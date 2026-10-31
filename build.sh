@@ -31,12 +31,13 @@ for pkg in $PKGS; do
   (cd Packages/$pkg
    mkdir -p .bin
    swiftc -parse-as-library -emit-library -emit-module \
-     -module-name $pkg -module-cache-path $MC \
+     -target arm64-apple-macos11.0 -module-cache-path $MC \
+     -module-name $pkg \
      -emit-module-path .bin/$pkg.swiftmodule \
      -o .bin/lib$pkg.dylib Sources/$pkg/*.swift
    local -a sanity=(Sources/*Sanity/main.swift)
    if [ -f "$sanity[1]" ]; then
-     swiftc -module-cache-path $MC -I .bin -L .bin -l$pkg \
+     swiftc -target arm64-apple-macos11.0 -module-cache-path $MC -I .bin -L .bin -l$pkg \
        -Xlinker -rpath -Xlinker @executable_path \
        -o .bin/$pkg-sanity "$sanity[1]"
    fi

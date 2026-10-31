@@ -72,3 +72,19 @@ public final class HolidayStore {
 public enum LunarCalendarShanghai {
     public static let timezone = TimeZone(identifier: "Asia/Shanghai")!
 }
+
+public extension HolidayStore {
+    /// App 默认数据源：SwiftPM 构建读包内 JSON；CLT 直编环境返回空库
+    static func bundled() -> HolidayStore {
+        #if SWIFTPM
+        guard let url = Bundle.module.url(forResource: "holiday-2026", withExtension: "json"),
+              let data = try? Data(contentsOf: url),
+              let store = try? HolidayStore(json: data) else {
+            return HolidayStore(holidays: [])
+        }
+        return store
+        #else
+        return HolidayStore(holidays: [])
+        #endif
+    }
+}

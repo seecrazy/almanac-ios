@@ -2,6 +2,7 @@
 
 ## v1.0 MVP
 - [x] 核心逻辑包：LunarKit / HolidayData / RecurrenceEngine
+- [x] App 壳：Xcode 工程 + 月视图(农历/休班角标) + 日详情 + Tab 框架
 - [ ] 日历数据层（EventKit + 本地缓存）
 - [ ] 月/日视图（农历、节日、调休角标）
 - [ ] 事件创建 + 自然语言输入 v1
