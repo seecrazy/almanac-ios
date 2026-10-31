@@ -1,0 +1,7 @@
+.build/
+DerivedData/
+xcuserdata/
+*.xcodeproj
+*.xcworkspace
+.DS_Store
+netrc
