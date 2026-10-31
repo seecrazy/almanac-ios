@@ -26,6 +26,8 @@
 
 依赖：macOS + Swift 5.4+。完整 Xcode 走 SwiftPM（含 XCTest）；仅 Command Line Tools 自动降级为 swiftc 直编 + Sanity 可执行验证（CLT 缺 xctest 运行时）。
 
+- **会话交接**：[docs/HANDOFF.md](docs/HANDOFF.md)（新会话先读这个）
+
 ## 文档索引
 
 - 产品：docs/product/ · 架构：docs/architecture/（含 ADR 决策记录）· 设计：docs/design/
