@@ -6,6 +6,7 @@ struct DayDetail: View {
     @Environment(\.palette) private var palette
     @EnvironmentObject private var eventService: EventStoreService
     @State private var composerContext: EventComposerContext?
+    @State private var selectedEvent: CalendarEvent?
 
     let date: Date
     let holidayStore: HolidayStore
@@ -33,6 +34,9 @@ struct DayDetail: View {
         .background(palette.background.ignoresSafeArea())
         .sheet(item: $composerContext) { context in
             AddEventView(initialDate: context.date)
+        }
+        .sheet(item: $selectedEvent) { event in
+            EventDetailView(event: event) {}
         }
     }
 
@@ -137,6 +141,10 @@ struct DayDetail: View {
                 VStack(spacing: 8) {
                     ForEach(dayEvents) { event in
                         EventRow(event: event)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                selectedEvent = event
+                            }
                     }
                 }
             }

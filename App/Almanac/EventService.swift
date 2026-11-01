@@ -4,13 +4,39 @@ import Foundation
 /// App 内使用的轻量日程模型，避免 EventKit 类型穿透 UI。
 struct CalendarEvent: Identifiable, Hashable {
     let id: String
+    let eventIdentifier: String?
     let title: String
     let startDate: Date
     let endDate: Date
     let isAllDay: Bool
     let location: String?
     let notes: String?
+    let calendarIdentifier: String?
     let calendarTitle: String
+    let isWritable: Bool
+    let hasRecurrenceRules: Bool
+
+    init(from event: EKEvent) {
+        let baseIdentifier = event.eventIdentifier ?? event.calendarItemExternalIdentifier ?? ""
+        let occurrenceID = [
+            baseIdentifier,
+            String(event.startDate.timeIntervalSince1970),
+            String(event.endDate.timeIntervalSince1970)
+        ].joined(separator: "|")
+
+        self.id = occurrenceID
+        self.eventIdentifier = event.eventIdentifier ?? event.calendarItemExternalIdentifier
+        self.title = event.title?.isEmpty == false ? event.title! : "无标题日程"
+        self.startDate = event.startDate
+        self.endDate = event.endDate
+        self.isAllDay = event.isAllDay
+        self.location = event.location
+        self.notes = event.notes
+        self.calendarIdentifier = event.calendar?.calendarIdentifier
+        self.calendarTitle = event.calendar?.title ?? "日历"
+        self.isWritable = event.calendar?.allowsContentModifications == true
+        self.hasRecurrenceRules = !(event.recurrenceRules?.isEmpty ?? true)
+    }
 }
 
 /// 新建事件表单里可选择的最小日历信息。
@@ -24,7 +50,10 @@ enum EventStoreError: LocalizedError {
     case accessDenied
     case invalidDates
     case noWritableCalendar
+    case eventNotFound
+    case readOnlyEvent
     case saveFailed(String)
+    case deleteFailed(String)
 
     var errorDescription: String? {
         switch self {
@@ -34,7 +63,13 @@ enum EventStoreError: LocalizedError {
             return "结束时间必须晚于开始时间"
         case .noWritableCalendar:
             return "没有可写入的日历"
+        case .eventNotFound:
+            return "日程不存在或已被删除"
+        case .readOnlyEvent:
+            return "该日历只读，不能修改或删除"
         case .saveFailed(let message):
+            return message
+        case .deleteFailed(let message):
             return message
         }
     }
@@ -114,18 +149,7 @@ final class EventStoreService: ObservableObject {
 
         let fetchedEvents = await Task.detached(priority: .userInitiated) { [store] in
             let predicate = store.predicateForEvents(withStart: interval.start, end: interval.end, calendars: nil)
-            return store.events(matching: predicate).map { event in
-                CalendarEvent(
-                    id: event.eventIdentifier ?? event.calendarItemExternalIdentifier,
-                    title: event.title?.isEmpty == false ? event.title! : "无标题日程",
-                    startDate: event.startDate,
-                    endDate: event.endDate,
-                    isAllDay: event.isAllDay,
-                    location: event.location,
-                    notes: event.notes,
-                    calendarTitle: event.calendar?.title ?? "日历"
-                )
-            }
+            return store.events(matching: predicate).map(CalendarEvent.init(from:))
         }.value
 
         events = fetchedEvents.sorted {
@@ -210,11 +234,86 @@ final class EventStoreService: ObservableObject {
         await reloadIfNecessary()
     }
 
+    func updateEvent(
+        _ model: CalendarEvent,
+        title: String,
+        startDate: Date,
+        endDate: Date,
+        isAllDay: Bool,
+        location: String?,
+        notes: String?,
+        calendarIdentifier: String?
+    ) async throws {
+        refreshAuthorizationState()
+        guard accessState == .granted else { throw EventStoreError.accessDenied }
+        guard isAllDay || endDate > startDate else { throw EventStoreError.invalidDates }
+
+        guard let storedEvent = ekEvent(matching: model) else {
+            throw EventStoreError.eventNotFound
+        }
+        guard storedEvent.calendar?.allowsContentModifications == true else {
+            throw EventStoreError.readOnlyEvent
+        }
+
+        let selectedCalendar = calendarIdentifier.flatMap { store.calendar(withIdentifier: $0) }
+        let targetCalendar = selectedCalendar ?? storedEvent.calendar
+        guard let targetCalendar, targetCalendar.allowsContentModifications else {
+            throw EventStoreError.noWritableCalendar
+        }
+
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedLocation = location?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedNotes = notes?.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        storedEvent.title = trimmedTitle.isEmpty ? "无标题日程" : trimmedTitle
+        storedEvent.startDate = isAllDay ? Calendar.current.startOfDay(for: startDate) : startDate
+        storedEvent.endDate = endDate
+        storedEvent.isAllDay = isAllDay
+        storedEvent.location = trimmedLocation?.isEmpty == false ? trimmedLocation : nil
+        storedEvent.notes = trimmedNotes?.isEmpty == false ? trimmedNotes : nil
+        storedEvent.calendar = targetCalendar
+
+        do {
+            try store.save(storedEvent, span: .thisEvent)
+        } catch {
+            throw EventStoreError.saveFailed(error.localizedDescription)
+        }
+
+        lastErrorMessage = nil
+        await reloadIfNecessary()
+    }
+
+    func deleteEvent(_ model: CalendarEvent) async throws {
+        refreshAuthorizationState()
+        guard accessState == .granted else { throw EventStoreError.accessDenied }
+
+        guard let storedEvent = ekEvent(matching: model) else {
+            throw EventStoreError.eventNotFound
+        }
+        guard storedEvent.calendar?.allowsContentModifications == true else {
+            throw EventStoreError.readOnlyEvent
+        }
+
+        do {
+            try store.remove(storedEvent, span: .thisEvent)
+        } catch {
+            throw EventStoreError.deleteFailed(error.localizedDescription)
+        }
+
+        lastErrorMessage = nil
+        await reloadIfNecessary()
+    }
+
     func events(on day: Date) -> [CalendarEvent] {
         let calendar = Calendar.current
         let start = calendar.startOfDay(for: day)
         guard let end = calendar.date(byAdding: .day, value: 1, to: start) else { return [] }
         return events.filter { $0.startDate < end && $0.endDate > start }
+    }
+
+    func event(with model: CalendarEvent) -> CalendarEvent? {
+        guard let storedEvent = ekEvent(matching: model) else { return nil }
+        return CalendarEvent(from: storedEvent)
     }
 
     func eventDayMarks(for month: Date) -> Set<Date> {
@@ -237,6 +336,19 @@ final class EventStoreService: ObservableObject {
     private func reloadIfNecessary() async {
         guard accessState == .granted, let interval = loadedInterval else { return }
         await loadEvents(from: interval.start, to: interval.end)
+    }
+
+    private func ekEvent(matching model: CalendarEvent) -> EKEvent? {
+        let searchStart = model.startDate.addingTimeInterval(-60 * 60 * 24)
+        let searchEnd = model.endDate.addingTimeInterval(60 * 60 * 24)
+        let predicate = store.predicateForEvents(withStart: searchStart, end: searchEnd, calendars: nil)
+
+        return store.events(matching: predicate).first { candidate in
+            let candidateIdentifier = candidate.eventIdentifier ?? candidate.calendarItemExternalIdentifier
+            let identifierMatches = model.eventIdentifier == nil || candidateIdentifier == model.eventIdentifier
+            let occurrenceMatches = candidate.startDate == model.startDate && candidate.endDate == model.endDate
+            return identifierMatches && occurrenceMatches
+        }
     }
 
     private func refreshAuthorizationState() {

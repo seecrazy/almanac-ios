@@ -1,6 +1,6 @@
 # Roadmap
 
-> 设计基线：[事件创建](../design/event-creation.md) · [设计系统](../design/design-system.md) · [历史蓝图恢复](../design/recovered-product-blueprint.md) · [设计差距清单](../design/design-gap.md)
+> 设计基线：[事件创建](../design/event-creation.md) · [事件详情/编辑/删除](../design/event-detail-editing.md) · [设计系统](../design/design-system.md) · [历史蓝图恢复](../design/recovered-product-blueprint.md) · [设计差距清单](../design/design-gap.md)
 
 ## v1.0 MVP
 - [x] 核心逻辑包：LunarKit / HolidayData / RecurrenceEngine
@@ -8,6 +8,7 @@
 - [x] 日历数据层：EventKit 只读接入（iOS 15/17 授权兼容；App 层数据后续再引入本地存储）
 - [x] 月/日视图（农历、节日、调休角标、日程圆点、真实日程列表）
 - [x] EventKit 写入 + 手动新建事件（标题/全天/起止时间/地点/备注/目标日历）
+- [x] EventKit 事件详情 / 编辑 / 删除（基础字段；重复日程 v1 仅当前发生）
 - [ ] 自然语言输入 v1
 - [ ] 里程碑倒计时（列表 + 日视图横幅 + 锁屏组件）
 - [ ] 阳历生日/纪念日提醒
@@ -34,10 +35,11 @@
 
 - [x] 设计系统 v0.1：色彩、字体、布局、月格/日详情/创建表单状态
 - [x] 事件创建 v1：入口、字段模型、授权数据流、状态与验收清单
+- [x] 事件详情 / 编辑 / 删除 v1：入口、字段映射、重复日程边界、状态与验收清单
 - [x] 历史设计恢复：核心日历、中国日历、里程碑、闹钟、迁移、日记、智能、打包与跨平台
 - [x] 设计 vs 实现差距清单：区分已实现、部分实现、未实现
 - [ ] 翻页与手势设计
 - [ ] 自然语言输入规则表 UI/UX
 - [ ] 里程碑倒计时信息架构
-- [ ] 事件编辑/删除、提醒、重复规则 UI 设计
+- [ ] 提醒、重复规则 / 系列编辑 UI 设计
 - [ ] WorkdayResolver / SyncProvider ADR
