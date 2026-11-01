@@ -55,6 +55,8 @@
 
 ## 新会话接手姿势
 
+**协作纪律**：讨论设计并决定开干时，先落设计文档；实现过程中同步更新设计、进展文档和 README。完整规则见仓库根目录 `AGENTS.md`。
+
 ```bash
 cd ~/IdeaProjects/almanac-ios
 git log --oneline        # 看提交

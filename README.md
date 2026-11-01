@@ -44,3 +44,9 @@
 - **架构**：[ADR-001 EventKit](docs/architecture/adr/ADR-001-eventkit-as-source-of-truth.md)、[ADR-007 跨平台](docs/architecture/adr/ADR-007-cross-platform.md)
 - **设计**：[设计系统 v0.1](docs/design/design-system.md)、[事件创建 v1](docs/design/event-creation.md)
 - **设计恢复 / 差距**：[历史产品蓝图](docs/design/recovered-product-blueprint.md)、[设计与实现差距](docs/design/design-gap.md)
+
+## 协作规范
+
+- 讨论设计并决定开干后，**第一件事是先把设计写成文档，再写生产代码**。
+- 实现过程中同步更新设计文档、roadmap、HANDOFF 和 README。
+- 详细要求见 [AGENTS.md](AGENTS.md)。
