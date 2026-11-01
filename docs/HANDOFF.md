@@ -1,17 +1,17 @@
 # 会话交接 / 项目现状（Handoff）
 
-> 最后更新：2026-11-01（EventKit 读写接入） · 供新会话冷启动使用
+> 最后更新：2026-11-01（EventKit 读写 + 设计文档基线） · 供新会话冷启动使用
 > 设计来源：产品设计讨论（本文只记录结论与状态，讨论细节见 ADR 与 roadmap）
 
 ## 一句话现状
 
-**设计闭环、工程可构建**：三大核心引擎 + XCTest 全绿（20 个测试），SwiftUI App 壳已通过 Xcode 27.2 iOS Simulator 构建；EventKit 只读与手动新建写入已接入，月历有日程圆点，日详情可查看和创建系统日程。
+**设计闭环、工程可构建**：三大核心引擎 + XCTest 全绿（20 个测试），SwiftUI App 壳已通过 Xcode 27.2 iOS Simulator 构建；EventKit 只读与手动新建写入已接入，月历有日程圆点，日详情可查看和创建系统日程。设计系统 v0.1 与事件创建 v1 设计已文档化。
 
-## 已完成（commit 152c50f）
+## 已完成（截至 commit 68eb385）
 
 | 模块 | 状态 | 验证方式 |
 |------|------|----------|
-| 文档体系 | ✅ README / roadmap / ADR-001(EventKit) / ADR-007(跨平台) | — |
+| 文档体系 | ✅ README / roadmap / HANDOFF / ADR-001(EventKit) / ADR-007(跨平台) / design-system / event-creation | 内容与 `68eb385` 状态一致 |
 | LunarKit | ✅ 1900-2100 农历换算、闰月、干支、生肖、月视图文本 | 17 项 Sanity 全绿（春节/中秋锚点、1949-10-01 甲子日、往返一致性） |
 | HolidayData | ✅ 年度 JSON（休/班）+ 查询引擎；`bundled()` 双路径入口 | 5 项 Sanity 全绿 |
 | RecurrenceEngine | ✅ 周期步进展开器：d/w/m/y + interval/count/until/EXDATE | 6 项 Sanity 全绿 |
@@ -33,18 +33,20 @@
 ## 下一步（按优先级）
 
 1. **Xcode GUI 模拟器运行**：打开工程选 iPhone Simulator ⌘R，验证完整链路：权限弹窗 → 新建日程 → 月历圆点 → 日详情列表
-2. **翻月手势**（swipe）+ 周起始日设置
-3. **自然语言输入 v1**（规则表 JSON 化，见 ADR-007）
-4. **里程碑倒计时**：数据模型（`Milestone`，isAllDay 精度切换）+ 列表页 + 锁屏小组件
-5. 节假日数据管道：当前 `holiday-2026.json` 为 **sample 标注**；接国务院年度通知更新流程 + 生成 2027 数据
-6. 更远：黄历面板(v1.1)、智能闹钟工作日引擎(v1.1)、公司政策引擎(v1.2)——设计已在会话中闭环，编码前补 ADR
+2. **补齐事件创建验收**：权限拒绝后跳系统设置；真机/iCloud 日历保存实测
+3. **翻月手势**（swipe）+ 周起始日设置
+4. **自然语言输入 v1**（规则表 JSON 化，见 ADR-007；表单可抽取 `EventDraft`）
+5. **里程碑倒计时**：数据模型（`Milestone`，isAllDay 精度切换）+ 列表页 + 锁屏小组件
+6. 节假日数据管道：当前 `holiday-2026.json` 为 **sample 标注**；接国务院年度通知更新流程 + 生成 2027 数据
+7. 更远：黄历面板(v1.1)、智能闹钟工作日引擎(v1.1)、公司政策引擎(v1.2)——编码前补 ADR
 
 ## 设计结论速查（详见各文档）
 
 - 日程源头：EventKit 读/写已接（ADR-001）；App 层数据后续用本地 SQLite
 - 跨平台：UI 原生、逻辑零依赖、规则 JSON 化、同步协议化（ADR-007）
 - 命名：产品「宜历」/ 仓库 almanac-ios / Bundle `com.yili.almanac`
-- 设计 token：docs/design/design-system.md 待补（色彩已在 Theme.swift 落码：纸感/墨感、朱砂/赭金/青瓷）
+- 设计 token：[docs/design/design-system.md](docs/design/design-system.md) 已建立 v0.1（纸感/墨感、朱砂/赭金/青瓷）
+- 事件创建：[docs/design/event-creation.md](docs/design/event-creation.md) 记录入口、字段映射、授权流、状态和验收清单
 - 明确不做：社交流、云端日程 AI、广告
 
 ## 新会话接手姿势

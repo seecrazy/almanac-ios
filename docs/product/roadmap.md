@@ -1,5 +1,7 @@
 # Roadmap
 
+> 设计基线：[事件创建](../design/event-creation.md) · [设计系统](../design/design-system.md)
+
 ## v1.0 MVP
 - [x] 核心逻辑包：LunarKit / HolidayData / RecurrenceEngine
 - [x] App 壳：Xcode 工程 + 月视图(农历/休班角标) + 日详情 + Tab 框架
@@ -27,3 +29,11 @@
 
 ## 明确不做
 社交信息流 / 云端日程 AI 分析 / 广告
+
+## 设计文档状态
+
+- [x] 设计系统 v0.1：色彩、字体、布局、月格/日详情/创建表单状态
+- [x] 事件创建 v1：入口、字段模型、授权数据流、状态与验收清单
+- [ ] 翻页与手势设计
+- [ ] 自然语言输入规则表 UI/UX
+- [ ] 里程碑倒计时信息架构
