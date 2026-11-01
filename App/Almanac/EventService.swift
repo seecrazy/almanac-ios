@@ -13,6 +13,33 @@ struct CalendarEvent: Identifiable, Hashable {
     let calendarTitle: String
 }
 
+/// 新建事件表单里可选择的最小日历信息。
+struct WritableCalendar: Identifiable, Hashable {
+    let id: String
+    let title: String
+    let sourceTitle: String
+}
+
+enum EventStoreError: LocalizedError {
+    case accessDenied
+    case invalidDates
+    case noWritableCalendar
+    case saveFailed(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .accessDenied:
+            return "没有系统日历写入权限"
+        case .invalidDates:
+            return "结束时间必须晚于开始时间"
+        case .noWritableCalendar:
+            return "没有可写入的日历"
+        case .saveFailed(let message):
+            return message
+        }
+    }
+}
+
 /// EventKit 是日程数据的唯一源头（ADR-001）。
 @MainActor
 final class EventStoreService: ObservableObject {
@@ -25,6 +52,8 @@ final class EventStoreService: ObservableObject {
     @Published private(set) var accessState: AccessState = .notDetermined
     @Published private(set) var events: [CalendarEvent] = []
     @Published private(set) var lastErrorMessage: String?
+    @Published private(set) var writableCalendars: [WritableCalendar] = []
+    @Published private(set) var defaultCalendarIdentifier: String?
 
     private let store = EKEventStore()
     private var changeObserver: NSObjectProtocol?
@@ -104,6 +133,81 @@ final class EventStoreService: ObservableObject {
             if $0.startDate == $1.startDate { return $0.endDate < $1.endDate }
             return $0.startDate < $1.startDate
         }
+    }
+
+    func loadWritableCalendars() {
+        refreshAuthorizationState()
+        guard accessState == .granted else {
+            writableCalendars = []
+            defaultCalendarIdentifier = nil
+            return
+        }
+
+        writableCalendars = store.calendars(for: .event)
+            .filter(\.allowsContentModifications)
+            .map { calendar in
+                WritableCalendar(
+                    id: calendar.calendarIdentifier,
+                    title: calendar.title.isEmpty ? "未命名日历" : calendar.title,
+                    sourceTitle: calendar.source?.title ?? "本地"
+                )
+            }
+            .sorted { lhs, rhs in
+                if lhs.sourceTitle != rhs.sourceTitle { return lhs.sourceTitle < rhs.sourceTitle }
+                return lhs.title < rhs.title
+            }
+        defaultCalendarIdentifier = store.defaultCalendarForNewEvents?.calendarIdentifier
+    }
+
+    func selectedWritableCalendarID(fallback: String?) -> String? {
+        let preferredID = fallback ?? defaultCalendarIdentifier
+        if let preferredID,
+           writableCalendars.contains(where: { $0.id == preferredID }) {
+            return preferredID
+        }
+        return writableCalendars.first?.id
+    }
+
+    func saveEvent(
+        title: String,
+        startDate: Date,
+        endDate: Date,
+        isAllDay: Bool,
+        location: String?,
+        notes: String?,
+        calendarIdentifier: String?
+    ) async throws {
+        refreshAuthorizationState()
+        guard accessState == .granted else { throw EventStoreError.accessDenied }
+
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard isAllDay || endDate > startDate else { throw EventStoreError.invalidDates }
+
+        let selectedCalendar = calendarIdentifier.flatMap { store.calendar(withIdentifier: $0) }
+        let calendar = selectedCalendar ?? store.defaultCalendarForNewEvents
+        guard let targetCalendar = calendar, targetCalendar.allowsContentModifications else {
+            throw EventStoreError.noWritableCalendar
+        }
+
+        let trimmedLocation = location?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedNotes = notes?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let event = EKEvent(eventStore: store)
+        event.title = trimmedTitle.isEmpty ? "新日程" : trimmedTitle
+        event.startDate = isAllDay ? Calendar.current.startOfDay(for: startDate) : startDate
+        event.endDate = endDate
+        event.isAllDay = isAllDay
+        event.location = trimmedLocation?.isEmpty == false ? trimmedLocation : nil
+        event.notes = trimmedNotes?.isEmpty == false ? trimmedNotes : nil
+        event.calendar = targetCalendar
+
+        do {
+            try store.save(event, span: .thisEvent)
+        } catch {
+            throw EventStoreError.saveFailed(error.localizedDescription)
+        }
+
+        lastErrorMessage = nil
+        await reloadIfNecessary()
     }
 
     func events(on day: Date) -> [CalendarEvent] {

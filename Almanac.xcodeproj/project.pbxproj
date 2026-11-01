@@ -3,11 +3,10 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		7A1111110000000000000021 /* Almanac.app in Embed App Products */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000020 /* Almanac.app */; };
 		7A1111110000000000000051 /* AlmanacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000041 /* AlmanacApp.swift */; };
 		7A1111110000000000000052 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000042 /* Theme.swift */; };
 		7A1111110000000000000053 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000043 /* RootView.swift */; };
@@ -16,6 +15,7 @@
 		7A1111110000000000000056 /* CountdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000046 /* CountdownView.swift */; };
 		7A1111110000000000000057 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000047 /* SettingsView.swift */; };
 		7A1111110000000000000058 /* EventService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000048 /* EventService.swift */; };
+		7A1111110000000000000059 /* AddEventView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000049 /* AddEventView.swift */; };
 		7A1111110000000000000080 /* LunarKit in Frameworks */ = {isa = PBXBuildFile; productRef = 7A1111110000000000000070 /* LunarKit */; };
 		7A1111110000000000000081 /* HolidayData in Frameworks */ = {isa = PBXBuildFile; productRef = 7A1111110000000000000071 /* HolidayData */; };
 		7A1111110000000000000082 /* RecurrenceEngine in Frameworks */ = {isa = PBXBuildFile; productRef = 7A1111110000000000000072 /* RecurrenceEngine */; };
@@ -31,6 +31,7 @@
 		7A1111110000000000000046 /* CountdownView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountdownView.swift; sourceTree = "<group>"; };
 		7A1111110000000000000047 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		7A1111110000000000000048 /* EventService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventService.swift; sourceTree = "<group>"; };
+		7A1111110000000000000049 /* AddEventView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddEventView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -47,10 +48,10 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		7A1111110000000000000002 /* main group */ = {
+		7A1111110000000000000002 = {
 			isa = PBXGroup;
 			children = (
-				7A1111110000000000000004 /* Almanac */,
+				7A1111110000000000000004 /* App/Almanac */,
 				7A1111110000000000000003 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -63,7 +64,7 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		7A1111110000000000000004 /* Almanac */ = {
+		7A1111110000000000000004 /* App/Almanac */ = {
 			isa = PBXGroup;
 			children = (
 				7A1111110000000000000041 /* AlmanacApp.swift */,
@@ -74,6 +75,7 @@
 				7A1111110000000000000046 /* CountdownView.swift */,
 				7A1111110000000000000047 /* SettingsView.swift */,
 				7A1111110000000000000048 /* EventService.swift */,
+				7A1111110000000000000049 /* AddEventView.swift */,
 			);
 			path = App/Almanac;
 			sourceTree = "<group>";
@@ -125,7 +127,7 @@
 			knownRegions = (
 				en,
 				Base,
-				"zh_CN",
+				zh_CN,
 			);
 			mainGroup = 7A1111110000000000000002;
 			packageReferences = (
@@ -165,6 +167,7 @@
 				7A1111110000000000000056 /* CountdownView.swift in Sources */,
 				7A1111110000000000000057 /* SettingsView.swift in Sources */,
 				7A1111110000000000000058 /* EventService.swift in Sources */,
+				7A1111110000000000000059 /* AddEventView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -239,12 +242,12 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = DFB7P62Y8F;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "宜历需要读取和写入系统日历，以便展示日程并新建事件。";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "宜历需要读取和写入系统日历，以便展示日程并新建事件。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "宜历需要读取系统日历，以便在月历和日详情中展示你的日程。";
-				INFOPLIST_KEY_NSCalendarsUsageDescription = "宜历需要读取系统日历，以便在月历和日详情中展示你的日程。";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -266,12 +269,12 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = DFB7P62Y8F;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "宜历需要读取和写入系统日历，以便展示日程并新建事件。";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "宜历需要读取和写入系统日历，以便展示日程并新建事件。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "宜历需要读取系统日历，以便在月历和日详情中展示你的日程。";
-				INFOPLIST_KEY_NSCalendarsUsageDescription = "宜历需要读取系统日历，以便在月历和日详情中展示你的日程。";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";

@@ -1,11 +1,11 @@
 # 会话交接 / 项目现状（Handoff）
 
-> 最后更新：2026-11-01（EventKit 只读接入） · 供新会话冷启动使用
+> 最后更新：2026-11-01（EventKit 读写接入） · 供新会话冷启动使用
 > 设计来源：产品设计讨论（本文只记录结论与状态，讨论细节见 ADR 与 roadmap）
 
 ## 一句话现状
 
-**设计闭环、工程可构建**：三大核心引擎 + XCTest 全绿（20 个测试），SwiftUI App 壳已通过 Xcode 27.2 iOS Simulator 构建；EventKit 只读接入完成，月历有日程圆点、日详情展示真实日程。
+**设计闭环、工程可构建**：三大核心引擎 + XCTest 全绿（20 个测试），SwiftUI App 壳已通过 Xcode 27.2 iOS Simulator 构建；EventKit 只读与手动新建写入已接入，月历有日程圆点，日详情可查看和创建系统日程。
 
 ## 已完成（commit 152c50f）
 
@@ -16,7 +16,7 @@
 | HolidayData | ✅ 年度 JSON（休/班）+ 查询引擎；`bundled()` 双路径入口 | 5 项 Sanity 全绿 |
 | RecurrenceEngine | ✅ 周期步进展开器：d/w/m/y + interval/count/until/EXDATE | 6 项 Sanity 全绿 |
 | App 壳 | ✅ Xcode 工程 + 月视图(农历/休班/今日/日程圆点) + 日详情真实日程 + 倒计时样卡 + 设置 | Xcode 27.2 iOS Simulator build ✅ |
-| EventKit 只读 | ✅ `EventStoreService`、iOS 15/17 授权兼容、系统日历变更监听、月/日视图消费 | generic iOS Simulator build ✅ |
+| EventKit 读写 | ✅ `EventStoreService`、iOS 15/17 授权兼容、系统日历变更监听、月/日视图消费、手动新建事件、可写日历选择 | generic iOS Simulator build ✅ |
 | XCTest | ✅ LunarKit 9 / HolidayData 5 / RecurrenceEngine 6 | `./build.sh test` 全绿 |
 
 构建命令：`./build.sh test`（20 个 XCTest + 三包编译）。
@@ -32,17 +32,16 @@
 
 ## 下一步（按优先级）
 
-1. **Xcode GUI 模拟器运行**：打开工程选 iPhone Simulator ⌘R，验证 EventKit 权限弹窗、日历读取和真机签名
-2. **EventKit 写入 / 事件创建**：新增事件 sheet → `EKEvent` 保存 → 保存后刷新当前月；错误与 denied 状态补引导
-3. **翻月手势**（swipe）+ 周起始日设置
-4. **自然语言输入 v1**（规则表 JSON 化，见 ADR-007）
-5. **里程碑倒计时**：数据模型（`Milestone`，isAllDay 精度切换）+ 列表页 + 锁屏小组件
-6. 节假日数据管道：当前 `holiday-2026.json` 为 **sample 标注**；接国务院年度通知更新流程 + 生成 2027 数据
-7. 更远：黄历面板(v1.1)、智能闹钟工作日引擎(v1.1)、公司政策引擎(v1.2)——设计已在会话中闭环，编码前补 ADR
+1. **Xcode GUI 模拟器运行**：打开工程选 iPhone Simulator ⌘R，验证完整链路：权限弹窗 → 新建日程 → 月历圆点 → 日详情列表
+2. **翻月手势**（swipe）+ 周起始日设置
+3. **自然语言输入 v1**（规则表 JSON 化，见 ADR-007）
+4. **里程碑倒计时**：数据模型（`Milestone`，isAllDay 精度切换）+ 列表页 + 锁屏小组件
+5. 节假日数据管道：当前 `holiday-2026.json` 为 **sample 标注**；接国务院年度通知更新流程 + 生成 2027 数据
+6. 更远：黄历面板(v1.1)、智能闹钟工作日引擎(v1.1)、公司政策引擎(v1.2)——设计已在会话中闭环，编码前补 ADR
 
 ## 设计结论速查（详见各文档）
 
-- 日程源头：EventKit 只读已接（ADR-001）；App 层数据后续用本地 SQLite
+- 日程源头：EventKit 读/写已接（ADR-001）；App 层数据后续用本地 SQLite
 - 跨平台：UI 原生、逻辑零依赖、规则 JSON 化、同步协议化（ADR-007）
 - 命名：产品「宜历」/ 仓库 almanac-ios / Bundle `com.yili.almanac`
 - 设计 token：docs/design/design-system.md 待补（色彩已在 Theme.swift 落码：纸感/墨感、朱砂/赭金/青瓷）

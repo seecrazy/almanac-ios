@@ -5,7 +5,7 @@
 
 ## 状态
 
-🚧 核心引擎与 EventKit 只读日程视图已可构建；当前进度见 [docs/product/roadmap.md](docs/product/roadmap.md)。
+🚧 核心引擎、EventKit 只读视图与手动新建日程已可构建；当前进度见 [docs/product/roadmap.md](docs/product/roadmap.md)。
 
 ## 核心包（纯逻辑，跨平台可移植）
 

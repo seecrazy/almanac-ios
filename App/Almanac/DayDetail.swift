@@ -5,6 +5,7 @@ import HolidayData
 struct DayDetail: View {
     @Environment(\.palette) private var palette
     @EnvironmentObject private var eventService: EventStoreService
+    @State private var composerContext: EventComposerContext?
 
     let date: Date
     let holidayStore: HolidayStore
@@ -30,6 +31,9 @@ struct DayDetail: View {
             }
         }
         .background(palette.background.ignoresSafeArea())
+        .sheet(item: $composerContext) { context in
+            AddEventView(initialDate: context.date)
+        }
     }
 
     private var grabber: some View {
@@ -107,9 +111,20 @@ struct DayDetail: View {
     @ViewBuilder
     private var eventList: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("今日日程")
-                .font(.system(size: 15, weight: .medium))
-                .foregroundColor(palette.ink)
+            HStack {
+                Text("今日日程")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(palette.ink)
+                Spacer()
+                Button {
+                    composerContext = EventComposerContext(date: date)
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(palette.accent)
+                }
+                .accessibilityLabel("新建日程")
+            }
             let dayEvents = eventService.events(on: date)
             if dayEvents.isEmpty {
                 Text("这一天暂无日程")
@@ -127,6 +142,11 @@ struct DayDetail: View {
             }
         }
     }
+}
+
+struct EventComposerContext: Identifiable {
+    let id = UUID()
+    let date: Date
 }
 
 private struct EventRow: View {

@@ -8,6 +8,7 @@ struct MonthView: View {
 
     @State private var visibleMonth: Date = MonthView.firstOfMonth(Date())
     @State private var selectedDay: Date?
+    @State private var quickComposerDate: Date?
 
     private let holidayStore = HolidayStore.bundled()
     private var calendar = Calendar(identifier: .gregorian)
@@ -32,6 +33,9 @@ struct MonthView: View {
         .sheet(item: $selectedDay) { day in
             DayDetail(date: day, holidayStore: holidayStore)
         }
+        .sheet(item: $quickComposerDate) { date in
+            AddEventView(initialDate: date)
+        }
     }
 
     // MARK: 头部
@@ -47,6 +51,15 @@ struct MonthView: View {
                     .foregroundColor(palette.secondary)
             }
             Spacer()
+            Button {
+                quickComposerDate = Date()
+            } label: {
+                Image(systemName: "plus.circle")
+                    .font(.system(size: 19, weight: .medium))
+                    .foregroundColor(palette.accent)
+                    .frame(width: 36, height: 36)
+            }
+            .accessibilityLabel("新建今日日程")
             Button { shiftMonth(-1) } label: {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 15, weight: .semibold))
