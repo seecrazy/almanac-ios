@@ -5,7 +5,7 @@
 
 ## 状态
 
-🚧 核心引擎、EventKit 只读/写入、手动新建、事件详情/编辑/删除、单条提醒、基础重复规则、多日历筛选、月视图手势和有限搜索已完成；当前进度见 [docs/product/roadmap.md](docs/product/roadmap.md)。
+🚧 核心引擎、EventKit 只读/写入、手动新建、事件详情/编辑/删除、单条提醒、基础重复规则、多日历筛选、月视图手势、有限搜索和里程碑基础闭环已完成；当前进度见 [docs/product/roadmap.md](docs/product/roadmap.md)。
 
 ## 核心包（纯逻辑，跨平台可移植）
 
@@ -42,7 +42,7 @@
 
 - **产品 / 进展**：[roadmap](docs/product/roadmap.md)、[HANDOFF](docs/HANDOFF.md)
 - **架构**：[ADR-001 EventKit](docs/architecture/adr/ADR-001-eventkit-as-source-of-truth.md)、[ADR-007 跨平台](docs/architecture/adr/ADR-007-cross-platform.md)
-- **设计**：[设计系统 v0.1](docs/design/design-system.md)、[事件创建 v1](docs/design/event-creation.md)、[事件详情/编辑/删除 v1](docs/design/event-detail-editing.md)、[事件提醒 v1](docs/design/event-reminders.md)、[重复规则 v1](docs/design/event-recurrence.md)、[多日历管理 v1](docs/design/calendar-management.md)、[月视图交互 v1](docs/design/month-interaction.md)、[事件搜索 v1](docs/design/event-search.md)
+- **设计**：[设计系统 v0.1](docs/design/design-system.md)、[事件创建 v1](docs/design/event-creation.md)、[事件详情/编辑/删除 v1](docs/design/event-detail-editing.md)、[事件提醒 v1](docs/design/event-reminders.md)、[重复规则 v1](docs/design/event-recurrence.md)、[多日历管理 v1](docs/design/calendar-management.md)、[月视图交互 v1](docs/design/month-interaction.md)、[事件搜索 v1](docs/design/event-search.md)、[里程碑 v1](docs/design/milestones.md)
 - **设计恢复 / 差距**：[历史产品蓝图](docs/design/recovered-product-blueprint.md)、[设计与实现差距](docs/design/design-gap.md)
 
 ## 协作规范

@@ -1,6 +1,6 @@
 # Roadmap
 
-> 设计基线：[事件创建](../design/event-creation.md) · [事件详情/编辑/删除](../design/event-detail-editing.md) · [事件提醒](../design/event-reminders.md) · [重复规则](../design/event-recurrence.md) · [多日历管理](../design/calendar-management.md) · [月视图交互](../design/month-interaction.md) · [事件搜索](../design/event-search.md) · [设计系统](../design/design-system.md) · [历史蓝图恢复](../design/recovered-product-blueprint.md) · [设计差距清单](../design/design-gap.md)
+> 设计基线：[事件创建](../design/event-creation.md) · [事件详情/编辑/删除](../design/event-detail-editing.md) · [事件提醒](../design/event-reminders.md) · [重复规则](../design/event-recurrence.md) · [多日历管理](../design/calendar-management.md) · [月视图交互](../design/month-interaction.md) · [事件搜索](../design/event-search.md) · [里程碑](../design/milestones.md) · [设计系统](../design/design-system.md) · [历史蓝图恢复](../design/recovered-product-blueprint.md) · [设计差距清单](../design/design-gap.md)
 
 ## v1.0 MVP
 - [x] 核心逻辑包：LunarKit / HolidayData / RecurrenceEngine
@@ -14,8 +14,11 @@
 - [x] 多日历筛选与颜色（读取日历来源 / 颜色；月视图多色圆点；显示 / 隐藏本地持久化）
 - [x] 月视图滑动手势 + 周起始日设置（周一 / 周日；本地持久化）
 - [x] 事件搜索 v1（标题 / 地点 / 备注；过去 180 天至未来 365 天；最多 100 条）
+- [x] 里程碑模型 + 本地列表（全天 / 时刻；创建 / 编辑 / 删除；本地持久化；日详情横幅）
 - [ ] 自然语言输入 v1
 - [ ] 里程碑倒计时（列表 + 日视图横幅 + 锁屏组件）
+  - [x] 本地里程碑基础闭环已完成
+  - [ ] 锁屏组件 / Live Activity / 提醒
 - [ ] 阳历生日/纪念日提醒
 
 ## v1.1
@@ -46,10 +49,11 @@
 - [x] 多日历管理 v1：日历列表、颜色、来源分组、显示 / 隐藏与验收清单
 - [x] 月视图交互 v1：滑动手势、周起始日设置与验收清单
 - [x] 事件搜索 v1：时间窗、字段范围、防抖、结果列表与验收清单
+- [x] 里程碑 v1：数据模型、精度策略、本地持久化、列表编辑和日详情横幅
 - [x] 历史设计恢复：核心日历、中国日历、里程碑、闹钟、迁移、日记、智能、打包与跨平台
 - [x] 设计 vs 实现差距清单：区分已实现、部分实现、未实现
 - [ ] 翻页与手势设计
 - [ ] 自然语言输入规则表 UI/UX
-- [ ] 里程碑倒计时信息架构
+- [ ] 里程碑提醒与小组件设计
 - [ ] 系列编辑 / 自定义周几 / 多条自定义提醒 UI 设计
 - [ ] WorkdayResolver / SyncProvider ADR

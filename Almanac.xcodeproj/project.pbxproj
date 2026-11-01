@@ -12,7 +12,6 @@
 		7A1111110000000000000053 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000043 /* RootView.swift */; };
 		7A1111110000000000000054 /* MonthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000044 /* MonthView.swift */; };
 		7A1111110000000000000055 /* DayDetail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000045 /* DayDetail.swift */; };
-		7A1111110000000000000056 /* CountdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000046 /* CountdownView.swift */; };
 		7A1111110000000000000057 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000047 /* SettingsView.swift */; };
 		7A1111110000000000000058 /* EventService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000048 /* EventService.swift */; };
 		7A1111110000000000000059 /* AddEventView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000049 /* AddEventView.swift */; };
@@ -20,6 +19,8 @@
 		7A1111110000000000000083 /* EventRecurrencePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000084 /* EventRecurrencePicker.swift */; };
 		7A1111110000000000000085 /* CalendarFilterSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000086 /* CalendarFilterSheet.swift */; };
 		7A1111110000000000000087 /* EventSearchSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000088 /* EventSearchSheet.swift */; };
+		7A1111110000000000000090 /* MilestoneStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000091 /* MilestoneStore.swift */; };
+		7A1111110000000000000092 /* MilestoneViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000093 /* MilestoneViews.swift */; };
 		7A1111110000000000000080 /* LunarKit in Frameworks */ = {isa = PBXBuildFile; productRef = 7A1111110000000000000070 /* LunarKit */; };
 		7A1111110000000000000081 /* HolidayData in Frameworks */ = {isa = PBXBuildFile; productRef = 7A1111110000000000000071 /* HolidayData */; };
 		7A1111110000000000000082 /* RecurrenceEngine in Frameworks */ = {isa = PBXBuildFile; productRef = 7A1111110000000000000072 /* RecurrenceEngine */; };
@@ -32,7 +33,6 @@
 		7A1111110000000000000043 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		7A1111110000000000000044 /* MonthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonthView.swift; sourceTree = "<group>"; };
 		7A1111110000000000000045 /* DayDetail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayDetail.swift; sourceTree = "<group>"; };
-		7A1111110000000000000046 /* CountdownView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountdownView.swift; sourceTree = "<group>"; };
 		7A1111110000000000000047 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		7A1111110000000000000048 /* EventService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventService.swift; sourceTree = "<group>"; };
 		7A1111110000000000000049 /* AddEventView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddEventView.swift; sourceTree = "<group>"; };
@@ -40,6 +40,8 @@
 		7A1111110000000000000084 /* EventRecurrencePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventRecurrencePicker.swift; sourceTree = "<group>"; };
 		7A1111110000000000000086 /* CalendarFilterSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarFilterSheet.swift; sourceTree = "<group>"; };
 		7A1111110000000000000088 /* EventSearchSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventSearchSheet.swift; sourceTree = "<group>"; };
+		7A1111110000000000000091 /* MilestoneStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MilestoneStore.swift; sourceTree = "<group>"; };
+		7A1111110000000000000093 /* MilestoneViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MilestoneViews.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -80,7 +82,6 @@
 				7A1111110000000000000043 /* RootView.swift */,
 				7A1111110000000000000044 /* MonthView.swift */,
 				7A1111110000000000000045 /* DayDetail.swift */,
-				7A1111110000000000000046 /* CountdownView.swift */,
 				7A1111110000000000000047 /* SettingsView.swift */,
 				7A1111110000000000000048 /* EventService.swift */,
 				7A1111110000000000000049 /* AddEventView.swift */,
@@ -88,6 +89,8 @@
 				7A1111110000000000000084 /* EventRecurrencePicker.swift */,
 				7A1111110000000000000086 /* CalendarFilterSheet.swift */,
 				7A1111110000000000000088 /* EventSearchSheet.swift */,
+				7A1111110000000000000091 /* MilestoneStore.swift */,
+				7A1111110000000000000093 /* MilestoneViews.swift */,
 			);
 			path = App/Almanac;
 			sourceTree = "<group>";
@@ -176,7 +179,6 @@
 				7A1111110000000000000053 /* RootView.swift in Sources */,
 				7A1111110000000000000054 /* MonthView.swift in Sources */,
 				7A1111110000000000000055 /* DayDetail.swift in Sources */,
-				7A1111110000000000000056 /* CountdownView.swift in Sources */,
 				7A1111110000000000000057 /* SettingsView.swift in Sources */,
 				7A1111110000000000000058 /* EventService.swift in Sources */,
 				7A1111110000000000000059 /* AddEventView.swift in Sources */,
@@ -184,6 +186,8 @@
 				7A1111110000000000000083 /* EventRecurrencePicker.swift in Sources */,
 				7A1111110000000000000085 /* CalendarFilterSheet.swift in Sources */,
 				7A1111110000000000000087 /* EventSearchSheet.swift in Sources */,
+				7A1111110000000000000090 /* MilestoneStore.swift in Sources */,
+				7A1111110000000000000092 /* MilestoneViews.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

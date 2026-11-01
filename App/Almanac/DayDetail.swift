@@ -5,6 +5,7 @@ import HolidayData
 struct DayDetail: View {
     @Environment(\.palette) private var palette
     @EnvironmentObject private var eventService: EventStoreService
+    @EnvironmentObject private var milestoneStore: MilestoneStore
     @State private var composerContext: EventComposerContext?
     @State private var selectedEvent: CalendarEvent?
 
@@ -25,6 +26,7 @@ struct DayDetail: View {
                 VStack(alignment: .leading, spacing: 18) {
                     header
                     holidayBanner
+                    milestoneBanners
                     nextHolidayFootnote
                     eventList
                 }
@@ -98,6 +100,27 @@ struct DayDetail: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(Capsule().fill(color))
+    }
+
+    @ViewBuilder
+    private var milestoneBanners: some View {
+        let dayMilestones = milestoneStore.milestones(on: date)
+        if !dayMilestones.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("里程碑")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(palette.ink)
+
+                VStack(spacing: 8) {
+                    ForEach(dayMilestones) { milestone in
+                        MilestoneBanner(
+                            milestone: milestone,
+                            countdown: milestoneStore.countdown(for: milestone, at: Date())
+                        )
+                    }
+                }
+            }
+        }
     }
 
     @ViewBuilder
@@ -201,5 +224,39 @@ private struct EventRow: View {
         }
         formatter.dateFormat = "M月d日 HH:mm"
         return "\(formatter.string(from: event.startDate)) – \(formatter.string(from: event.endDate))"
+    }
+}
+
+private struct MilestoneBanner: View {
+    @Environment(\.palette) private var palette
+
+    let milestone: Milestone
+    let countdown: MilestoneCountdown
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+            RoundedRectangle(cornerRadius: 2)
+                .fill(countdown.isPast ? palette.makeupGray : palette.holidayRed)
+                .frame(width: 3)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("\(milestone.category.icon) \(milestone.title)")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(palette.ink)
+                Text("\(milestone.category.title) · \(countdown.isPast ? "已开始" : countdown.primaryText + countdown.unitText)")
+                    .font(.system(size: 12))
+                    .foregroundColor(palette.secondary)
+            }
+
+            Spacer()
+
+            Text(countdown.primaryText)
+                .font(.system(size: 22, weight: .semibold, design: .serif))
+                .foregroundColor(countdown.isPast ? palette.makeupGray : palette.holidayRed)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        }
+        .padding(14)
+        .background(RoundedRectangle(cornerRadius: 16).fill(palette.card))
     }
 }
