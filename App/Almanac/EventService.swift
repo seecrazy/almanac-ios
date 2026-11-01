@@ -15,6 +15,9 @@ struct CalendarEvent: Identifiable, Hashable {
     let calendarTitle: String
     let isWritable: Bool
     let hasRecurrenceRules: Bool
+    let reminderOption: EventReminderOption
+    let reminderSummary: String
+    let hasUnsupportedAlarms: Bool
 
     init(from event: EKEvent) {
         let baseIdentifier = event.eventIdentifier ?? event.calendarItemExternalIdentifier ?? ""
@@ -36,6 +39,106 @@ struct CalendarEvent: Identifiable, Hashable {
         self.calendarTitle = event.calendar?.title ?? "日历"
         self.isWritable = event.calendar?.allowsContentModifications == true
         self.hasRecurrenceRules = !(event.recurrenceRules?.isEmpty ?? true)
+        self.reminderOption = EventReminderOption(from: event.alarms ?? [])
+        self.reminderSummary = EventReminderOption.summary(for: event.alarms ?? [])
+        self.hasUnsupportedAlarms = EventReminderOption(from: event.alarms ?? []) == .preserveExisting
+    }
+}
+
+/// v1 只管理一条相对提醒；无法归一化的系统提醒保持只读保护。
+enum EventReminderOption: Hashable, CaseIterable, Identifiable {
+    case none
+    case atStart
+    case minutesBefore(Int)
+    case preserveExisting
+
+    static let standardOptions: [EventReminderOption] = [
+        .none,
+        .atStart,
+        .minutesBefore(5),
+        .minutesBefore(15),
+        .minutesBefore(30),
+        .minutesBefore(60),
+        .minutesBefore(24 * 60)
+    ]
+
+    static var allCases: [EventReminderOption] {
+        standardOptions + [.preserveExisting]
+    }
+
+    var id: String {
+        switch self {
+        case .none: return "none"
+        case .atStart: return "at-start"
+        case .preserveExisting: return "preserve-existing"
+        case .minutesBefore(let minutes): return "minutes-\(minutes)"
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .none:
+            return "不提醒"
+        case .atStart:
+            return "准时"
+        case .preserveExisting:
+            return "保留现有提醒"
+        case .minutesBefore(let minutes):
+            switch minutes {
+            case 60: return "提前 1 小时"
+            case 24 * 60: return "提前 1 天"
+            default: return "提前 \(minutes) 分钟"
+            }
+        }
+    }
+
+    var relativeOffset: TimeInterval? {
+        switch self {
+        case .none, .preserveExisting:
+            return nil
+        case .atStart:
+            return 0
+        case .minutesBefore(let minutes):
+            return -Double(minutes * 60)
+        }
+    }
+
+    init?(relativeOffset offset: TimeInterval) {
+        if offset == 0 {
+            self = .atStart
+            return
+        }
+        guard offset < 0, offset.truncatingRemainder(dividingBy: 60) == 0 else { return nil }
+        self = .minutesBefore(Int(abs(offset) / 60))
+    }
+
+    init(from alarms: [EKAlarm]) {
+        guard !alarms.isEmpty else {
+            self = .none
+            return
+        }
+        let alarm = alarms[0]
+        guard alarm.absoluteDate == nil,
+              let option = EventReminderOption(relativeOffset: alarm.relativeOffset) else {
+            self = .preserveExisting
+            return
+        }
+        self = option
+    }
+
+    static func formOptions(hasUnsupportedAlarms: Bool) -> [EventReminderOption] {
+        hasUnsupportedAlarms ? allCases : standardOptions
+    }
+
+    static func summary(for alarms: [EKAlarm]) -> String {
+        switch EventReminderOption(from: alarms) {
+        case .none:
+            return "不提醒"
+        case .preserveExisting:
+            return "系统自定义提醒（宜历 v1 不修改）"
+        case .atStart, .minutesBefore:
+            return EventReminderOption(from: alarms).title
+        }
     }
 }
 
@@ -199,7 +302,8 @@ final class EventStoreService: ObservableObject {
         isAllDay: Bool,
         location: String?,
         notes: String?,
-        calendarIdentifier: String?
+        calendarIdentifier: String?,
+        reminderOption: EventReminderOption
     ) async throws {
         refreshAuthorizationState()
         guard accessState == .granted else { throw EventStoreError.accessDenied }
@@ -223,6 +327,7 @@ final class EventStoreService: ObservableObject {
         event.location = trimmedLocation?.isEmpty == false ? trimmedLocation : nil
         event.notes = trimmedNotes?.isEmpty == false ? trimmedNotes : nil
         event.calendar = targetCalendar
+        applyReminder(reminderOption, to: event)
 
         do {
             try store.save(event, span: .thisEvent)
@@ -242,7 +347,8 @@ final class EventStoreService: ObservableObject {
         isAllDay: Bool,
         location: String?,
         notes: String?,
-        calendarIdentifier: String?
+        calendarIdentifier: String?,
+        reminderOption: EventReminderOption
     ) async throws {
         refreshAuthorizationState()
         guard accessState == .granted else { throw EventStoreError.accessDenied }
@@ -272,6 +378,7 @@ final class EventStoreService: ObservableObject {
         storedEvent.location = trimmedLocation?.isEmpty == false ? trimmedLocation : nil
         storedEvent.notes = trimmedNotes?.isEmpty == false ? trimmedNotes : nil
         storedEvent.calendar = targetCalendar
+        applyReminder(reminderOption, to: storedEvent)
 
         do {
             try store.save(storedEvent, span: .thisEvent)
@@ -348,6 +455,21 @@ final class EventStoreService: ObservableObject {
             let identifierMatches = model.eventIdentifier == nil || candidateIdentifier == model.eventIdentifier
             let occurrenceMatches = candidate.startDate == model.startDate && candidate.endDate == model.endDate
             return identifierMatches && occurrenceMatches
+        }
+    }
+
+    private func applyReminder(_ option: EventReminderOption, to event: EKEvent) {
+        guard option != .preserveExisting else { return }
+
+        switch option {
+        case .none:
+            event.alarms = nil
+        case .atStart:
+            event.alarms = [EKAlarm(relativeOffset: 0)]
+        case .minutesBefore(let minutes):
+            event.alarms = [EKAlarm(relativeOffset: -Double(minutes * 60))]
+        case .preserveExisting:
+            break
         }
     }
 

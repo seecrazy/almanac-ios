@@ -12,6 +12,7 @@ struct AddEventView: View {
     @State private var isAllDay = false
     @State private var location = ""
     @State private var notes = ""
+    @State private var reminderOption: EventReminderOption = .none
     @State private var selectedCalendarID: String?
     @State private var errorMessage: String?
     @State private var isSaving = false
@@ -69,6 +70,14 @@ struct AddEventView: View {
                 Section("详情") {
                     TextField("地点（可选）", text: $location)
                     TextField("备注（可选）", text: $notes)
+                }
+
+                Section("提醒") {
+                    Picker("提醒", selection: $reminderOption) {
+                        ForEach(EventReminderOption.standardOptions) { option in
+                            Text(option.title).tag(option)
+                        }
+                    }
                 }
 
                 Section("日历") {
@@ -144,7 +153,8 @@ struct AddEventView: View {
                     isAllDay: isAllDay,
                     location: location,
                     notes: notes,
-                    calendarIdentifier: calendarID
+                    calendarIdentifier: calendarID,
+                    reminderOption: reminderOption
                 )
                 dismiss()
             } catch {

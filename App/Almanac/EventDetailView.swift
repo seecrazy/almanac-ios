@@ -25,6 +25,7 @@ struct EventDetailView: View {
                     detailRow("标题", currentEvent.title)
                     detailRow("时间", timeText)
                     detailRow("全天", currentEvent.isAllDay ? "是" : "否")
+                    detailRow("提醒", currentEvent.reminderSummary)
                     if let location = currentEvent.location, !location.isEmpty {
                         detailRow("地点", location)
                     }
@@ -166,6 +167,7 @@ struct EventEditView: View {
     @State private var isAllDay: Bool
     @State private var location: String
     @State private var notes: String
+    @State private var reminderOption: EventReminderOption
     @State private var selectedCalendarID: String?
     @State private var errorMessage: String?
     @State private var isSaving = false
@@ -180,6 +182,7 @@ struct EventEditView: View {
         _isAllDay = State(initialValue: event.isAllDay)
         _location = State(initialValue: event.location ?? "")
         _notes = State(initialValue: event.notes ?? "")
+        _reminderOption = State(initialValue: event.reminderOption)
         _selectedCalendarID = State(initialValue: event.calendarIdentifier)
     }
 
@@ -226,6 +229,14 @@ struct EventEditView: View {
                 Section("详情") {
                     TextField("地点（可选）", text: $location)
                     TextField("备注（可选）", text: $notes)
+                }
+
+                Section("提醒") {
+                    Picker("提醒", selection: $reminderOption) {
+                        ForEach(EventReminderOption.formOptions(hasUnsupportedAlarms: event.hasUnsupportedAlarms)) { option in
+                            Text(option.title).tag(option)
+                        }
+                    }
                 }
 
                 Section("日历") {
@@ -306,7 +317,8 @@ struct EventEditView: View {
                     isAllDay: isAllDay,
                     location: location,
                     notes: notes,
-                    calendarIdentifier: calendarID
+                    calendarIdentifier: calendarID,
+                    reminderOption: reminderOption
                 )
                 dismiss()
             } catch {
