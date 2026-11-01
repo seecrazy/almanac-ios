@@ -1,6 +1,6 @@
 # 事件创建设计 v1
 
-状态：已实现手动创建基线（2026-11-01）  
+状态：已实现手动创建基线；重复规则基础项由 [event-recurrence.md](event-recurrence.md) 接管（2026-11-01）。
 架构依据：[ADR-001](../architecture/adr/ADR-001-eventkit-as-source-of-truth.md)  
 视觉基线：[design-system.md](design-system.md)
 
@@ -13,8 +13,8 @@
 ## 2. 非 v1 目标
 
 - 自然语言解析。
-- 重复规则编辑。
-- 提醒规则编辑。
+- 重复规则完整编辑；基础预设由 [event-recurrence.md](event-recurrence.md) 接管。
+- 提醒规则完整编辑；单条预设由 [event-reminders.md](event-reminders.md) 接管。
 - 跨日复杂时段。
 - 参与人和会议室。
 
@@ -40,6 +40,7 @@
 | 地点 | 否 | `EKEvent.location` | 保存前清理空白 |
 | 备注 | 否 | `EKEvent.notes` | v1 不做富文本 |
 | 目标日历 | 是，有默认值 | `EKEvent.calendar` | 只列出可写日历 |
+| 重复规则 | 否 | `EKEvent.recurrenceRules` | 不重复 / 每天 / 每周 / 每两周 / 每月 / 每年；可到日期结束 |
 
 约束：
 
@@ -98,4 +99,4 @@
 1. 模拟器和真机实测 iCloud / 本地日历。
 2. 权限拒绝状态增加“打开系统设置”。
 3. 表单抽取 `EventDraft`，为自然语言输入提供纯逻辑落点。
-4. v1.1 接入 `RecurrenceEngine`，把重复规则写入 `EKEvent.recurrenceRules`。
+4. 重复规则自定义周几、COUNT 结束和系列编辑。

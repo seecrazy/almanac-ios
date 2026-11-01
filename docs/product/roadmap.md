@@ -1,6 +1,6 @@
 # Roadmap
 
-> 设计基线：[事件创建](../design/event-creation.md) · [事件详情/编辑/删除](../design/event-detail-editing.md) · [事件提醒](../design/event-reminders.md) · [设计系统](../design/design-system.md) · [历史蓝图恢复](../design/recovered-product-blueprint.md) · [设计差距清单](../design/design-gap.md)
+> 设计基线：[事件创建](../design/event-creation.md) · [事件详情/编辑/删除](../design/event-detail-editing.md) · [事件提醒](../design/event-reminders.md) · [重复规则](../design/event-recurrence.md) · [设计系统](../design/design-system.md) · [历史蓝图恢复](../design/recovered-product-blueprint.md) · [设计差距清单](../design/design-gap.md)
 
 ## v1.0 MVP
 - [x] 核心逻辑包：LunarKit / HolidayData / RecurrenceEngine
@@ -10,6 +10,7 @@
 - [x] EventKit 写入 + 手动新建事件（标题/全天/起止时间/地点/备注/目标日历）
 - [x] EventKit 事件详情 / 编辑 / 删除（基础字段；重复日程 v1 仅当前发生）
 - [x] EventKit 单条提醒（不提醒 / 准时 / 提前 5、15、30、60 分钟 / 1 天；自定义提醒默认保留）
+- [x] EventKit 基础重复规则（每天 / 每周 / 每两周 / 每月 / 每年；可到日期结束；已有重复事件只读保护）
 - [ ] 自然语言输入 v1
 - [ ] 里程碑倒计时（列表 + 日视图横幅 + 锁屏组件）
 - [ ] 阳历生日/纪念日提醒
@@ -38,10 +39,11 @@
 - [x] 事件创建 v1：入口、字段模型、授权数据流、状态与验收清单
 - [x] 事件详情 / 编辑 / 删除 v1：入口、字段映射、重复日程边界、状态与验收清单
 - [x] 事件提醒 v1：预设映射、自定义提醒保护、详情展示与验收清单
+- [x] 事件重复规则 v1：基础预设、EventKit 映射、复杂规则保护与验收清单
 - [x] 历史设计恢复：核心日历、中国日历、里程碑、闹钟、迁移、日记、智能、打包与跨平台
 - [x] 设计 vs 实现差距清单：区分已实现、部分实现、未实现
 - [ ] 翻页与手势设计
 - [ ] 自然语言输入规则表 UI/UX
 - [ ] 里程碑倒计时信息架构
-- [ ] 重复规则 / 系列编辑 / 多条自定义提醒 UI 设计
+- [ ] 系列编辑 / 自定义周几 / 多条自定义提醒 UI 设计
 - [ ] WorkdayResolver / SyncProvider ADR

@@ -26,6 +26,9 @@ struct EventDetailView: View {
                     detailRow("时间", timeText)
                     detailRow("全天", currentEvent.isAllDay ? "是" : "否")
                     detailRow("提醒", currentEvent.reminderSummary)
+                    if let recurrenceSummary = currentEvent.recurrenceSummary {
+                        detailRow("重复", recurrenceSummary)
+                    }
                     if let location = currentEvent.location, !location.isEmpty {
                         detailRow("地点", location)
                     }
@@ -168,6 +171,7 @@ struct EventEditView: View {
     @State private var location: String
     @State private var notes: String
     @State private var reminderOption: EventReminderOption
+    @State private var recurrenceDraft: EventRecurrenceDraft
     @State private var selectedCalendarID: String?
     @State private var errorMessage: String?
     @State private var isSaving = false
@@ -183,6 +187,9 @@ struct EventEditView: View {
         _location = State(initialValue: event.location ?? "")
         _notes = State(initialValue: event.notes ?? "")
         _reminderOption = State(initialValue: event.reminderOption)
+        _recurrenceDraft = State(
+            initialValue: event.recurrenceDraft ?? EventRecurrenceDraft(startDate: event.startDate)
+        )
         _selectedCalendarID = State(initialValue: event.calendarIdentifier)
     }
 
@@ -237,6 +244,14 @@ struct EventEditView: View {
                             Text(option.title).tag(option)
                         }
                     }
+                }
+
+                Section("重复") {
+                    EventRecurrenceEditor(
+                        draft: $recurrenceDraft,
+                        startDate: startDate,
+                        isProtected: event.hasRecurrenceRules
+                    )
                 }
 
                 Section("日历") {
@@ -318,7 +333,8 @@ struct EventEditView: View {
                     location: location,
                     notes: notes,
                     calendarIdentifier: calendarID,
-                    reminderOption: reminderOption
+                    reminderOption: reminderOption,
+                    recurrenceDraft: recurrenceDraft
                 )
                 dismiss()
             } catch {

@@ -18,6 +18,8 @@ struct CalendarEvent: Identifiable, Hashable {
     let reminderOption: EventReminderOption
     let reminderSummary: String
     let hasUnsupportedAlarms: Bool
+    let recurrenceSummary: String?
+    let recurrenceDraft: EventRecurrenceDraft?
 
     init(from event: EKEvent) {
         let baseIdentifier = event.eventIdentifier ?? event.calendarItemExternalIdentifier ?? ""
@@ -39,6 +41,8 @@ struct CalendarEvent: Identifiable, Hashable {
         self.calendarTitle = event.calendar?.title ?? "日历"
         self.isWritable = event.calendar?.allowsContentModifications == true
         self.hasRecurrenceRules = !(event.recurrenceRules?.isEmpty ?? true)
+        self.recurrenceDraft = EventRecurrenceDraft(rules: event.recurrenceRules, startDate: event.startDate)
+        self.recurrenceSummary = EventRecurrenceDraft.summary(for: event.recurrenceRules, startDate: event.startDate)
         self.reminderOption = EventReminderOption(from: event.alarms ?? [])
         self.reminderSummary = EventReminderOption.summary(for: event.alarms ?? [])
         self.hasUnsupportedAlarms = EventReminderOption(from: event.alarms ?? []) == .preserveExisting
@@ -303,7 +307,8 @@ final class EventStoreService: ObservableObject {
         location: String?,
         notes: String?,
         calendarIdentifier: String?,
-        reminderOption: EventReminderOption
+        reminderOption: EventReminderOption,
+        recurrenceDraft: EventRecurrenceDraft
     ) async throws {
         refreshAuthorizationState()
         guard accessState == .granted else { throw EventStoreError.accessDenied }
@@ -327,6 +332,7 @@ final class EventStoreService: ObservableObject {
         event.location = trimmedLocation?.isEmpty == false ? trimmedLocation : nil
         event.notes = trimmedNotes?.isEmpty == false ? trimmedNotes : nil
         event.calendar = targetCalendar
+        applyRecurrence(recurrenceDraft, to: event, isExistingRecurring: false)
         applyReminder(reminderOption, to: event)
 
         do {
@@ -348,7 +354,8 @@ final class EventStoreService: ObservableObject {
         location: String?,
         notes: String?,
         calendarIdentifier: String?,
-        reminderOption: EventReminderOption
+        reminderOption: EventReminderOption,
+        recurrenceDraft: EventRecurrenceDraft
     ) async throws {
         refreshAuthorizationState()
         guard accessState == .granted else { throw EventStoreError.accessDenied }
@@ -378,6 +385,7 @@ final class EventStoreService: ObservableObject {
         storedEvent.location = trimmedLocation?.isEmpty == false ? trimmedLocation : nil
         storedEvent.notes = trimmedNotes?.isEmpty == false ? trimmedNotes : nil
         storedEvent.calendar = targetCalendar
+        applyRecurrence(recurrenceDraft, to: storedEvent, isExistingRecurring: model.hasRecurrenceRules)
         applyReminder(reminderOption, to: storedEvent)
 
         do {
@@ -471,6 +479,16 @@ final class EventStoreService: ObservableObject {
         case .preserveExisting:
             break
         }
+    }
+
+    private func applyRecurrence(
+        _ draft: EventRecurrenceDraft,
+        to event: EKEvent,
+        isExistingRecurring: Bool
+    ) {
+        // v1 不改写已有重复规则，避免误把“仅此次修改”变成系列修改。
+        guard !isExistingRecurring else { return }
+        event.recurrenceRules = draft.makeRule(startDate: event.startDate).map { [$0] }
     }
 
     private func refreshAuthorizationState() {

@@ -5,7 +5,7 @@
 
 ## 状态
 
-🚧 核心引擎、EventKit 只读/写入、手动新建、事件详情/编辑/删除、单条提醒基线已完成；当前进度见 [docs/product/roadmap.md](docs/product/roadmap.md)。
+🚧 核心引擎、EventKit 只读/写入、手动新建、事件详情/编辑/删除、单条提醒和基础重复规则已完成；当前进度见 [docs/product/roadmap.md](docs/product/roadmap.md)。
 
 ## 核心包（纯逻辑，跨平台可移植）
 
@@ -42,7 +42,7 @@
 
 - **产品 / 进展**：[roadmap](docs/product/roadmap.md)、[HANDOFF](docs/HANDOFF.md)
 - **架构**：[ADR-001 EventKit](docs/architecture/adr/ADR-001-eventkit-as-source-of-truth.md)、[ADR-007 跨平台](docs/architecture/adr/ADR-007-cross-platform.md)
-- **设计**：[设计系统 v0.1](docs/design/design-system.md)、[事件创建 v1](docs/design/event-creation.md)、[事件详情/编辑/删除 v1](docs/design/event-detail-editing.md)、[事件提醒 v1](docs/design/event-reminders.md)
+- **设计**：[设计系统 v0.1](docs/design/design-system.md)、[事件创建 v1](docs/design/event-creation.md)、[事件详情/编辑/删除 v1](docs/design/event-detail-editing.md)、[事件提醒 v1](docs/design/event-reminders.md)、[重复规则 v1](docs/design/event-recurrence.md)
 - **设计恢复 / 差距**：[历史产品蓝图](docs/design/recovered-product-blueprint.md)、[设计与实现差距](docs/design/design-gap.md)
 
 ## 协作规范

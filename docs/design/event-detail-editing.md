@@ -2,7 +2,7 @@
 
 状态：已实现代码基线；待模拟器 / 真机验收（2026-11-01）  
 架构依据：[ADR-001](../architecture/adr/ADR-001-eventkit-as-source-of-truth.md)  
-关联设计：[事件创建](event-creation.md) · [设计系统](design-system.md)
+关联设计：[事件创建](event-creation.md) · [事件提醒](event-reminders.md) · [重复规则](event-recurrence.md) · [设计系统](design-system.md)
 
 ## 1. 目标
 
@@ -14,7 +14,7 @@
 
 ## 2. 非目标 v1
 
-- 不编辑重复规则本身。
+- 不编辑已有重复事件的规则；非重复事件补充基础重复规则由 [event-recurrence.md](event-recurrence.md) 接管。
 - 不编辑参与人、附件、会议链接；单条提醒由 [event-reminders.md](event-reminders.md) 接管。
 - 不做“单次修改 / 整个系列修改”选择页。
 - 不处理只读日历的本地草稿或覆盖写入。
@@ -63,6 +63,7 @@ EventDetailView → 删除按钮
 | 地点 | 是 | `EKEvent.location` | 空值写入 `nil` |
 | 备注 | 是 | `EKEvent.notes` | 空值写入 `nil` |
 | 目标日历 | 是 | `EKEvent.calendar` | 只允许选择可写日历 |
+| 重复规则 | 非重复事件可补充 | `EKEvent.recurrenceRules` | 已有重复事件进入只读保护 |
 
 详情页额外展示：
 
@@ -84,7 +85,11 @@ func deleteEvent(...)
 
 ```swift
 store.events(matching: predicate)
-  .first { $0.identifier == model.eventIdentifier && $0.startDate == model.startDate }
+  .first { candidate in
+    (candidate.eventIdentifier ?? candidate.calendarItemExternalIdentifier) == model.eventIdentifier
+      && candidate.startDate == model.startDate
+      && candidate.endDate == model.endDate
+  }
 ```
 
 可写性判断：
@@ -107,7 +112,7 @@ event.calendar?.allowsContentModifications == true
 
 UI 对重复日程显示“重复日程：v1 只修改 / 删除当前这一次”。
 
-完整系列编辑会涉及例外日期、未来发生项和用户预期确认，放到重复规则 UI 阶段一起设计。
+完整系列编辑会涉及例外日期、未来发生项和用户预期确认，仍留在后续版本。
 
 ## 7. 状态设计
 
@@ -146,6 +151,6 @@ UI 对重复日程显示“重复日程：v1 只修改 / 删除当前这一次�
 
 1. 编辑 / 删除前重新检查事件仍然存在。
 2. 支持重复事件的“仅此次 / 此次及未来 / 整个系列”。
-3. 编辑提醒和重复规则。
+3. 编辑多条提醒和完整重复规则。
 4. 权限被拒后跳系统设置。
 5. 使用 SwiftUI Testing 覆盖表单校验和错误状态。

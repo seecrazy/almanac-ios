@@ -13,6 +13,7 @@ struct AddEventView: View {
     @State private var location = ""
     @State private var notes = ""
     @State private var reminderOption: EventReminderOption = .none
+    @State private var recurrenceDraft: EventRecurrenceDraft
     @State private var selectedCalendarID: String?
     @State private var errorMessage: String?
     @State private var isSaving = false
@@ -25,6 +26,7 @@ struct AddEventView: View {
         let end = Calendar.current.date(byAdding: .hour, value: 1, to: start) ?? start
         _startDate = State(initialValue: start)
         _endDate = State(initialValue: end)
+        _recurrenceDraft = State(initialValue: EventRecurrenceDraft(startDate: start))
     }
 
     var body: some View {
@@ -70,6 +72,14 @@ struct AddEventView: View {
                 Section("详情") {
                     TextField("地点（可选）", text: $location)
                     TextField("备注（可选）", text: $notes)
+                }
+
+                Section("重复") {
+                    EventRecurrenceEditor(
+                        draft: $recurrenceDraft,
+                        startDate: startDate,
+                        isProtected: false
+                    )
                 }
 
                 Section("提醒") {
@@ -154,7 +164,8 @@ struct AddEventView: View {
                     location: location,
                     notes: notes,
                     calendarIdentifier: calendarID,
-                    reminderOption: reminderOption
+                    reminderOption: reminderOption,
+                    recurrenceDraft: recurrenceDraft
                 )
                 dismiss()
             } catch {
