@@ -5,7 +5,7 @@
 
 ## 状态
 
-🚧 设计已完成，工程启动中。当前进度见 [docs/product/roadmap.md](docs/product/roadmap.md)。
+🚧 核心引擎与 EventKit 只读日程视图已可构建；当前进度见 [docs/product/roadmap.md](docs/product/roadmap.md)。
 
 ## 核心包（纯逻辑，跨平台可移植）
 
@@ -21,10 +21,11 @@
 
 ```bash
 ./build.sh            # 编译全部核心包
-./build.sh test       # 编译 + 测试
+./build.sh test       # 编译 + XCTest（20 个测试）
 ```
 
-依赖：macOS + Swift 5.4+。完整 Xcode 走 SwiftPM（含 XCTest）；仅 Command Line Tools 自动降级为 swiftc 直编 + Sanity 可执行验证（CLT 缺 xctest 运行时）。
+依赖：macOS + Xcode/SwiftPM。如果全局 developer directory 仍指向 CLT，可直接使用
+`/Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild`。
 
 - **会话交接**：[docs/HANDOFF.md](docs/HANDOFF.md)（新会话先读这个）
 

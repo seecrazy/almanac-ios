@@ -1,4 +1,4 @@
-// swift-tools-version:5.3
+// swift-tools-version:6.0
 import PackageDescription
 
 let package = Package(
@@ -8,7 +8,14 @@ let package = Package(
         .executable(name: "recurrence-sanity", targets: ["RecurrenceSanity"]),
     ],
     targets: [
+
         .target(name: "RecurrenceEngine"),
         .executableTarget(name: "RecurrenceSanity", dependencies: ["RecurrenceEngine"], path: "Sources/RecurrenceSanity"),
-    ]
+        .testTarget(
+            name: "RecurrenceEngineTests",
+            dependencies: ["RecurrenceEngine"],
+            path: "Tests/RecurrenceEngineTests"
+        ),
+    ],
+    swiftLanguageModes: [.v5]
 )

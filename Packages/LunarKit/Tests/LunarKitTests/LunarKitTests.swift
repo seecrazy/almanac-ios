@@ -60,7 +60,7 @@ final class LunarKitTests: XCTestCase {
     func testDisplayText() {
         XCTAssertEqual(LunarCalendar.displayText(for: LunarDate(year: 2026, month: 1, day: 1)), "正月")
         XCTAssertEqual(LunarCalendar.displayText(for: LunarDate(year: 2024, month: 8, day: 15)), "十五")
-        XCTAssertEqual(LunarCalendar.displayText(for: LunarDate(year: 2023, month: 2, day: 3, isLeapMonth: true)), "闰二月")
+        XCTAssertEqual(LunarCalendar.displayText(for: LunarDate(year: 2023, month: 2, day: 3, isLeapMonth: true)), "初三")
     }
 
     // MARK: 干支

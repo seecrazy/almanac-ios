@@ -4,6 +4,7 @@ import HolidayData
 
 struct DayDetail: View {
     @Environment(\.palette) private var palette
+    @EnvironmentObject private var eventService: EventStoreService
 
     let date: Date
     let holidayStore: HolidayStore
@@ -23,7 +24,7 @@ struct DayDetail: View {
                     header
                     holidayBanner
                     nextHolidayFootnote
-                    eventPlaceholder
+                    eventList
                 }
                 .padding(.horizontal, 24)
             }
@@ -103,17 +104,74 @@ struct DayDetail: View {
         }
     }
 
-    private var eventPlaceholder: some View {
+    @ViewBuilder
+    private var eventList: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("今日日程")
                 .font(.system(size: 15, weight: .medium))
                 .foregroundColor(palette.ink)
-            Text("日程视图将接入系统日历（ADR-001）")
-                .font(.system(size: 13))
-                .foregroundColor(palette.secondary)
-                .padding(.vertical, 24)
-                .frame(maxWidth: .infinity)
-                .background(RoundedRectangle(cornerRadius: 16).fill(palette.card))
+            let dayEvents = eventService.events(on: date)
+            if dayEvents.isEmpty {
+                Text("这一天暂无日程")
+                    .font(.system(size: 13))
+                    .foregroundColor(palette.secondary)
+                    .padding(.vertical, 24)
+                    .frame(maxWidth: .infinity)
+                    .background(RoundedRectangle(cornerRadius: 16).fill(palette.card))
+            } else {
+                VStack(spacing: 8) {
+                    ForEach(dayEvents) { event in
+                        EventRow(event: event)
+                    }
+                }
+            }
         }
+    }
+}
+
+private struct EventRow: View {
+    @Environment(\.palette) private var palette
+
+    let event: CalendarEvent
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            RoundedRectangle(cornerRadius: 2)
+                .fill(palette.accent)
+                .frame(width: 3)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(event.title)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(palette.ink)
+                Text(timeText)
+                    .font(.system(size: 12))
+                    .foregroundColor(palette.secondary)
+                if let location = event.location, !location.isEmpty {
+                    Label(location, systemImage: "mappin.and.ellipse")
+                        .font(.system(size: 12))
+                        .foregroundColor(palette.secondary)
+                }
+                Text(event.calendarTitle)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(palette.secondary)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .background(RoundedRectangle(cornerRadius: 16).fill(palette.card))
+    }
+
+    private var timeText: String {
+        if event.isAllDay { return "全天" }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "zh_CN")
+        formatter.dateFormat = "HH:mm"
+        let sameDay = Calendar.current.isDate(event.startDate, inSameDayAs: event.endDate)
+        if sameDay {
+            return "\(formatter.string(from: event.startDate)) – \(formatter.string(from: event.endDate))"
+        }
+        formatter.dateFormat = "M月d日 HH:mm"
+        return "\(formatter.string(from: event.startDate)) – \(formatter.string(from: event.endDate))"
     }
 }

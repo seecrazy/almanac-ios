@@ -4,6 +4,7 @@ import HolidayData
 
 struct MonthView: View {
     @Environment(\.palette) private var palette
+    @EnvironmentObject private var eventService: EventStoreService
 
     @State private var visibleMonth: Date = MonthView.firstOfMonth(Date())
     @State private var selectedDay: Date?
@@ -25,6 +26,9 @@ struct MonthView: View {
             Spacer(minLength: 0)
         }
         .background(palette.background.ignoresSafeArea())
+        .task(id: visibleMonth.timeIntervalSince1970) {
+            await loadMonthEvents()
+        }
         .sheet(item: $selectedDay) { day in
             DayDetail(date: day, holidayStore: holidayStore)
         }
@@ -56,6 +60,9 @@ struct MonthView: View {
                     .frame(width: 36, height: 36)
             }
         }
+        .onAppear {
+            Task { await eventService.requestAccessIfNeeded() }
+        }
         .padding(.horizontal, 20)
         .padding(.top, 8)
         .padding(.bottom, 12)
@@ -75,6 +82,11 @@ struct MonthView: View {
 
     private func shiftMonth(_ delta: Int) {
         visibleMonth = calendar.date(byAdding: .month, value: delta, to: visibleMonth) ?? visibleMonth
+    }
+
+    private func loadMonthEvents() async {
+        guard let interval = calendar.dateInterval(of: .month, for: visibleMonth) else { return }
+        await eventService.loadEvents(from: interval.start, to: interval.end)
     }
 
     // MARK: 星期表头（周一起始）
@@ -97,6 +109,7 @@ struct MonthView: View {
 
     private var grid: some View {
         let cells = monthCells(for: visibleMonth)
+        let eventMarks = eventService.eventDayMarks(for: visibleMonth)
         let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
         return LazyVGrid(columns: columns, spacing: 0) {
             ForEach(Array(cells.enumerated()), id: \.offset) { _, cell in
@@ -104,7 +117,8 @@ struct MonthView: View {
                     DayCell(day: day,
                             isToday: calendar.isDate(day, inSameDayAs: Date()),
                             lunarText: LunarCalendar.displayText(for: LunarCalendar.lunar(from: day)),
-                            effect: holidayStore.effect(for: day))
+                            effect: holidayStore.effect(for: day),
+                            hasEvents: eventMarks.contains(calendar.startOfDay(for: day)))
                         .contentShape(Rectangle())
                         .onTapGesture { selectedDay = day }
                 } else {
@@ -138,6 +152,7 @@ struct DayCell: View {
     let isToday: Bool
     let lunarText: String
     let effect: DayEffect?
+    var hasEvents: Bool = false
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
@@ -156,6 +171,11 @@ struct DayCell: View {
                     .font(.system(size: 10))
                     .foregroundColor(lunarColor)
                     .lineLimit(1)
+                if hasEvents {
+                    Circle()
+                        .fill(isToday ? .white : palette.accent)
+                        .frame(width: 4, height: 4)
+                }
             }
             .frame(maxWidth: .infinity)
             .frame(height: 76)

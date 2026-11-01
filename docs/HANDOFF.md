@@ -1,11 +1,11 @@
 # 会话交接 / 项目现状（Handoff）
 
-> 最后更新：2026-11-01 · 供新会话冷启动使用
+> 最后更新：2026-11-01（EventKit 只读接入） · 供新会话冷启动使用
 > 设计来源：产品设计讨论（本文只记录结论与状态，讨论细节见 ADR 与 roadmap）
 
 ## 一句话现状
 
-**设计全部闭环，工程已启动**：三大核心引擎完成并全绿（28 检查），SwiftUI App 壳完成并通过本地 typecheck。下一步 = 安装 Xcode → 真机构建验证 → EventKit 接入。
+**设计闭环、工程可构建**：三大核心引擎 + XCTest 全绿（20 个测试），SwiftUI App 壳已通过 Xcode 27.2 iOS Simulator 构建；EventKit 只读接入完成，月历有日程圆点、日详情展示真实日程。
 
 ## 已完成（commit 152c50f）
 
@@ -15,32 +15,34 @@
 | LunarKit | ✅ 1900-2100 农历换算、闰月、干支、生肖、月视图文本 | 17 项 Sanity 全绿（春节/中秋锚点、1949-10-01 甲子日、往返一致性） |
 | HolidayData | ✅ 年度 JSON（休/班）+ 查询引擎；`bundled()` 双路径入口 | 5 项 Sanity 全绿 |
 | RecurrenceEngine | ✅ 周期步进展开器：d/w/m/y + interval/count/until/EXDATE | 6 项 Sanity 全绿 |
-| App 壳 | ✅ Xcode 工程 + 月视图(农历/休班角标/今日圆标) + 日详情 sheet + 倒计时样卡 + 设置 | swiftc typecheck ✅（macOS 11 SDK，iOS 15 API 范围） |
+| App 壳 | ✅ Xcode 工程 + 月视图(农历/休班/今日/日程圆点) + 日详情真实日程 + 倒计时样卡 + 设置 | Xcode 27.2 iOS Simulator build ✅ |
+| EventKit 只读 | ✅ `EventStoreService`、iOS 15/17 授权兼容、系统日历变更监听、月/日视图消费 | generic iOS Simulator build ✅ |
+| XCTest | ✅ LunarKit 9 / HolidayData 5 / RecurrenceEngine 6 | `./build.sh test` 全绿 |
 
-构建命令：`./build.sh test`（28 检查 + 三包编译，无需 Xcode）。
+构建命令：`./build.sh test`（20 个 XCTest + 三包编译）。
 
 ## 环境与构建路径（重要）
 
-- 本机**未安装 Xcode**，仅 Command Line Tools（Swift 5.4，darwin23）
-- Swift 5.4 的 SwiftPM 在纯 CLT 下探测 xctest 失败 → `build.sh` 自动降级 **swiftc 直编 + `*Sanity` 可执行验证**
-- 模块缓存固定在 `/tmp/swift-module-cache`（`~/.cache` 不可写时需此参数）
-- App 层验证目标固定 `arm64-apple-macos11.0`（与包的 swiftmodule 一致）
-- **装上 Xcode 16+ 后**：同一脚本自动切换 SwiftPM 路径；届时恢复 XCTest 目标（LunarKit 的测试文件已在 `Tests/LunarKitTests/`，Package.swift 里 testTarget 被注释待启用；HolidayData/RecurrenceEngine 的 Tests 目录为空，可补测试或继续用 Sanity）
+- 已安装 **Xcode 27.2**（`/Applications/Xcode.app`），但 `xcode-select -p` 仍指向 Command Line Tools；命令行构建可直接使用完整路径：
+  `/Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild`
+- 三包 manifest 已升到 Swift tools 6.0，并设置 `swiftLanguageModes: [.v5]`；`./build.sh test` 已走 SwiftPM/XCTest 路径
+- 手写 pbxproj 已修复三个会导致 Xcode 27 打不开的问题：本地包引用不应作为 main group children；App group path 必须是 `App/Almanac`；Swift tools 6.0 才接受现有 `executableTarget` 签名
+- `.gitignore` 已停止忽略整个 `*.xcodeproj`，否则仓库实际不含 Xcode 工程；现在只忽略用户态数据
+- 真机/模拟器运行仍建议先打开 Xcode GUI 检查签名与 runtime
 
 ## 下一步（按优先级）
 
-1. **安装 Xcode 16+** → `open Almanac.xcodeproj` 选模拟器 ⌘R；手写 pbxproj 首次打开如有自动修复属正常
-2. **恢复 XCTest**：三个 Package.swift 启用 testTarget，跑 `swift test` 双路径齐备
-3. **EventKit 接入**（ADR-001）：真日历读写 → 月视图日程圆点 → 日详情真实日程列表
-4. **翻月手势**（swipe）+ 周起始日设置
-5. **事件创建 + 自然语言输入 v1**（规则表 JSON 化，见 ADR-007）
-6. **里程碑倒计时**：数据模型（`Milestone`，isAllDay 精度切换）+ 列表页 + 锁屏小组件
-7. 节假日数据管道：当前 `holiday-2026.json` 为 **sample 标注**；接国务院年度通知更新流程 + 生成 2027 数据
-8. 更远：黄历面板(v1.1)、智能闹钟工作日引擎(v1.1)、公司政策引擎(v1.2)——设计已在会话中闭环，编码前补 ADR
+1. **Xcode GUI 模拟器运行**：打开工程选 iPhone Simulator ⌘R，验证 EventKit 权限弹窗、日历读取和真机签名
+2. **EventKit 写入 / 事件创建**：新增事件 sheet → `EKEvent` 保存 → 保存后刷新当前月；错误与 denied 状态补引导
+3. **翻月手势**（swipe）+ 周起始日设置
+4. **自然语言输入 v1**（规则表 JSON 化，见 ADR-007）
+5. **里程碑倒计时**：数据模型（`Milestone`，isAllDay 精度切换）+ 列表页 + 锁屏小组件
+6. 节假日数据管道：当前 `holiday-2026.json` 为 **sample 标注**；接国务院年度通知更新流程 + 生成 2027 数据
+7. 更远：黄历面板(v1.1)、智能闹钟工作日引擎(v1.1)、公司政策引擎(v1.2)——设计已在会话中闭环，编码前补 ADR
 
 ## 设计结论速查（详见各文档）
 
-- 数据源头：EventKit + 本地 SQLite 缓存（ADR-001）
+- 日程源头：EventKit 只读已接（ADR-001）；App 层数据后续用本地 SQLite
 - 跨平台：UI 原生、逻辑零依赖、规则 JSON 化、同步协议化（ADR-007）
 - 命名：产品「宜历」/ 仓库 almanac-ios / Bundle `com.yili.almanac`
 - 设计 token：docs/design/design-system.md 待补（色彩已在 Theme.swift 落码：纸感/墨感、朱砂/赭金/青瓷）
@@ -52,5 +54,5 @@
 cd ~/IdeaProjects/almanac-ios
 git log --oneline        # 看提交
 cat docs/product/roadmap.md   # 看进度
-./build.sh test          # 确认 28 检查仍全绿
+./build.sh test          # 确认 20 个 XCTest 仍全绿
 ```

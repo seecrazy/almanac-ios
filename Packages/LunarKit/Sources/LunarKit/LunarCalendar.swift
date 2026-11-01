@@ -22,7 +22,7 @@ public enum LunarCalendar {
     public static let timeZone = TimeZone(identifier: "Asia/Shanghai")!
 
     /// 基准：1900-01-31 = 农历 1900 年正月初一
-    static var calendar: Calendar = {
+    static let calendar: Calendar = {
         var c = Calendar(identifier: .gregorian)
         c.timeZone = timeZone
         return c
@@ -73,12 +73,16 @@ public enum LunarCalendar {
             y += 1
         }
         var m = 1
-        while m < lunar.month || (lunar.isLeapMonth && m == lunar.month) {
+        while m < lunar.month {
             if leap > 0, m == leap {
                 offset += daysInLunarMonth(lunar.year, m, isLeapMonth: true)
             }
             offset += daysInLunarMonth(lunar.year, m, isLeapMonth: false)
             m += 1
+        }
+        // 闰 X 月紧贴在正常 X 月之前：进入正常/闰 X 月都要跨过闰月。
+        if leap == lunar.month {
+            offset += daysInLunarMonth(lunar.year, lunar.month, isLeapMonth: true)
         }
         if lunar.isLeapMonth {
             guard leap == lunar.month else { return nil }
@@ -135,7 +139,7 @@ public enum LunarCalendar {
 
     // MARK: - Private
 
-    private static var baseDate: Date = {
+    private static let baseDate: Date = {
         var c = DateComponents()
         c.year = 1900; c.month = 1; c.day = 31
         return calendar.date(from: c)!
@@ -154,6 +158,8 @@ public enum LunarCalendar {
 
     private static func leapOrZero(_ lunar: LunarDate) -> Int? {
         guard let bits = bits(for: lunar.year) else { return nil }
-        return lunar.isLeapMonth ? Int(bits & 0xF) : 0
+        let leap = Int(bits & 0xF)
+        if lunar.isLeapMonth, leap != lunar.month { return nil }
+        return leap
     }
 }
