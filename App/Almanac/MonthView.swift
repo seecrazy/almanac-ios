@@ -9,6 +9,7 @@ struct MonthView: View {
     @State private var visibleMonth: Date = MonthView.firstOfMonth(Date())
     @State private var selectedDay: Date?
     @State private var quickComposerDate: Date?
+    @State private var calendarFilterIsPresented = false
 
     private let holidayStore = HolidayStore.bundled()
     private var calendar = Calendar(identifier: .gregorian)
@@ -36,6 +37,9 @@ struct MonthView: View {
         .sheet(item: $quickComposerDate) { date in
             AddEventView(initialDate: date)
         }
+        .sheet(isPresented: $calendarFilterIsPresented) {
+            CalendarFilterSheet()
+        }
     }
 
     // MARK: 头部
@@ -51,6 +55,15 @@ struct MonthView: View {
                     .foregroundColor(palette.secondary)
             }
             Spacer()
+            Button {
+                calendarFilterIsPresented = true
+            } label: {
+                Image(systemName: "line.3.horizontal.decrease.circle")
+                    .font(.system(size: 19, weight: .medium))
+                    .foregroundColor(palette.accent)
+                    .frame(width: 36, height: 36)
+            }
+            .accessibilityLabel("日历筛选")
             Button {
                 quickComposerDate = Date()
             } label: {
@@ -75,6 +88,7 @@ struct MonthView: View {
         }
         .onAppear {
             Task { await eventService.requestAccessIfNeeded() }
+            eventService.loadCalendars()
         }
         .padding(.horizontal, 20)
         .padding(.top, 8)
@@ -122,7 +136,7 @@ struct MonthView: View {
 
     private var grid: some View {
         let cells = monthCells(for: visibleMonth)
-        let eventMarks = eventService.eventDayMarks(for: visibleMonth)
+        let eventColors = eventService.eventCalendarColors(for: visibleMonth)
         let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
         return LazyVGrid(columns: columns, spacing: 0) {
             ForEach(Array(cells.enumerated()), id: \.offset) { _, cell in
@@ -131,7 +145,7 @@ struct MonthView: View {
                             isToday: calendar.isDate(day, inSameDayAs: Date()),
                             lunarText: LunarCalendar.displayText(for: LunarCalendar.lunar(from: day)),
                             effect: holidayStore.effect(for: day),
-                            hasEvents: eventMarks.contains(calendar.startOfDay(for: day)))
+                            eventColors: eventColors[calendar.startOfDay(for: day)] ?? [])
                         .contentShape(Rectangle())
                         .onTapGesture { selectedDay = day }
                 } else {
@@ -166,6 +180,7 @@ struct DayCell: View {
     let lunarText: String
     let effect: DayEffect?
     var hasEvents: Bool = false
+    var eventColors: [CalendarColorComponents] = []
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
@@ -184,10 +199,14 @@ struct DayCell: View {
                     .font(.system(size: 10))
                     .foregroundColor(lunarColor)
                     .lineLimit(1)
-                if hasEvents {
-                    Circle()
-                        .fill(isToday ? .white : palette.accent)
-                        .frame(width: 4, height: 4)
+                if !eventColors.isEmpty {
+                    HStack(spacing: 2) {
+                        ForEach(eventColors, id: \.self) { color in
+                            Circle()
+                                .fill(color.swiftUIColor)
+                                .frame(width: 4, height: 4)
+                        }
+                    }
                 }
             }
             .frame(maxWidth: .infinity)

@@ -165,7 +165,7 @@ private struct EventRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             RoundedRectangle(cornerRadius: 2)
-                .fill(palette.accent)
+                .fill(event.calendarColor?.swiftUIColor ?? palette.accent)
                 .frame(width: 3)
 
             VStack(alignment: .leading, spacing: 4) {

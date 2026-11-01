@@ -1,5 +1,6 @@
 import EventKit
 import Foundation
+import CoreGraphics
 
 /// App 内使用的轻量日程模型，避免 EventKit 类型穿透 UI。
 struct CalendarEvent: Identifiable, Hashable {
@@ -13,6 +14,7 @@ struct CalendarEvent: Identifiable, Hashable {
     let notes: String?
     let calendarIdentifier: String?
     let calendarTitle: String
+    let calendarColor: CalendarColorComponents?
     let isWritable: Bool
     let hasRecurrenceRules: Bool
     let reminderOption: EventReminderOption
@@ -39,6 +41,7 @@ struct CalendarEvent: Identifiable, Hashable {
         self.notes = event.notes
         self.calendarIdentifier = event.calendar?.calendarIdentifier
         self.calendarTitle = event.calendar?.title ?? "日历"
+        self.calendarColor = CalendarColorComponents(cgColor: event.calendar?.cgColor)
         self.isWritable = event.calendar?.allowsContentModifications == true
         self.hasRecurrenceRules = !(event.recurrenceRules?.isEmpty ?? true)
         self.recurrenceDraft = EventRecurrenceDraft(rules: event.recurrenceRules, startDate: event.startDate)
@@ -47,6 +50,65 @@ struct CalendarEvent: Identifiable, Hashable {
         self.reminderSummary = EventReminderOption.summary(for: event.alarms ?? [])
         self.hasUnsupportedAlarms = EventReminderOption(from: event.alarms ?? []) == .preserveExisting
     }
+}
+
+struct CalendarColorComponents: Hashable {
+    let red: Double
+    let green: Double
+    let blue: Double
+    let opacity: Double
+
+    init?(cgColor: CGColor?) {
+        guard let cgColor,
+              let sRGBSpace = CGColorSpace(name: CGColorSpace.sRGB),
+              let converted = cgColor.converted(
+                to: sRGBSpace,
+                intent: .relativeColorimetric,
+                options: nil
+              ),
+              let components = converted.components,
+              !components.isEmpty else {
+            return nil
+        }
+
+        if components.count >= 3 {
+            red = Double(components[0])
+            green = Double(components[1])
+            blue = Double(components[2])
+            opacity = components.count >= 4 ? Double(components[3]) : 1
+        } else if components.count == 1 {
+            let gray = Double(components[0])
+            red = gray
+            green = gray
+            blue = gray
+            opacity = 1
+        } else {
+            return nil
+        }
+    }
+
+    static let fallback = CalendarColorComponents(
+        red: 0.710,
+        green: 0.537,
+        blue: 0.235,
+        opacity: 1
+    )
+
+    init(red: Double, green: Double, blue: Double, opacity: Double) {
+        self.red = red
+        self.green = green
+        self.blue = blue
+        self.opacity = opacity
+    }
+}
+
+struct CalendarDisplayInfo: Identifiable, Hashable {
+    let id: String
+    let title: String
+    let sourceTitle: String
+    let color: CalendarColorComponents
+    let allowsContentModifications: Bool
+    let isSubscribed: Bool
 }
 
 /// v1 只管理一条相对提醒；无法归一化的系统提醒保持只读保护。
@@ -196,12 +258,17 @@ final class EventStoreService: ObservableObject {
     @Published private(set) var lastErrorMessage: String?
     @Published private(set) var writableCalendars: [WritableCalendar] = []
     @Published private(set) var defaultCalendarIdentifier: String?
+    @Published private(set) var calendars: [CalendarDisplayInfo] = []
+    @Published private(set) var hiddenCalendarIDs: Set<String>
 
     private let store = EKEventStore()
     private var changeObserver: NSObjectProtocol?
     private var loadedInterval: DateInterval?
+    private let hiddenCalendarIDsKey = "hidden.event.calendar.identifiers"
 
     init() {
+        let persistedHiddenIDs = UserDefaults.standard.stringArray(forKey: hiddenCalendarIDsKey) ?? []
+        _hiddenCalendarIDs = Published(initialValue: Set(persistedHiddenIDs))
         refreshAuthorizationState()
         changeObserver = NotificationCenter.default.addObserver(
             forName: .EKEventStoreChanged,
@@ -209,6 +276,12 @@ final class EventStoreService: ObservableObject {
             queue: .main
         ) { [weak self] _ in
             Task { await self?.reloadIfNecessary() }
+        }
+
+        Task { [weak self] in
+            await MainActor.run {
+                self?.loadCalendars()
+            }
         }
     }
 
@@ -221,6 +294,7 @@ final class EventStoreService: ObservableObject {
     func requestAccessIfNeeded() async {
         refreshAuthorizationState()
         guard accessState == .notDetermined else {
+            loadCalendars()
             await reloadIfNecessary()
             return
         }
@@ -242,6 +316,7 @@ final class EventStoreService: ObservableObject {
 
         refreshAuthorizationState()
         if granted {
+            loadCalendars()
             await reloadIfNecessary()
         } else {
             lastErrorMessage = "未获得日历访问权限"
@@ -259,11 +334,13 @@ final class EventStoreService: ObservableObject {
             return store.events(matching: predicate).map(CalendarEvent.init(from:))
         }.value
 
-        events = fetchedEvents.sorted {
-            if $0.isAllDay != $1.isAllDay { return $0.isAllDay }
-            if $0.startDate == $1.startDate { return $0.endDate < $1.endDate }
-            return $0.startDate < $1.startDate
-        }
+        events = fetchedEvents
+            .filter { isCalendarVisible($0.calendarIdentifier) }
+            .sorted {
+                if $0.isAllDay != $1.isAllDay { return $0.isAllDay }
+                if $0.startDate == $1.startDate { return $0.endDate < $1.endDate }
+                return $0.startDate < $1.startDate
+            }
     }
 
     func loadWritableCalendars() {
@@ -288,6 +365,62 @@ final class EventStoreService: ObservableObject {
                 return lhs.title < rhs.title
             }
         defaultCalendarIdentifier = store.defaultCalendarForNewEvents?.calendarIdentifier
+    }
+
+    func loadCalendars() {
+        refreshAuthorizationState()
+        guard accessState == .granted else {
+            calendars = []
+            return
+        }
+
+        let infos = store.calendars(for: .event)
+            .map { calendar in
+                CalendarDisplayInfo(
+                    id: calendar.calendarIdentifier,
+                    title: calendar.title.isEmpty ? "未命名日历" : calendar.title,
+                    sourceTitle: calendar.source?.title ?? "本地",
+                    color: CalendarColorComponents(cgColor: calendar.cgColor) ?? .fallback,
+                    allowsContentModifications: calendar.allowsContentModifications,
+                    isSubscribed: calendar.isSubscribed
+                )
+            }
+            .sorted { lhs, rhs in
+                if lhs.sourceTitle.caseInsensitiveCompare(rhs.sourceTitle) != .orderedSame {
+                    return lhs.sourceTitle.localizedCaseInsensitiveCompare(rhs.sourceTitle) == .orderedAscending
+                }
+                return lhs.title.localizedCaseInsensitiveCompare(rhs.title) == .orderedAscending
+            }
+
+        calendars = infos
+        hiddenCalendarIDs.formIntersection(Set(infos.map(\.id)))
+        persistHiddenCalendarIDs()
+    }
+
+    var visibleCalendarCount: Int {
+        calendars.isEmpty
+            ? max(0, 1 - hiddenCalendarIDs.count)
+            : max(calendars.count - hiddenCalendarIDs.count, 0)
+    }
+
+    func isCalendarVisible(_ identifier: String?) -> Bool {
+        guard let identifier else { return true }
+        return !hiddenCalendarIDs.contains(identifier)
+    }
+
+    func setCalendarVisible(_ identifier: String, isVisible: Bool) {
+        if isVisible {
+            hiddenCalendarIDs.remove(identifier)
+        } else {
+            guard isCalendarVisible(identifier), visibleCalendarCount > 1 else { return }
+            hiddenCalendarIDs.insert(identifier)
+        }
+        persistHiddenCalendarIDs()
+    }
+
+    func showAllCalendars() {
+        hiddenCalendarIDs.removeAll()
+        persistHiddenCalendarIDs()
     }
 
     func selectedWritableCalendarID(fallback: String?) -> String? {
@@ -423,7 +556,9 @@ final class EventStoreService: ObservableObject {
         let calendar = Calendar.current
         let start = calendar.startOfDay(for: day)
         guard let end = calendar.date(byAdding: .day, value: 1, to: start) else { return [] }
-        return events.filter { $0.startDate < end && $0.endDate > start }
+        return events.filter {
+            isCalendarVisible($0.calendarIdentifier) && $0.startDate < end && $0.endDate > start
+        }
     }
 
     func event(with model: CalendarEvent) -> CalendarEvent? {
@@ -436,7 +571,7 @@ final class EventStoreService: ObservableObject {
         guard let interval = calendar.dateInterval(of: .month, for: month) else { return [] }
         var marks = Set<Date>()
 
-        for event in events {
+        for event in events where isCalendarVisible(event.calendarIdentifier) {
             var day = calendar.startOfDay(for: max(event.startDate, interval.start))
             let end = min(event.endDate.addingTimeInterval(-1), interval.end.addingTimeInterval(-1))
             while day < end {
@@ -446,6 +581,30 @@ final class EventStoreService: ObservableObject {
             }
         }
         return marks
+    }
+
+    func eventCalendarColors(for month: Date) -> [Date: [CalendarColorComponents]] {
+        let calendar = Calendar.current
+        guard let interval = calendar.dateInterval(of: .month, for: month) else { return [:] }
+        var marks: [Date: [CalendarColorComponents]] = [:]
+
+        for event in events where isCalendarVisible(event.calendarIdentifier) {
+            guard let color = event.calendarColor else { continue }
+            var day = calendar.startOfDay(for: max(event.startDate, interval.start))
+            let end = min(event.endDate.addingTimeInterval(-1), interval.end.addingTimeInterval(-1))
+
+            while day < end {
+                var colors = marks[day, default: []]
+                if !colors.contains(color) {
+                    colors.append(color)
+                }
+                marks[day] = colors
+                guard let next = calendar.date(byAdding: .day, value: 1, to: day) else { break }
+                day = next
+            }
+        }
+
+        return marks.mapValues { Array($0.prefix(3)) }
     }
 
     private func reloadIfNecessary() async {
@@ -479,6 +638,13 @@ final class EventStoreService: ObservableObject {
         case .preserveExisting:
             break
         }
+    }
+
+    private func persistHiddenCalendarIDs() {
+        UserDefaults.standard.set(
+            hiddenCalendarIDs.sorted(),
+            forKey: hiddenCalendarIDsKey
+        )
     }
 
     private func applyRecurrence(
