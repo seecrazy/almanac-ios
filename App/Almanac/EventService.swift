@@ -260,11 +260,15 @@ final class EventStoreService: ObservableObject {
     @Published private(set) var defaultCalendarIdentifier: String?
     @Published private(set) var calendars: [CalendarDisplayInfo] = []
     @Published private(set) var hiddenCalendarIDs: Set<String>
+    @Published private(set) var searchResults: [CalendarEvent] = []
+    @Published private(set) var isSearching = false
+    @Published private(set) var searchErrorMessage: String?
 
     private let store = EKEventStore()
     private var changeObserver: NSObjectProtocol?
     private var loadedInterval: DateInterval?
     private let hiddenCalendarIDsKey = "hidden.event.calendar.identifiers"
+    private var searchRequestGeneration = 0
 
     init() {
         let persistedHiddenIDs = UserDefaults.standard.stringArray(forKey: hiddenCalendarIDsKey) ?? []
@@ -430,6 +434,60 @@ final class EventStoreService: ObservableObject {
             return preferredID
         }
         return writableCalendars.first?.id
+    }
+
+    func clearSearchResults() {
+        searchRequestGeneration += 1
+        searchResults = []
+        isSearching = false
+        searchErrorMessage = nil
+    }
+
+    func searchEvents(query: String, from start: Date, to end: Date) async {
+        refreshAuthorizationState()
+        let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard accessState == .granted else {
+            searchResults = []
+            isSearching = false
+            searchErrorMessage = "未授权读取系统日历"
+            return
+        }
+
+        guard !trimmedQuery.isEmpty else {
+            searchResults = []
+            isSearching = false
+            searchErrorMessage = nil
+            return
+        }
+
+        isSearching = true
+        searchErrorMessage = nil
+        let interval = DateInterval(start: start, end: max(start, end))
+        let requestGeneration = searchRequestGeneration
+
+        let matchedEvents = await Task.detached(priority: .userInitiated) { [store] in
+            let predicate = store.predicateForEvents(withStart: interval.start, end: interval.end, calendars: nil)
+            return store.events(matching: predicate).map(CalendarEvent.init(from:))
+        }.value
+
+        guard requestGeneration == searchRequestGeneration else { return }
+
+        searchResults = matchedEvents
+            .filter { isCalendarVisible($0.calendarIdentifier) }
+            .filter { event in
+                let fields = [
+                    event.title,
+                    event.location,
+                    event.notes
+                ].compactMap { $0 }
+                return fields.contains { $0.localizedStandardContains(trimmedQuery) }
+            }
+            .sorted { $0.startDate < $1.startDate }
+            .prefix(100)
+            .map { $0 }
+
+        isSearching = false
     }
 
     func saveEvent(

@@ -7,6 +7,7 @@ struct SettingsView: View {
     @AppStorage("showLunar") private var showLunar = true
     @AppStorage("showSolarTerms") private var showSolarTerms = true
     @AppStorage("showHuangLi") private var showHuangLi = false
+    @AppStorage("month.week.start.day") private var weekStartDayRaw = WeekStartDay.monday.rawValue
 
     var body: some View {
         ScrollView {
@@ -22,6 +23,25 @@ struct SettingsView: View {
                     Divider().background(palette.separator)
                     toggleRow("黄历（宜忌/冲煞）", binding: $showHuangLi)
                 }
+                .background(RoundedRectangle(cornerRadius: 16).fill(palette.card))
+
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("月视图")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(palette.ink)
+                    Text("周起始日")
+                        .font(.system(size: 13))
+                        .foregroundColor(palette.secondary)
+                    Picker("周起始日", selection: $weekStartDayRaw) {
+                        ForEach(WeekStartDay.allCases) { day in
+                            Text(day.title).tag(day.rawValue)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .accessibilityLabel("周起始日")
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(16)
                 .background(RoundedRectangle(cornerRadius: 16).fill(palette.card))
 
                 VStack(alignment: .leading, spacing: 12) {

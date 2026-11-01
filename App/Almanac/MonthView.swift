@@ -2,6 +2,27 @@ import SwiftUI
 import LunarKit
 import HolidayData
 
+enum WeekStartDay: String, CaseIterable, Identifiable {
+    case monday
+    case sunday
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .monday: return "周一"
+        case .sunday: return "周日"
+        }
+    }
+
+    var firstWeekday: Int {
+        switch self {
+        case .monday: return 2
+        case .sunday: return 1
+        }
+    }
+}
+
 struct MonthView: View {
     @Environment(\.palette) private var palette
     @EnvironmentObject private var eventService: EventStoreService
@@ -10,9 +31,20 @@ struct MonthView: View {
     @State private var selectedDay: Date?
     @State private var quickComposerDate: Date?
     @State private var calendarFilterIsPresented = false
+    @State private var searchIsPresented = false
+    @AppStorage("month.week.start.day") private var weekStartDayRaw = WeekStartDay.monday.rawValue
 
     private let holidayStore = HolidayStore.bundled()
-    private var calendar = Calendar(identifier: .gregorian)
+
+    private var weekStartDay: WeekStartDay {
+        WeekStartDay(rawValue: weekStartDayRaw) ?? .monday
+    }
+
+    private var calendar: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.firstWeekday = weekStartDay.firstWeekday
+        return calendar
+    }
 
     static func firstOfMonth(_ date: Date) -> Date {
         let c = Calendar(identifier: .gregorian)
@@ -40,6 +72,18 @@ struct MonthView: View {
         .sheet(isPresented: $calendarFilterIsPresented) {
             CalendarFilterSheet()
         }
+        .sheet(isPresented: $searchIsPresented) {
+            EventSearchSheet()
+        }
+        .gesture(
+            DragGesture(minimumDistance: 56)
+                .onEnded { value in
+                    let horizontal = abs(value.translation.width)
+                    let vertical = abs(value.translation.height)
+                    guard horizontal >= 56, horizontal >= vertical * 1.5 else { return }
+                    shiftMonth(value.translation.width < 0 ? 1 : -1)
+                }
+        )
     }
 
     // MARK: 头部
@@ -55,6 +99,15 @@ struct MonthView: View {
                     .foregroundColor(palette.secondary)
             }
             Spacer()
+            Button {
+                searchIsPresented = true
+            } label: {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 19, weight: .medium))
+                    .foregroundColor(palette.accent)
+                    .frame(width: 36, height: 36)
+            }
+            .accessibilityLabel("搜索日程")
             Button {
                 calendarFilterIsPresented = true
             } label: {
@@ -119,7 +172,9 @@ struct MonthView: View {
     // MARK: 星期表头（周一起始）
 
     private var weekdayHeader: some View {
-        let names = ["一", "二", "三", "四", "五", "六", "日"]
+        let names = weekStartDay == .sunday
+            ? ["日", "一", "二", "三", "四", "五", "六"]
+            : ["一", "二", "三", "四", "五", "六", "日"]
         return HStack(spacing: 0) {
             ForEach(names, id: \.self) { name in
                 Text(name)
@@ -161,7 +216,7 @@ struct MonthView: View {
         let first = interval.start
         let dayCount = calendar.range(of: .day, in: .month, for: month)?.count ?? 30
         let firstWeekday = calendar.component(.weekday, from: first)
-        let leading = (firstWeekday + 5) % 7      // 周一起始
+        let leading = (firstWeekday + 7 - calendar.firstWeekday) % 7
         var cells: [Date?] = Array(repeating: nil, count: leading)
         for offset in 0..<dayCount {
             cells.append(calendar.date(byAdding: .day, value: offset, to: first))

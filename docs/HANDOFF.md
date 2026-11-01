@@ -1,24 +1,25 @@
 # 会话交接 / 项目现状（Handoff）
 
-> 最后更新：2026-11-01（多日历筛选与颜色） · 供新会话冷启动使用
+> 最后更新：2026-11-02（月视图交互 + 事件搜索） · 供新会话冷启动使用
 > 设计来源：产品设计讨论（本文只记录结论与状态，讨论细节见 ADR 与 roadmap）
 
 ## 一句话现状
 
-**设计闭环、工程可构建**：三大核心引擎 + XCTest 全绿（20 个测试），SwiftUI App 壳已通过 Xcode 27.2 iOS Simulator 构建；EventKit 只读、手动新建、事件详情、基础字段编辑、删除、单条提醒、基础重复规则和多日历筛选 / 颜色已接入。已有重复事件保持只读保护，仍只修改/删除当前发生。GUI / 真机验收仍待完成。
+**设计闭环、工程可构建**：三大核心引擎 + XCTest 全绿（20 个测试），SwiftUI App 壳已通过 Xcode 27.2 iOS Simulator 构建；EventKit 只读、手动新建、事件详情、基础字段编辑、删除、单条提醒、基础重复规则、多日历筛选 / 颜色、月视图滑动翻月、周起始日设置和有限事件搜索已接入。已有重复事件保持只读保护，仍只修改/删除当前发生。GUI / 真机验收仍待完成。
 
 ## 已完成（截至 2026-11-01 工作树）
 
 | 模块 | 状态 | 验证方式 |
 |------|------|----------|
-| 文档体系 | ✅ README / roadmap / HANDOFF / ADR-001(EventKit) / ADR-007(跨平台) / design-system / event-creation / event-detail-editing / event-reminders / event-recurrence / calendar-management | 内容与当前工作树状态一致 |
+| 文档体系 | ✅ README / roadmap / HANDOFF / ADR-001(EventKit) / ADR-007(跨平台) / design-system / event-creation / event-detail-editing / event-reminders / event-recurrence / calendar-management / month-interaction / event-search | 内容与当前工作树状态一致 |
 | 历史设计 | ✅ `recovered-product-blueprint.md` 恢复核心日历、中国日历、里程碑、闹钟、迁移、日记、智能与跨平台设计 | 来源 Codex rollout `01a19205-ad9f-7731-a10f-fd3c511941d1` |
 | 设计差距 | ✅ `design-gap.md` 区分 ✅ / 🟡 / 🔴 | 每次里程碑结束应刷新 |
 | LunarKit | ✅ 1900-2100 农历换算、闰月、干支、生肖、月视图文本 | 17 项 Sanity 全绿（春节/中秋锚点、1949-10-01 甲子日、往返一致性） |
 | HolidayData | ✅ 年度 JSON（休/班）+ 查询引擎；`bundled()` 双路径入口 | 5 项 Sanity 全绿 |
 | RecurrenceEngine | ✅ 周期步进展开器：d/w/m/y + interval/count/until/EXDATE | 6 项 Sanity 全绿 |
 | App 壳 | ✅ Xcode 工程 + 月视图(农历/休班/今日/日程圆点) + 日详情真实日程 + 倒计时样卡 + 设置 | Xcode 27.2 iOS Simulator build ✅ |
-| EventKit 读写 | ✅ `EventStoreService`、iOS 15/17 授权兼容、系统日历变更监听、月/日视图消费、手动新建事件、可写日历选择、事件详情、基础字段编辑、单次删除、单条提醒、基础重复规则、多日历筛选 / 颜色 | generic iOS Simulator build ✅；GUI / 真机验收待完成 |
+| EventKit 读写 | ✅ `EventStoreService`、iOS 15/17 授权兼容、系统日历变更监听、月/日视图消费、手动新建事件、可写日历选择、事件详情、基础字段编辑、单次删除、单条提醒、基础重复规则、多日历筛选 / 颜色、有限搜索 | generic iOS Simulator build ✅；GUI / 真机验收待完成 |
+| 月视图交互 | ✅ 左右滑动翻月；周一起始 / 周日起始设置；`UserDefaults` 持久化 | generic iOS Simulator build ✅；GUI / 真机验收待完成 |
 | XCTest | ✅ LunarKit 9 / HolidayData 5 / RecurrenceEngine 6 | `./build.sh test` 全绿 |
 
 构建命令：`./build.sh test`（20 个 XCTest + 三包编译）。
@@ -34,13 +35,12 @@
 
 ## 下一步（按优先级）
 
-1. **Xcode GUI 模拟器运行**：验证日历筛选 → 月历多色圆点 → 日详情过滤 → 新建（提醒 + 重复） → 编辑 → 删除
-2. **真机 / iCloud 日历实测**：多日历颜色、重复事件、复杂规则保护、只读日历、自定义提醒、权限拒绝路径
-3. **翻月手势**（swipe）+ 周起始日设置
-4. **自然语言输入 v1**（规则表 JSON 化，见 ADR-007；表单可抽取 `EventDraft`）
-5. **里程碑倒计时**：数据模型（`Milestone`，isAllDay 精度切换）+ 列表页 + 锁屏小组件
-6. 节假日数据管道：当前 `holiday-2026.json` 为 **sample 标注**；接国务院年度通知更新流程 + 生成 2027 数据
-7. 更远：完整日历管理(v1.1)、完整重复规则(v1.1)、黄历面板(v1.1)、智能闹钟工作日引擎(v1.1)——编码前补 ADR
+1. **Xcode GUI 模拟器运行**：验证滑动翻月 → 周起始日切换 → 日历筛选 → 搜索 → 点击结果 → 新建（提醒 + 重复） → 编辑 → 删除
+2. **真机 / iCloud 日历实测**：多日历颜色、搜索结果点击、重复事件、复杂规则保护、只读日历、自定义提醒、权限拒绝路径
+3. **自然语言输入 v1**（规则表 JSON 化，见 ADR-007；表单可抽取 `EventDraft`）
+4. **里程碑倒计时**：数据模型（`Milestone`，isAllDay 精度切换）+ 列表页 + 锁屏小组件
+5. 节假日数据管道：当前 `holiday-2026.json` 为 **sample 标注**；接国务院年度通知更新流程 + 生成 2027 数据
+6. 更远：议程 / 日 / 周 / 年视图、完整日历管理(v1.1)、完整重复规则(v1.1)、黄历面板(v1.1)、智能闹钟工作日引擎(v1.1)——编码前补 ADR
 
 ## 设计结论速查（详见各文档）
 
@@ -53,6 +53,8 @@
 - 事件提醒：[docs/design/event-reminders.md](docs/design/event-reminders.md) 记录单条提醒映射、自定义提醒保护和 v1 边界
 - 重复规则：[docs/design/event-recurrence.md](docs/design/event-recurrence.md) 记录基础预设、EventKit 映射、复杂规则保护和 v1 边界
 - 多日历管理：[docs/design/calendar-management.md](docs/design/calendar-management.md) 记录颜色、来源分组、显示 / 隐藏和持久化策略
+- 月视图交互：[docs/design/month-interaction.md](docs/design/month-interaction.md) 记录手势阈值、周起始日和持久化策略
+- 事件搜索：[docs/design/event-search.md](docs/design/event-search.md) 记录时间窗、字段范围、防抖和结果边界
 - 历史蓝图：[docs/design/recovered-product-blueprint.md](docs/design/recovered-product-blueprint.md) 汇总之前会话未落码设计
 - 差距清单：[docs/design/design-gap.md](docs/design/design-gap.md) 是当前“文档设计 vs 代码实现”事实表
 - 明确不做：社交流、云端日程 AI、广告
