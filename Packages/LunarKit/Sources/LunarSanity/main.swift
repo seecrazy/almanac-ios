@@ -52,6 +52,10 @@ if let terms = SolarTermCalendar.terms(inGregorianYear: 2026) {
     check(SolarTermCalendar.displayName(for: date(2026, 2, 4)) == "立春", "2026-02-04 立春")
     check(SolarTermCalendar.displayName(for: date(2026, 12, 22)) == "冬至", "2026-12-22 冬至")
 }
+check(LunarFestivalCalendar.displayName(for: date(2026, 2, 17)) == "春节", "2026-02-17 春节")
+check(LunarFestivalCalendar.displayName(for: date(2024, 9, 17)) == "中秋节", "2024-09-17 中秋节")
+check(LunarFestivalCalendar.displayName(for: date(2025, 1, 28)) == "除夕", "2025-01-28 除夕")
+
 // 今天
 let today = LunarCalendar.lunar(from: Date())
 print("----")

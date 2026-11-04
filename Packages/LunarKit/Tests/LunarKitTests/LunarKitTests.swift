@@ -166,6 +166,52 @@ final class LunarKitTests: XCTestCase {
         XCTAssertNil(SolarTermCalendar.terms(inGregorianYear: 2101))
     }
 
+    // MARK: 农历节日
+
+    func testLunarFestivalCatalogCompletenessAndOrder() {
+        XCTAssertEqual(LunarFestivalName.allCases.count, 10)
+        XCTAssertEqual(Set(LunarFestivalName.allCases.map(\.rawValue)).count, 10)
+
+        for year in LunarFestivalCalendar.firstLunarYear...(LunarFestivalCalendar.lastLunarYear - 1) {
+            let festivals = LunarFestivalCalendar.festivals(inLunarYear: year)
+            XCTAssertEqual(festivals?.count, 10, "\(year) 应有 10 个节日")
+            XCTAssertTrue(
+                zip(festivals ?? [], (festivals ?? []).dropFirst()).allSatisfy {
+                    $0.date < $1.date
+                }
+            )
+        }
+
+        // 2101 年春节超出农历数据表，因此 2100 农历年的除夕不能推导。
+        XCTAssertEqual(
+            LunarFestivalCalendar.festivals(inLunarYear: LunarFestivalCalendar.lastLunarYear)?.count,
+            9
+        )
+        XCTAssertNil(LunarFestivalCalendar.festivals(inLunarYear: 1899))
+        XCTAssertNil(LunarFestivalCalendar.festivals(inLunarYear: 2101))
+    }
+
+    func testLunarFestivalAnchors() {
+        let anchors: [(LunarFestivalName, (year: Int, month: Int, day: Int))] = [
+            (.springFestival, (2026, 2, 17)),
+            (.lanternFestival, (2026, 3, 3)),
+            (.midAutumnFestival, (2026, 9, 25)),
+            (.midAutumnFestival, (2024, 9, 17)),
+            (.newYearsEve, (2027, 2, 5)),
+            (.newYearsEve, (2025, 1, 28))
+        ]
+
+        for (name, anchor) in anchors {
+            let festival = LunarFestivalCalendar.festival(
+                on: date(anchor.year, anchor.month, anchor.day)
+            )
+            XCTAssertEqual(festival?.name, name, "\(name.rawValue) 锚点错误")
+        }
+
+        XCTAssertNil(LunarFestivalCalendar.festival(on: date(2026, 2, 18)))
+        XCTAssertNil(LunarFestivalCalendar.festival(on: date(1899, 12, 31)))
+    }
+
     // MARK: 黄历
 
     func testBundledAlmanacRulesDecodeTwentyFourActivities() throws {

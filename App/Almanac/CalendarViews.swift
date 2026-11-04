@@ -215,6 +215,7 @@ private struct CalendarWeekView: View {
     @EnvironmentObject private var eventService: EventStoreService
     @AppStorage("month.week.start.day") private var weekStartDayRaw = WeekStartDay.monday.rawValue
     @AppStorage("showSolarTerms") private var showSolarTerms = true
+    @AppStorage("showLunarFestivals") private var showLunarFestivals = true
 
     @Binding var selectedDate: Date
     let holidayStore: HolidayStore
@@ -239,6 +240,7 @@ private struct CalendarWeekView: View {
 
     var body: some View {
         let solarTermNameMap = solarTermNameMap
+        let festivalNameMap = festivalNameMap
         VStack(spacing: 0) {
             header
             weekdayHeader
@@ -251,6 +253,9 @@ private struct CalendarWeekView: View {
                             isToday: calendar.isDateInToday(day),
                             events: Array(eventService.events(on: day).prefix(3)),
                             totalEventCount: eventService.events(on: day).count,
+                            festivalText: showLunarFestivals
+                                ? festivalNameMap[solarTermDayKey(for: day)]
+                                : nil,
                             solarTermText: solarTermNameMap[solarTermDayKey(for: day)],
                             effect: holidayStore.effect(for: day),
                             onTap: { onSelectDay(day) }
@@ -283,6 +288,24 @@ private struct CalendarWeekView: View {
         let terms = years.compactMap { SolarTermCalendar.terms(inGregorianYear: $0) }
         return Dictionary(
             uniqueKeysWithValues: terms.flatMap { $0 }.map {
+                (dayKey($0.date, calendar: shanghaiCalendar), $0.name.rawValue)
+            }
+        )
+    }
+
+    private var festivalNameMap: [DateComponents: String] {
+        guard showLunarFestivals else { return [:] }
+
+        var shanghaiCalendar = Calendar(identifier: .gregorian)
+        shanghaiCalendar.timeZone = LunarCalendar.timeZone
+        let lunarYears = Set(weekDays.map {
+            LunarCalendar.lunar(from: $0).year
+        })
+        let festivals = lunarYears.compactMap {
+            LunarFestivalCalendar.festivals(inLunarYear: $0)
+        }
+        return Dictionary(
+            uniqueKeysWithValues: festivals.flatMap { $0 }.map {
                 (dayKey($0.date, calendar: shanghaiCalendar), $0.name.rawValue)
             }
         )
@@ -373,6 +396,7 @@ private struct WeekDayColumn: View {
     let isToday: Bool
     let events: [CalendarEvent]
     let totalEventCount: Int
+    var festivalText: String? = nil
     var solarTermText: String? = nil
     let effect: DayEffect?
     let onTap: () -> Void
@@ -383,9 +407,13 @@ private struct WeekDayColumn: View {
                 Text("\(Calendar.current.component(.day, from: day))")
                     .font(.system(size: 18, weight: isSelected ? .semibold : .regular))
                     .foregroundColor(dayColor)
-                Text(solarTermText ?? LunarCalendar.displayText(for: LunarCalendar.lunar(from: day)))
+                Text(
+                    festivalText
+                        ?? solarTermText
+                        ?? LunarCalendar.displayText(for: LunarCalendar.lunar(from: day))
+                )
                     .font(.system(size: 10))
-                    .foregroundColor(solarTermText == nil ? palette.secondary : palette.solarGreen)
+                    .foregroundColor(subtitleColor)
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity)
@@ -427,6 +455,12 @@ private struct WeekDayColumn: View {
         if case .restDay = effect { return palette.holidayRed }
         return palette.ink
     }
+
+    private var subtitleColor: Color {
+        if festivalText != nil { return palette.holidayRed }
+        if solarTermText != nil { return palette.solarGreen }
+        return palette.secondary
+    }
 }
 
 private struct CalendarDayView: View {
@@ -441,6 +475,7 @@ private struct CalendarDayView: View {
     @State private var selectedEvent: CalendarEvent?
     @AppStorage("showHuangLi") private var showHuangLi = false
     @AppStorage("showSolarTerms") private var showSolarTerms = true
+    @AppStorage("showLunarFestivals") private var showLunarFestivals = true
 
     private let calendar = Calendar.current
 
@@ -488,6 +523,11 @@ private struct CalendarDayView: View {
                 Text(lunarLine)
                     .font(.system(size: 13))
                     .foregroundColor(palette.secondary)
+                if showLunarFestivals, let festival = LunarFestivalCalendar.festival(on: selectedDate) {
+                    Text("农历节日 · \(festival.name.rawValue)")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(palette.holidayRed)
+                }
                 if showSolarTerms, let solarTerm = SolarTermCalendar.term(on: selectedDate) {
                     Text("节气 · \(solarTerm.name.rawValue)")
                         .font(.system(size: 13, weight: .medium))

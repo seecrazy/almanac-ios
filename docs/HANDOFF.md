@@ -1,20 +1,20 @@
 # 会话交接 / 项目现状（Handoff）
 
-> 最后更新：2026-11-04（D-180 二十四节气代码接入） · 供新会话冷启动使用
+> 最后更新：2026-11-04（D-190 农历节日代码接入） · 供新会话冷启动使用
 > 设计来源：产品设计讨论（本文只记录结论与状态，讨论细节见 ADR 与 roadmap）
 
 ## 一句话现状
 
-**设计闭环、工程可构建**：七个 SwiftPM 包 XCTest 全绿（70 个测试），SwiftUI App 壳与 Milestone Widget extension 已通过 Xcode 27.2 iOS Simulator 构建；EventKit 只读、手动新建、自然语言创建 v1、事件详情、基础字段编辑、删除、单条提醒、完整重复规则编辑与系列操作、多日历筛选 / 颜色、月 / 周 / 日 / 议程 / 年基础视图矩阵、搜索 v2、里程碑基础闭环、农历生日 / 纪念日、里程碑提醒与小组件、D-110 节假日多年度数据管道、D-160 黄历面板、D-180 二十四节气、D-170 工作日智能闹钟已接入。用户已决定暂跳过人工验收，先推进 v1.1 编码；D-100 / D-101 / D-150 / D-160 / D-161 / D-170 / D-180 仍保留 GUI / 真机待验收。
+**设计闭环、工程可构建**：七个 SwiftPM 包 XCTest 全绿（72 个测试），SwiftUI App 壳与 Milestone Widget extension 已通过 Xcode 27.2 iOS Simulator 构建；EventKit 只读、手动新建、自然语言创建 v1、事件详情、基础字段编辑、删除、单条提醒、完整重复规则编辑与系列操作、多日历筛选 / 颜色、月 / 周 / 日 / 议程 / 年基础视图矩阵、搜索 v2、里程碑基础闭环、农历生日 / 纪念日、里程碑提醒与小组件、D-110 节假日多年度数据管道、D-160 黄历面板、D-180 二十四节气、D-190 农历节日、D-170 工作日智能闹钟已接入。用户已决定暂跳过人工验收，先推进 v1.1 编码；D-100 / D-101 / D-150 / D-160 / D-161 / D-170 / D-180 / D-190 仍保留 GUI / 真机待验收。
 
 ## 已完成（截至 2026-11-04 工作树）
 
 | 模块 | 状态 | 验证方式 |
 |------|------|----------|
-| 文档体系 | ✅ README / roadmap / HANDOFF / ADR-001(EventKit) / ADR-007(跨平台) / ADR-008(自然语言输入) / ADR-009(工作日闹钟) / design-system / event-creation / natural-language-input / event-detail-editing / event-reminders / event-recurrence / recurrence-series-editing / views-navigation / holiday-data-pipeline / milestone-reminders-widgets / calendar-management / month-interaction / event-search / event-search-v2 / almanac-panel / milestones / lunar-anniversaries / solar-terms / workday-alarm | 内容与当前工作树状态一致 |
+| 文档体系 | ✅ README / roadmap / HANDOFF / ADR-001(EventKit) / ADR-007(跨平台) / ADR-008(自然语言输入) / ADR-009(工作日闹钟) / design-system / event-creation / natural-language-input / event-detail-editing / event-reminders / event-recurrence / recurrence-series-editing / views-navigation / holiday-data-pipeline / milestone-reminders-widgets / calendar-management / month-interaction / event-search / event-search-v2 / almanac-panel / milestones / lunar-anniversaries / solar-terms / lunar-festivals / workday-alarm | 内容与当前工作树状态一致 |
 | 历史设计 | ✅ `recovered-product-blueprint.md` 恢复核心日历、中国日历、里程碑、闹钟、迁移、日记、智能与跨平台设计 | 来源 Codex rollout `01a19205-ad9f-7731-a10f-fd3c511941d1` |
 | 设计差距 | ✅ `design-gap.md` 区分 ✅ / 🟡 / 🔴 | 每次里程碑结束应刷新 |
-| LunarKit | ✅ 1900-2100 农历换算、闰月、干支、生肖、月视图文本、二十四节气、黄历规则与宜忌 | 17 项 XCTest 全绿（春节/中秋锚点、1949-10-01 甲子日、往返一致性、节气顺序与日期、冲煞 / 宜忌 / 边界） |
+| LunarKit | ✅ 1900-2100 农历换算、闰月、干支、生肖、月视图文本、二十四节气、农历节日、黄历规则与宜忌 | 19 项 XCTest 全绿（春节/中秋锚点、1949-10-01 甲子日、往返一致性、节气顺序与日期、10 个农历节日与除夕、冲煞 / 宜忌 / 边界） |
 | HolidayData | ✅ manifest + 年度 JSON（2026/2027 sample）+ 跨年查询；来源 / 覆盖状态 / 校验降级；`bundled()` 与 `bundled(years:)`；WorkdayResolver | 14 项 XCTest 全绿 |
 | RecurrenceEngine | ✅ 周期步进展开器：d/w/m/y + interval/count/until/EXDATE | 6 项 Sanity 全绿 |
 | NaturalInput | ✅ 本地中文规则解析：相对/显式日期、时间区间、时长、全天、基础重复、地点 / 备注；JSON 规则表 | 13 项 XCTest 全绿 |
@@ -34,10 +34,11 @@
 | 黄历面板 D-160 | ✅ 年 / 月 / 日干支、生肖、建除十二神、冲煞、24 项 JSON 宜忌、折叠 / 展开、规则损坏降级与农历越界提示 | LunarKit 14 项 XCTest（黄历阶段）+ generic iOS Simulator build ✅；GUI / 真机人工验收按当前决策暂跳过 |
 | 农历生日 / 纪念日 D-161 | ✅ 阳历 / 农历模型、下一次发生 Resolver、闰月三种 fallback、年龄 / 周年、倒计时区块、编辑 / 删除、提醒统一调度、日详情横幅 | MilestoneKit 10 项 XCTest + generic iOS Simulator build ✅；GUI / 真机人工验收按当前决策暂跳过 |
 | 二十四节气 D-180 | ✅ 太阳视黄经引擎、上海日期归属、1900–2100 边界、月 / 周节气小字、日视图 / 日详情节气行、设置开关 | LunarKit 17 项 XCTest + generic iOS Simulator build ✅；GUI / 真机人工验收按当前决策暂跳过 |
+| 农历节日 D-190 | ✅ 10 个常见节日、除夕动态推导、上海日期归属、月 / 周节日小字、日视图 / 日详情节日行、设置开关 | LunarKit 19 项 XCTest + generic iOS Simulator build ✅；GUI / 真机人工验收按当前决策暂跳过 |
 | 工作日智能闹钟 D-170 | ✅ 标准 / 单休 / 六天 / 自定义模板、官方休班优先级、60 天预览、本地通知预计算、权限拒绝保护与里程碑通知前缀隔离 | HolidayData 14 项 XCTest + generic iOS Simulator build ✅；通知响铃、跨时区与 GUI / 真机人工验收按当前决策暂跳过 |
-| XCTest | ✅ LunarKit 17 / HolidayData 14 / RecurrenceEngine 6 / NaturalInput 13 / EventKitMapping 6 / MilestoneKit 10 / EventSearchKit 4 | `./build.sh test` 全绿 |
+| XCTest | ✅ LunarKit 19 / HolidayData 14 / RecurrenceEngine 6 / NaturalInput 13 / EventKitMapping 6 / MilestoneKit 10 / EventSearchKit 4 | `./build.sh test` 全绿 |
 
-构建命令：`./build.sh test`（70 个 XCTest + 七包编译）。
+构建命令：`./build.sh test`（72 个 XCTest + 七包编译）。
 
 ## 环境与构建路径（重要）
 
@@ -51,7 +52,7 @@
 
 ## 下一步（按优先级）
 
-1. **D-150 / D-160 / D-161 / D-170 / D-180 GUI / 真机验收**：按设计清单逐项勾选；用户当前可继续暂跳过
+1. **D-150 / D-160 / D-161 / D-170 / D-180 / D-190 GUI / 真机验收**：按设计清单逐项勾选；用户当前可继续暂跳过
 2. **官方节假日数据替换**：管道已完成；等待国务院 2026/2027 年度通知人工核对后替换 sample
 3. **SyncProvider ADR**：CloudKit / 备份 / 导入导出抽象仍未成文
 4. **暂缓项**：D-100 / D-101 GUI 与真机验收、通知实际响铃与 Widget 添加验收、Live Activity、SQLite / GRDB、自然语言问答 / 英文输入 / 复杂表达、完整日历管理
@@ -75,6 +76,7 @@
 - 黄历面板：[docs/design/almanac-panel.md](docs/design/almanac-panel.md) 记录干支、建除十二神、冲煞、JSON 宜忌与越界提示
 - 农历生日 / 纪念日：[docs/design/lunar-anniversaries.md](docs/design/lunar-anniversaries.md) 记录农历换算、闰月 fallback、年龄 / 周年与提醒
 - 二十四节气：[docs/design/solar-terms.md](docs/design/solar-terms.md) 记录太阳视黄经计算、上海日期归属、展示规则与边界
+- 农历节日：[docs/design/lunar-festivals.md](docs/design/lunar-festivals.md) 记录 10 个节日范围、除夕推导、显示优先级与开关
 - 工作日智能闹钟：[docs/design/workday-alarm.md](docs/design/workday-alarm.md) 与 [ADR-009](docs/architecture/adr/ADR-009-workday-alarm.md) 记录模板、休班优先级、60 天窗口、通知隔离与边界
 - 里程碑：[docs/design/milestones.md](docs/design/milestones.md) 与 [milestone-reminders-widgets.md](docs/design/milestone-reminders-widgets.md) 记录数据模型、精度策略、本地持久化、提醒和 Widget 边界
 - 历史蓝图：[docs/design/recovered-product-blueprint.md](docs/design/recovered-product-blueprint.md) 汇总之前会话未落码设计
@@ -89,5 +91,5 @@
 cd ~/IdeaProjects/almanac-ios
 git log --oneline        # 看提交
 cat docs/product/roadmap.md   # 看进度
-./build.sh test          # 确认 70 个 XCTest 仍全绿
+./build.sh test          # 确认 72 个 XCTest 仍全绿
 ```

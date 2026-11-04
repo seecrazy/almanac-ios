@@ -10,6 +10,7 @@ struct DayDetail: View {
     @State private var selectedEvent: CalendarEvent?
     @AppStorage("showHuangLi") private var showHuangLi = false
     @AppStorage("showSolarTerms") private var showSolarTerms = true
+    @AppStorage("showLunarFestivals") private var showLunarFestivals = true
 
     let date: Date
     let holidayStore: HolidayStore
@@ -71,6 +72,11 @@ struct DayDetail: View {
             Text(lunarLine)
                 .font(.system(size: 14))
                 .foregroundColor(palette.secondary)
+            if showLunarFestivals, let festival = LunarFestivalCalendar.festival(on: date) {
+                Text("农历节日 · \(festival.name.rawValue)")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(palette.holidayRed)
+            }
             if showSolarTerms, let solarTerm = SolarTermCalendar.term(on: date) {
                 Text("节气 · \(solarTerm.name.rawValue)")
                     .font(.system(size: 14, weight: .medium))

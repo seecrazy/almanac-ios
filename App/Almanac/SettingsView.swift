@@ -9,6 +9,7 @@ struct SettingsView: View {
 
     @AppStorage("showLunar") private var showLunar = true
     @AppStorage("showSolarTerms") private var showSolarTerms = true
+    @AppStorage("showLunarFestivals") private var showLunarFestivals = true
     @AppStorage("showHuangLi") private var showHuangLi = false
     @AppStorage("month.week.start.day") private var weekStartDayRaw = WeekStartDay.monday.rawValue
 
@@ -33,6 +34,8 @@ struct SettingsView: View {
                     toggleRow("农历日期", binding: $showLunar)
                     Divider().background(palette.separator)
                     toggleRow("二十四节气", binding: $showSolarTerms)
+                    Divider().background(palette.separator)
+                    toggleRow("农历节日", binding: $showLunarFestivals)
                     Divider().background(palette.separator)
                     toggleRow("黄历（宜忌/冲煞）", binding: $showHuangLi)
                 }
