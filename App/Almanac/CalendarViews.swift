@@ -419,6 +419,7 @@ private struct CalendarDayView: View {
                 header
                 holidayBanner
                 milestoneBanners
+                anniversaryBanners
                 eventList
                 if showHuangLi {
                     AlmanacPanel(date: selectedDate)
@@ -509,6 +510,29 @@ private struct CalendarDayView: View {
                         milestone: milestone,
                         countdown: milestoneStore.countdown(for: milestone, at: Date())
                     )
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var anniversaryBanners: some View {
+        let occurrences = milestoneStore.anniversaries(on: selectedDate)
+        if !occurrences.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("生日 / 纪念日")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(palette.ink)
+                ForEach(occurrences) { occurrence in
+                    HStack {
+                        Text("\(occurrence.anniversary.title)\(occurrence.countText.map { " · \($0)" } ?? "")")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(palette.ink)
+                        Spacer()
+                    }
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(RoundedRectangle(cornerRadius: 16).fill(palette.card))
                 }
             }
         }

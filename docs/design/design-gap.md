@@ -14,13 +14,14 @@
 | EventKit 搜索 v2 | ✅ | `EventSearchKit` 预设 / 自定义日期范围、临时日历筛选、最近搜索、200 条上限与请求保护；GUI / 真机验收待完成 |
 | 月视图基础交互 | ✅ | 左右滑动翻月；周一起始 / 周日起始设置本地持久化 |
 | 里程碑基础闭环 | ✅ | `Milestone` 模型、本地 JSON 持久化、列表、创建 / 编辑 / 删除、日详情横幅已实现 |
+| 农历生日 / 纪念日 | 🟡 | Anniversary 模型、Resolver、三种闰月 fallback、年龄 / 周年、倒计时区块、提醒与日详情横幅已接入；GUI / 真机验收未完成 |
 | 自然语言创建 v1 | 🟡 | `NaturalInput` 本地规则表解析 + 13 项测试；月视图输入框可预填创建表单；GUI / 真机验收、自然语言问答、复杂表达未实现 |
 | EventKit 写入 | ✅ | 手动创建标题/全天/时间/地点/备注/目标日历 |
 | EventKit 编辑删除 | ✅ | 详情页可编辑标题/时间/全天/地点/备注/日历，可删除；重复日程支持仅此 / 未来 / 系列范围 |
 | EventKit 单条提醒 | 🟡 | 新建/编辑支持不提醒、准时、提前 5/15/30/60 分钟、1 天；详情可展示。多条/自定义提醒默认保留，GUI 验收待完成 |
 | EventKit 基础重复规则 | ✅ | 新建/编辑支持基础频率、间隔、周几多选、每月规则和三种结束方式 |
 | Xcode 工程 | ✅ | Xcode 27.2 generic simulator build 通过 |
-| 核心引擎测试 | ✅ | LunarKit 14 / HolidayData 12 / RecurrenceEngine 6 / NaturalInput 13 / EventKitMapping 6 / MilestoneKit 4 / EventSearchKit 4 |
+| 核心引擎测试 | ✅ | LunarKit 14 / HolidayData 12 / RecurrenceEngine 6 / NaturalInput 13 / EventKitMapping 6 / MilestoneKit 10 / EventSearchKit 4 |
 | 设计系统 | 🟡 | token 和月格/日详情/创建表单基线已文档化；组件覆盖不全 |
 | 农历基础 | 🟡 | 公历↔农历、闰月、干支、生肖、月视图文本已实现；月柱为农历月近似，节气月柱未精确计算 |
 | 节假日 | 🟡 | manifest、2026–2027 多年度 sample、跨年查询、覆盖状态与来源提示已接入；官方数据待替换 |
@@ -28,7 +29,7 @@
 | 里程碑平台能力 | 🟡 | 四类本地提醒、桌面 small / medium Widget、锁屏 circular / inline / rectangular Widget 已接入；Live Activity、SQLite、模板和颜色自定义未实现 |
 | 秒级倒计时 | 🔴 | 未实现 |
 | Widget / Live Activity | 🟡 | Milestone Widget extension 已接入；Live Activity / 灵动岛未实现 |
-| 农历生日 / 纪念日 | 🔴 | 无模型、编辑器、提醒 |
+| 农历生日 / 纪念日 | 🟡 | 模型 / Resolver / 编辑器 / 提醒已接入；GUI / 真机验收未完成 |
 | 黄历 | 🟡 | `AlmanacCalendar` / JSON 规则 / 日详情折叠面板已接入；GUI / 真机验收和完整口径校准待完成 |
 | 二十四节气 | 🔴 | 设置项存在但无计算/展示 |
 | 智能闹钟 | 🔴 | 无 WorkdayResolver / Alarm / 通知调度 |
@@ -55,14 +56,14 @@
 
 1. **官方节假日数据替换**：管道已接入，但 2026/2027 仍是 sample，不能代表产品承诺。
 2. **搜索升级**：v2 日期 / 日历筛选与最近搜索已接入；SQLite FTS 与完整本地索引未实现。
-3. **中国日历差异化**：黄历面板已接入；农历生日 / 纪念日、二十四节气未实现。
+3. **中国日历差异化**：黄历面板与生日 / 纪念日已接入；二十四节气未实现。
 4. **里程碑平台升级**：Live Activity、SQLite / GRDB、模板与颜色自定义。
 
 ## 3. v1.1 / v1.2 主要缺口
 
 | 领域 | 缺口 |
 |---|---|
-| 中国日历 | 二十四节气、农历节日、农历生日；黄历面板待 GUI 验收 |
+| 中国日历 | 二十四节气、农历节日；生日 / 纪念日与黄历面板待 GUI 验收 |
 | 智能闹钟 | WorkdayResolver、调休感知、通知预计算、响铃计划预览 |
 | 公司政策 | 模板、公司码、版本更新、大小周、月末周六 |
 | 平台能力 | Live Activity、App Intents、Shortcuts |

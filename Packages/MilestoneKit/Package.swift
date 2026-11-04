@@ -6,8 +6,16 @@ let package = Package(
     products: [
         .library(name: "MilestoneKit", targets: ["MilestoneKit"])
     ],
+    dependencies: [
+        .package(path: "../LunarKit")
+    ],
     targets: [
-        .target(name: "MilestoneKit"),
+        .target(
+            name: "MilestoneKit",
+            dependencies: [
+                .product(name: "LunarKit", package: "lunarkit")
+            ]
+        ),
         .testTarget(
             name: "MilestoneKitTests",
             dependencies: ["MilestoneKit"],

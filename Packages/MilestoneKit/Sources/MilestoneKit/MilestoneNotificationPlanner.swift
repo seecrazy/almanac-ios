@@ -32,7 +32,8 @@ public enum MilestoneNotificationPlanner {
         isAllDay: Bool,
         reminders: [MilestoneReminder],
         referenceDate: Date,
-        calendar: Calendar = .current
+        calendar: Calendar = .current,
+        notificationTitle: String = "倒计时提醒"
     ) -> [MilestoneNotificationRequest] {
         let enabledKinds = reminders
             .filter(\.isEnabled)
@@ -59,7 +60,7 @@ public enum MilestoneNotificationPlanner {
             return MilestoneNotificationRequest(
                 identifier: identifier(milestoneID: milestoneID, kind: kind),
                 fireDate: fireDate,
-                title: "倒计时提醒",
+                title: notificationTitle,
                 subtitle: title,
                 body: body(kind: kind, title: title)
             )

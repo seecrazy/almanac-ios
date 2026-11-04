@@ -32,6 +32,7 @@ struct DayDetail: View {
                     }
                     holidayCoverageFootnote
                     milestoneBanners
+                    anniversaryBanners
                     nextHolidayFootnote
                     eventList
                 }
@@ -162,6 +163,29 @@ struct DayDetail: View {
                             countdown: milestoneStore.countdown(for: milestone, at: Date())
                         )
                     }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var anniversaryBanners: some View {
+        let occurrences = milestoneStore.anniversaries(on: date)
+        if !occurrences.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("生日 / 纪念日")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(palette.ink)
+                ForEach(occurrences) { occurrence in
+                    HStack {
+                        Text("\(occurrence.anniversary.title)\(occurrence.countText.map { " · \($0)" } ?? "")")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(palette.ink)
+                        Spacer()
+                    }
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(RoundedRectangle(cornerRadius: 16).fill(palette.card))
                 }
             }
         }

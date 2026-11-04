@@ -38,6 +38,7 @@ final class MilestonePlatformService {
 
     func sync(
         milestones: [Milestone],
+        anniversaries: [Anniversary] = [],
         referenceDate: Date,
         shouldRequestAuthorization: Bool
     ) async -> (authorization: MilestoneNotificationAuthorizationState, snapshotAvailable: Bool) {
@@ -79,8 +80,27 @@ final class MilestonePlatformService {
             )
         }
 
+        let anniversaryRequests = anniversaries.flatMap { anniversary -> [MilestoneNotificationRequest] in
+            guard let occurrence = AnniversaryResolver.nextOccurrence(
+                for: anniversary,
+                onOrAfter: referenceDate
+            ) else { return [] }
+
+            return MilestoneNotificationPlanner.requests(
+                milestoneID: anniversary.id,
+                title: anniversary.notificationTitle,
+                targetDate: occurrence.date,
+                isAllDay: true,
+                reminders: anniversary.reminders,
+                referenceDate: referenceDate,
+                notificationTitle: "生日 / 纪念日"
+            )
+        }
+
+        let allRequests = requests + anniversaryRequests
+
         notificationCenter.removeAllPendingNotificationRequests()
-        for request in requests {
+        for request in allRequests {
             let content = UNMutableNotificationContent()
             content.title = request.title
             content.subtitle = request.subtitle

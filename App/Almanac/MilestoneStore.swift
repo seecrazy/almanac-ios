@@ -114,22 +114,27 @@ struct MilestoneCountdown: Hashable {
 @MainActor
 final class MilestoneStore: ObservableObject {
     @Published private(set) var milestones: [Milestone] = []
+    @Published private(set) var anniversaries: [Anniversary] = []
     @Published private(set) var notificationAuthorization: MilestoneNotificationAuthorizationState = .notDetermined
     @Published private(set) var snapshotAvailable = false
 
     private let defaults: UserDefaults
     private let storageKey: String
+    private let anniversaryStorageKey: String
     private let platformService: MilestonePlatformService
 
     init(
         defaults: UserDefaults = .standard,
         storageKey: String = "milestones.v1",
+        anniversaryStorageKey: String = "anniversaries.v1",
         platformService: MilestonePlatformService = MilestonePlatformService()
     ) {
         self.defaults = defaults
         self.storageKey = storageKey
+        self.anniversaryStorageKey = anniversaryStorageKey
         self.platformService = platformService
         loadMilestones()
+        loadAnniversaries()
     }
 
     var refreshInterval: TimeInterval {
@@ -153,6 +158,18 @@ final class MilestoneStore: ObservableObject {
         }
     }
 
+    func sortedAnniversaryOccurrences(at referenceDate: Date) -> [AnniversaryOccurrence] {
+        anniversaries.compactMap {
+            AnniversaryResolver.nextOccurrence(for: $0, onOrAfter: referenceDate)
+        }
+        .sorted { $0.date < $1.date }
+    }
+
+    func anniversaries(on day: Date) -> [AnniversaryOccurrence] {
+        sortedAnniversaryOccurrences(at: day)
+            .filter { AnniversaryResolver.isOn($0, day: day) }
+    }
+
     func save(_ milestone: Milestone) async {
         if let index = milestones.firstIndex(where: { $0.id == milestone.id }) {
             milestones[index] = milestone
@@ -161,6 +178,30 @@ final class MilestoneStore: ObservableObject {
         }
         persist()
         await refreshPlatformState(shouldRequestAuthorization: !milestone.reminders.isEmpty)
+    }
+
+    func save(_ anniversary: Anniversary) async {
+        var updated = anniversary
+        let occurrence = AnniversaryResolver.nextOccurrence(
+            for: updated,
+            onOrAfter: Date()
+        )
+        updated.resolvedDate = occurrence?.date
+        updated.resolvedWithFallback = occurrence.map(\.isFallback)
+
+        if let index = anniversaries.firstIndex(where: { $0.id == updated.id }) {
+            anniversaries[index] = updated
+        } else {
+            anniversaries.append(updated)
+        }
+        persistAnniversaries()
+        await refreshPlatformState(shouldRequestAuthorization: !updated.reminders.isEmpty)
+    }
+
+    func remove(_ anniversary: Anniversary) async {
+        anniversaries.removeAll { $0.id == anniversary.id }
+        persistAnniversaries()
+        await refreshPlatformState(shouldRequestAuthorization: false)
     }
 
     func remove(_ milestone: Milestone) async {
@@ -172,6 +213,7 @@ final class MilestoneStore: ObservableObject {
     func refreshPlatformState(shouldRequestAuthorization: Bool = false) async {
         let result = await platformService.sync(
             milestones: milestones,
+            anniversaries: anniversaries,
             referenceDate: Date(),
             shouldRequestAuthorization: shouldRequestAuthorization
         )
@@ -264,5 +306,19 @@ final class MilestoneStore: ObservableObject {
         encoder.dateEncodingStrategy = .iso8601
         guard let data = try? encoder.encode(milestones) else { return }
         defaults.set(data, forKey: storageKey)
+    }
+
+    private func loadAnniversaries() {
+        guard let data = defaults.data(forKey: anniversaryStorageKey) else { return }
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        anniversaries = (try? decoder.decode([Anniversary].self, from: data)) ?? []
+    }
+
+    private func persistAnniversaries() {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        guard let data = try? encoder.encode(anniversaries) else { return }
+        defaults.set(data, forKey: anniversaryStorageKey)
     }
 }

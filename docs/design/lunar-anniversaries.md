@@ -1,7 +1,7 @@
 # 农历生日 / 纪念日设计 v1
 
-状态：设计已冻结（2026-11-02）  
-架构依据：[ADR-001](../architecture/adr/ADR-001-eventkit-as-source-of-truth.md)  
+状态：代码已接入（2026-11-04）；GUI / 真机验收待完成
+架构依据：[ADR-001](../architecture/adr/ADR-001-eventkit-as-source-of-truth.md)
 关联设计：[里程碑 v1](milestones.md) · [里程碑提醒与小组件](milestone-reminders-widgets.md)
 
 ## 1. 目标
@@ -27,6 +27,7 @@ enum AnniversaryCalendar: String, Codable {
 }
 
 struct LunarDateSpec: Codable, Hashable {
+    var originalYear: Int?
     var month: Int
     var day: Int
     var isLeapMonth: Bool
@@ -58,6 +59,7 @@ enum LeapMonthFallback: String, Codable, CaseIterable {
 
 - `calendar == .solar` 时必须有 `solarDate`。
 - `calendar == .lunar` 时必须有 `lunarDate`。
+- `originalYear` 用于年龄 / 周年计数；不填时只显示下一次日期，不显示年龄或周年。
 - 农历闰月必须显式 `isLeapMonth`，不自动近似。
 - `personName` 只用于文案，不请求联系人权限。
 
@@ -120,14 +122,14 @@ enum LeapMonthFallback: String, Codable, CaseIterable {
 
 ## 8. 验收清单
 
-- [ ] 可创建阳历生日。
-- [ ] 可创建农历生日。
-- [ ] 农历闰月必须显式选择。
-- [ ] 闰月不存在时按 fallback 换算。
-- [ ] 每年下一次日期自动更新。
-- [ ] 年龄 / 周年显示正确。
-- [ ] 日详情显示当天 anniversary。
-- [ ] 提醒可开启 / 关闭。
-- [ ] 通知授权拒绝不阻塞保存。
-- [ ] 删除后通知取消。
-- [ ] XCTest 覆盖平年、闰月存在、闰月缺失、跨年换算。
+- [ ] 可创建阳历生日。（GUI 验收待完成）
+- [ ] 可创建农历生日。（GUI 验收待完成）
+- [ ] 农历闰月必须显式选择。（编辑器已显式开关）
+- [ ] 闰月不存在时按 fallback 换算。（XCTest 已覆盖）
+- [ ] 每年下一次日期自动更新。（Resolver 已覆盖）
+- [ ] 年龄 / 周年显示正确。（逻辑已覆盖；GUI 验收待完成）
+- [ ] 日详情显示当天 anniversary。（代码已接入；GUI 验收待完成）
+- [ ] 提醒可开启 / 关闭。（代码已接入；GUI 验收待完成）
+- [ ] 通知授权拒绝不阻塞保存。（代码已接入；真机验收待完成）
+- [ ] 删除后通知取消。（代码已接入；真机验收待完成）
+- [x] XCTest 覆盖平年、闰月存在、闰月缺失、跨年换算。

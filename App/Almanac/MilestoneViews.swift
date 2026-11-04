@@ -1,9 +1,15 @@
 import SwiftUI
 import MilestoneKit
+import LunarKit
 
 struct MilestoneEditorContext: Identifiable {
     let id = UUID()
     let milestone: Milestone?
+}
+
+struct AnniversaryEditorContext: Identifiable {
+    let id = UUID()
+    let anniversary: Anniversary?
 }
 
 struct CountdownView: View {
@@ -11,11 +17,13 @@ struct CountdownView: View {
     @EnvironmentObject private var milestoneStore: MilestoneStore
 
     @State private var editorContext: MilestoneEditorContext?
+    @State private var anniversaryEditorContext: AnniversaryEditorContext?
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: milestoneStore.refreshInterval)) { timeline in
             let now = timeline.date
             let milestones = milestoneStore.sortedMilestones(at: now)
+            let anniversaryOccurrences = milestoneStore.sortedAnniversaryOccurrences(at: now)
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
@@ -36,7 +44,9 @@ struct CountdownView: View {
                     }
                     .padding(.horizontal, 20)
 
-                    if milestones.isEmpty {
+                    anniversarySection(occurrences: anniversaryOccurrences)
+
+                    if milestones.isEmpty && anniversaryOccurrences.isEmpty {
                         VStack(spacing: 8) {
                             Text("还没有里程碑")
                                 .font(.system(size: 15, weight: .medium))
@@ -52,20 +62,7 @@ struct CountdownView: View {
                         .background(RoundedRectangle(cornerRadius: 16).fill(palette.card))
                         .padding(.horizontal, 20)
                     } else {
-                        VStack(spacing: 12) {
-                            ForEach(milestones) { milestone in
-                                Button {
-                                    editorContext = MilestoneEditorContext(milestone: milestone)
-                                } label: {
-                                    MilestoneCard(
-                                        milestone: milestone,
-                                        countdown: milestoneStore.countdown(for: milestone, at: now)
-                                    )
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .padding(.horizontal, 20)
+                        milestoneList(milestones: milestones, now: now)
                     }
 
                     Text("里程碑保存在本机；提醒通过本地通知调度，小组件读取共享快照。")
@@ -84,6 +81,65 @@ struct CountdownView: View {
         .background(palette.background.ignoresSafeArea())
         .sheet(item: $editorContext) { context in
             MilestoneEditorView(milestone: context.milestone)
+        }
+        .sheet(item: $anniversaryEditorContext) { context in
+            AnniversaryEditorView(anniversary: context.anniversary)
+        }
+    }
+
+    private func milestoneList(milestones: [Milestone], now: Date) -> some View {
+        VStack(spacing: 12) {
+            ForEach(milestones) { milestone in
+                Button {
+                    editorContext = MilestoneEditorContext(milestone: milestone)
+                } label: {
+                    MilestoneCard(
+                        milestone: milestone,
+                        countdown: milestoneStore.countdown(for: milestone, at: now)
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 20)
+    }
+
+    private func anniversarySection(occurrences: [AnniversaryOccurrence]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("生日 / 纪念日")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(palette.ink)
+                Spacer()
+                Button {
+                    anniversaryEditorContext = AnniversaryEditorContext(anniversary: nil)
+                } label: {
+                    Image(systemName: "person.crop.circle.badge.plus")
+                        .font(.system(size: 17, weight: .medium))
+                        .foregroundColor(palette.accent)
+                }
+                .accessibilityLabel("新建生日或纪念日")
+            }
+            .padding(.horizontal, 20)
+
+            if occurrences.isEmpty {
+                Text("还没有生日或纪念日；可手动添加阳历或农历日期。")
+                    .font(.system(size: 13))
+                    .foregroundColor(palette.secondary)
+                    .padding(.horizontal, 20)
+            } else {
+                VStack(spacing: 10) {
+                    ForEach(occurrences) { occurrence in
+                        Button {
+                            anniversaryEditorContext = AnniversaryEditorContext(anniversary: occurrence.anniversary)
+                        } label: {
+                            AnniversaryCard(occurrence: occurrence)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 20)
+            }
         }
     }
 }
@@ -326,6 +382,361 @@ struct MilestoneEditorView: View {
             get: {
                 reminders.first { $0.kind == kind }?.isEnabled ?? false
             },
+            set: { isEnabled in
+                if let index = reminders.firstIndex(where: { $0.kind == kind }) {
+                    if isEnabled {
+                        reminders[index].isEnabled = true
+                    } else {
+                        reminders.remove(at: index)
+                    }
+                } else if isEnabled {
+                    reminders.append(MilestoneReminder(kind: kind, isEnabled: true))
+                }
+            }
+        )
+    }
+}
+
+private struct AnniversaryCard: View {
+    @Environment(\.palette) private var palette
+
+    let occurrence: AnniversaryOccurrence
+
+    private var anniversary: Anniversary { occurrence.anniversary }
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 16) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(cardTitle)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(palette.ink)
+                Text(dateSpecText)
+                    .font(.system(size: 13))
+                    .foregroundColor(palette.secondary)
+                Text("下一次 \(nextDateText)")
+                    .font(.system(size: 12))
+                    .foregroundColor(palette.secondary)
+                if let countText = occurrence.countText {
+                    Text(countText)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(palette.accent)
+                }
+                if let fallback = occurrence.fallbackNote {
+                    Text(fallback)
+                        .font(.system(size: 11))
+                        .foregroundColor(palette.makeupGray)
+                        .lineLimit(2)
+                }
+                if !anniversary.reminders.isEmpty {
+                    Text("提醒 \(anniversary.reminders.count) 项")
+                        .font(.system(size: 10))
+                        .foregroundColor(palette.secondary)
+                }
+            }
+
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 4) {
+                Text(kindIcon)
+                    .font(.system(size: 24))
+                Text(anniversary.kind.title)
+                    .font(.system(size: 10))
+                    .foregroundColor(palette.secondary)
+            }
+        }
+        .padding(16)
+        .background(RoundedRectangle(cornerRadius: 16).fill(palette.card))
+    }
+
+    private var cardTitle: String {
+        if let person = anniversary.personName?.nilIfEmpty {
+            return "\(person) · \(anniversary.title)"
+        }
+        return anniversary.title
+    }
+
+    private var kindIcon: String {
+        switch anniversary.kind {
+        case .birthday: return "🎂"
+        case .memorial: return "🕯️"
+        case .wedding: return "💍"
+        case .custom: return "⭐️"
+        }
+    }
+
+    private var dateSpecText: String {
+        switch anniversary.calendar {
+        case .solar:
+            return "阳历 \(solarSpecText)"
+        case .lunar:
+            return "农历 \(lunarSpecText)"
+        }
+    }
+
+    private var solarSpecText: String {
+        let components = anniversary.solarDate
+        return "\(components?.year ?? 0)年\(components?.month ?? 0)月\(components?.day ?? 0)日"
+    }
+
+    private var lunarSpecText: String {
+        guard let spec = anniversary.lunarDate else { return "日期暂不可用" }
+        let leap = spec.isLeapMonth ? "闰" : ""
+        let month = LunarCalendar.monthNames.indices.contains(spec.month)
+            ? LunarCalendar.monthNames[spec.month]
+            : "\(spec.month)月"
+        let day = LunarCalendar.dayNames.indices.contains(spec.day)
+            ? LunarCalendar.dayNames[spec.day]
+            : "\(spec.day)日"
+        return "\(leap)\(month)\(day)"
+    }
+
+    private var nextDateText: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "zh_CN")
+        formatter.dateFormat = "yyyy年M月d日"
+        return formatter.string(from: occurrence.date)
+    }
+}
+
+struct AnniversaryEditorView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.palette) private var palette
+    @EnvironmentObject private var milestoneStore: MilestoneStore
+
+    let anniversary: Anniversary?
+
+    @State private var title = ""
+    @State private var personName = ""
+    @State private var kind: AnniversaryKind = .birthday
+    @State private var calendarType: AnniversaryCalendar = .solar
+    @State private var solarDate = Date()
+    @State private var lunarMonth = 1
+    @State private var lunarDay = 1
+    @State private var isLeapMonth = false
+    @State private var fallback: LeapMonthFallback = .previousCommonMonth
+    @State private var originalYearText = ""
+    @State private var showAge = true
+    @State private var showAnniversaryYears = true
+    @State private var notes = ""
+    @State private var reminders: [MilestoneReminder] = []
+    @State private var deleteConfirmationIsPresented = false
+
+    private let calendar = Calendar.current
+
+    init(anniversary: Anniversary?) {
+        self.anniversary = anniversary
+
+        if let anniversary {
+            _title = State(initialValue: anniversary.title)
+            _personName = State(initialValue: anniversary.personName ?? "")
+            _kind = State(initialValue: anniversary.kind)
+            _calendarType = State(initialValue: anniversary.calendar)
+            _isLeapMonth = State(initialValue: anniversary.lunarDate?.isLeapMonth ?? false)
+            _lunarMonth = State(initialValue: anniversary.lunarDate?.month ?? 1)
+            _lunarDay = State(initialValue: anniversary.lunarDate?.day ?? 1)
+            _fallback = State(initialValue: anniversary.leapMonthFallback)
+            _originalYearText = State(
+                initialValue: anniversary.lunarDate?.originalYear.map(String.init) ?? ""
+            )
+            _showAge = State(initialValue: anniversary.showAge)
+            _showAnniversaryYears = State(initialValue: anniversary.showAnniversaryYears)
+            _notes = State(initialValue: anniversary.notes)
+            _reminders = State(initialValue: anniversary.reminders)
+            if let components = anniversary.solarDate,
+               let date = Calendar.current.date(from: components) {
+                _solarDate = State(initialValue: date)
+            }
+        }
+    }
+
+    var body: some View {
+        NavigationView {
+            Form {
+                Section("基本信息") {
+                    TextField("标题", text: $title)
+                    TextField("对象（可选）", text: $personName)
+                    Picker("类型", selection: $kind) {
+                        ForEach(AnniversaryKind.allCases) { item in
+                            Text(item.title).tag(item)
+                        }
+                    }
+                    Picker("日期类型", selection: $calendarType) {
+                        ForEach(AnniversaryCalendar.allCases) { item in
+                            Text(item.title).tag(item)
+                        }
+                    }
+                }
+
+                Section(calendarType == .solar ? "阳历日期" : "农历日期") {
+                    if calendarType == .solar {
+                        DatePicker("日期", selection: $solarDate, displayedComponents: [.date])
+                    } else {
+                        Picker("月", selection: $lunarMonth) {
+                            ForEach(1...12, id: \.self) { month in
+                                Text(LunarCalendar.monthNames[month]).tag(month)
+                            }
+                        }
+                        Picker("日", selection: $lunarDay) {
+                            ForEach(1...30, id: \.self) { day in
+                                Text(LunarCalendar.dayNames[day]).tag(day)
+                            }
+                        }
+                        Toggle("闰月", isOn: $isLeapMonth)
+                        if isLeapMonth {
+                            Picker("闰月缺失", selection: $fallback) {
+                                ForEach(LeapMonthFallback.allCases) { item in
+                                    Text(item.title).tag(item)
+                                }
+                            }
+                        }
+                        TextField("原始年份（用于年龄 / 周年，可选）", text: $originalYearText)
+                            .keyboardType(.numberPad)
+                    }
+                }
+
+                Section("展示") {
+                    if kind == .birthday {
+                        Toggle("显示年龄", isOn: $showAge)
+                    } else {
+                        Toggle("显示周年", isOn: $showAnniversaryYears)
+                    }
+                }
+
+                Section("备注") {
+                    TextField("备注（可选）", text: $notes)
+                }
+
+                Section("提醒") {
+                    ForEach([
+                        MilestoneReminderKind.sevenDaysAtNine,
+                        .oneDayAtNine,
+                        .sameDayAtNine,
+                    ], id: \.self) { kind in
+                        Toggle(kind.title, isOn: reminderBinding(for: kind))
+                    }
+
+                    switch milestoneStore.notificationAuthorization {
+                    case .granted:
+                        Text("通知已授权，将按计划响铃。")
+                            .font(.system(size: 12))
+                            .foregroundColor(palette.secondary)
+                    case .notDetermined:
+                        Text(hasEnabledReminders ? "保存后会请求通知权限。" : "启用提醒后，保存时会请求通知权限。")
+                            .font(.system(size: 12))
+                            .foregroundColor(palette.secondary)
+                    case .denied:
+                        Text("通知未授权；设置会保存，但不会响铃。")
+                            .font(.system(size: 12))
+                            .foregroundColor(palette.holidayRed)
+                    }
+                }
+
+                Section {
+                    Button {
+                        save()
+                    } label: {
+                        HStack {
+                            Spacer()
+                            Text(anniversary == nil ? "保存生日 / 纪念日" : "保存修改")
+                                .fontWeight(.medium)
+                            Spacer()
+                        }
+                    }
+                    .disabled(!canSave)
+
+                    if anniversary != nil {
+                        Button(role: .destructive) {
+                            deleteConfirmationIsPresented = true
+                        } label: {
+                            HStack {
+                                Spacer()
+                                Text("删除")
+                                Spacer()
+                            }
+                        }
+                    }
+                } footer: {
+                    Text("生日 / 纪念日保存在本机，不写入系统日历或云端。")
+                }
+            }
+            .navigationTitle(anniversary == nil ? "新建纪念日" : "编辑纪念日")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("取消") { dismiss() }
+                }
+            }
+            .alert("删除这条生日 / 纪念日？", isPresented: $deleteConfirmationIsPresented) {
+                Button("取消", role: .cancel) {}
+                Button("删除", role: .destructive) {
+                    if let anniversary {
+                        Task {
+                            await milestoneStore.remove(anniversary)
+                            dismiss()
+                        }
+                    }
+                }
+            } message: {
+                Text("删除后无法在宜历内撤销。")
+            }
+        }
+    }
+
+    private var canSave: Bool {
+        let hasTitle = !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let hasValidYear = originalYearText.trimmingCharacters(in: .whitespaces).isEmpty
+            || Int(originalYearText) != nil
+        return hasTitle && hasValidYear
+    }
+
+    private var hasEnabledReminders: Bool {
+        reminders.contains { $0.isEnabled }
+    }
+
+    private func save() {
+        let updated = Anniversary(
+            id: anniversary?.id ?? UUID(),
+            title: title.trimmingCharacters(in: .whitespacesAndNewlines),
+            personName: personName.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty,
+            kind: kind,
+            calendar: calendarType,
+            solarDate: solarComponents,
+            lunarDate: lunarDateSpec,
+            leapMonthFallback: fallback,
+            showAge: showAge,
+            showAnniversaryYears: showAnniversaryYears,
+            reminders: reminders,
+            notes: notes.trimmingCharacters(in: .whitespacesAndNewlines),
+            createdAt: anniversary?.createdAt ?? Date(),
+            resolvedDate: anniversary?.resolvedDate,
+            resolvedWithFallback: anniversary?.resolvedWithFallback
+        )
+
+        Task {
+            await milestoneStore.save(updated)
+            dismiss()
+        }
+    }
+
+    private var solarComponents: DateComponents? {
+        calendarType == .solar
+            ? calendar.dateComponents([.year, .month, .day], from: solarDate)
+            : nil
+    }
+
+    private var lunarDateSpec: LunarDateSpec? {
+        guard calendarType == .lunar else { return nil }
+        return LunarDateSpec(
+            originalYear: Int(originalYearText.trimmingCharacters(in: .whitespaces)),
+            month: lunarMonth,
+            day: lunarDay,
+            isLeapMonth: isLeapMonth
+        )
+    }
+
+    private func reminderBinding(for kind: MilestoneReminderKind) -> Binding<Bool> {
+        Binding<Bool>(
+            get: { reminders.first { $0.kind == kind }?.isEnabled ?? false },
             set: { isEnabled in
                 if let index = reminders.firstIndex(where: { $0.kind == kind }) {
                     if isEnabled {

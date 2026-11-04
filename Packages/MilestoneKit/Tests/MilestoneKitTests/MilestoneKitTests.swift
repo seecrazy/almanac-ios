@@ -138,4 +138,119 @@ final class MilestoneKitTests: XCTestCase {
             "milestone.\(id.uuidString)."
         )
     }
+
+    private func anniversary(
+        calendarType: AnniversaryCalendar,
+        solarDate: DateComponents? = nil,
+        lunarDate: LunarDateSpec? = nil,
+        kind: AnniversaryKind = .birthday,
+        fallback: LeapMonthFallback = .previousCommonMonth
+    ) -> Anniversary {
+        Anniversary(
+            title: "测试",
+            personName: "张三",
+            kind: kind,
+            calendar: calendarType,
+            solarDate: solarDate,
+            lunarDate: lunarDate,
+            leapMonthFallback: fallback
+        )
+    }
+
+    func testSolarBirthdayResolvesSameOrNextYearWithAge() {
+        let birthday = anniversary(
+            calendarType: .solar,
+            solarDate: DateComponents(year: 1998, month: 11, day: 10)
+        )
+        let occurrence = AnniversaryResolver.nextOccurrence(
+            for: birthday,
+            onOrAfter: date(2026, 11, 4),
+            calendar: calendar
+        )
+
+        XCTAssertEqual(occurrence?.date, date(2026, 11, 10))
+        XCTAssertEqual(occurrence?.countText, "28 岁")
+        XCTAssertFalse(occurrence?.isFallback ?? true)
+    }
+
+    func testLunarLeapMonthExistsWhenPresent() {
+        let birthday = anniversary(
+            calendarType: .lunar,
+            lunarDate: LunarDateSpec(originalYear: 1995, month: 6, day: 1, isLeapMonth: true)
+        )
+        let occurrence = AnniversaryResolver.nextOccurrence(
+            for: birthday,
+            onOrAfter: date(2025, 1, 1),
+            calendar: calendar
+        )
+
+        XCTAssertEqual(occurrence?.date, date(2025, 8, 23))
+        XCTAssertTrue(occurrence?.anniversary.lunarDate?.isLeapMonth ?? false)
+        XCTAssertEqual(occurrence?.countText, "30 岁")
+        XCTAssertFalse(occurrence?.isFallback ?? true)
+    }
+
+    func testMissingLeapMonthUsesPreviousCommonMonthFallback() {
+        let birthday = anniversary(
+            calendarType: .lunar,
+            lunarDate: LunarDateSpec(originalYear: 1995, month: 6, day: 1, isLeapMonth: true)
+        )
+        let occurrence = AnniversaryResolver.nextOccurrence(
+            for: birthday,
+            onOrAfter: date(2026, 1, 1),
+            calendar: calendar
+        )
+
+        XCTAssertEqual(occurrence?.date, date(2026, 7, 14))
+        XCTAssertTrue(occurrence?.isFallback ?? false)
+        XCTAssertEqual(occurrence?.fallbackNote?.contains("普通六月"), true)
+    }
+
+    func testMissingLeapMonthUsesNextCommonMonthFallback() {
+        let birthday = anniversary(
+            calendarType: .lunar,
+            lunarDate: LunarDateSpec(originalYear: 1995, month: 6, day: 1, isLeapMonth: true),
+            fallback: .nextCommonMonth
+        )
+        let occurrence = AnniversaryResolver.nextOccurrence(
+            for: birthday,
+            onOrAfter: date(2026, 1, 1),
+            calendar: calendar
+        )
+
+        XCTAssertEqual(occurrence?.date, date(2026, 8, 13))
+        XCTAssertTrue(occurrence?.isFallback ?? false)
+        XCTAssertEqual(occurrence?.fallbackNote?.contains("七月"), true)
+    }
+
+    func testMissingLeapMonthSkipYearWaitsForNextLeapYear() {
+        let birthday = anniversary(
+            calendarType: .lunar,
+            lunarDate: LunarDateSpec(originalYear: 1995, month: 6, day: 1, isLeapMonth: true),
+            fallback: .skipYear
+        )
+        let occurrence = AnniversaryResolver.nextOccurrence(
+            for: birthday,
+            onOrAfter: date(2026, 1, 1),
+            calendar: calendar
+        )
+
+        XCTAssertEqual(occurrence?.date, date(2036, 8, 22))
+        XCTAssertFalse(occurrence?.isFallback ?? true)
+    }
+
+    func testLunarBirthdayCrossesYearWhenDateHasPassed() {
+        let birthday = anniversary(
+            calendarType: .lunar,
+            lunarDate: LunarDateSpec(originalYear: 1998, month: 9, day: 1)
+        )
+        let occurrence = AnniversaryResolver.nextOccurrence(
+            for: birthday,
+            onOrAfter: date(2026, 11, 4),
+            calendar: calendar
+        )
+
+        XCTAssertEqual(occurrence?.date, date(2027, 9, 30))
+        XCTAssertEqual(occurrence?.countText, "29 岁")
+    }
 }
