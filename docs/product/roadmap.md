@@ -71,6 +71,11 @@
   - [ ] GUI / 真机人工验收
 - [ ] 农历生日（闰月规则）
 - [ ] 智能闹钟：工作日/休息日（调休感知）
+  - [x] `WorkdayResolver` 模板、官方休 / 班优先级、60 天计划与覆盖状态
+  - [x] 设置页模板 / 自定义周几 / 响铃时间 / 未来 60 天预览
+  - [x] 本地通知预计算、前缀隔离重建与权限拒绝保护
+  - [x] HolidayData 14 项 XCTest + generic iOS Simulator build
+  - [ ] 通知响铃、跨时区与设置 GUI / 真机人工验收
 - [ ] 桌面大组件、倒计时模板
 - [ ] 联系人生日导入
 
@@ -110,4 +115,4 @@
 - [x] 自然语言输入规则表 UI/UX
 - [x] 里程碑提醒与小组件设计
 - [ ] 多条自定义提醒 UI 设计
-- [ ] WorkdayResolver / SyncProvider ADR
+- [ ] SyncProvider ADR

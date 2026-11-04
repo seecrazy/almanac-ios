@@ -21,7 +21,7 @@
 | EventKit 单条提醒 | 🟡 | 新建/编辑支持不提醒、准时、提前 5/15/30/60 分钟、1 天；详情可展示。多条/自定义提醒默认保留，GUI 验收待完成 |
 | EventKit 基础重复规则 | ✅ | 新建/编辑支持基础频率、间隔、周几多选、每月规则和三种结束方式 |
 | Xcode 工程 | ✅ | Xcode 27.2 generic simulator build 通过 |
-| 核心引擎测试 | ✅ | LunarKit 14 / HolidayData 12 / RecurrenceEngine 6 / NaturalInput 13 / EventKitMapping 6 / MilestoneKit 10 / EventSearchKit 4 |
+| 核心引擎测试 | ✅ | LunarKit 14 / HolidayData 14 / RecurrenceEngine 6 / NaturalInput 13 / EventKitMapping 6 / MilestoneKit 10 / EventSearchKit 4 |
 | 设计系统 | 🟡 | token 和月格/日详情/创建表单基线已文档化；组件覆盖不全 |
 | 农历基础 | 🟡 | 公历↔农历、闰月、干支、生肖、月视图文本已实现；月柱为农历月近似，节气月柱未精确计算 |
 | 节假日 | 🟡 | manifest、2026–2027 多年度 sample、跨年查询、覆盖状态与来源提示已接入；官方数据待替换 |
@@ -32,7 +32,7 @@
 | 农历生日 / 纪念日 | 🟡 | 模型 / Resolver / 编辑器 / 提醒已接入；GUI / 真机验收未完成 |
 | 黄历 | 🟡 | `AlmanacCalendar` / JSON 规则 / 日详情折叠面板已接入；GUI / 真机验收和完整口径校准待完成 |
 | 二十四节气 | 🔴 | 设置项存在但无计算/展示 |
-| 智能闹钟 | 🔴 | 无 WorkdayResolver / Alarm / 通知调度 |
+| 智能闹钟 | 🟡 | WorkdayResolver、设置页预览与本地通知调度已接入；通知响铃、跨时区和 GUI / 真机验收未完成 |
 | 公司政策引擎 | 🔴 | 无规则模型、模板、公司码分发 |
 | 自然语言创建 | 🟡 | 本地 parser / 规则表 / UI 已接入；GUI 验收、英文完整表达、复杂重复规则、提醒推断未实现 |
 | 自然语言问答 | 🔴 | 无本地查询引擎 |
@@ -64,7 +64,7 @@
 | 领域 | 缺口 |
 |---|---|
 | 中国日历 | 二十四节气、农历节日；生日 / 纪念日与黄历面板待 GUI 验收 |
-| 智能闹钟 | WorkdayResolver、调休感知、通知预计算、响铃计划预览 |
+| 智能闹钟 | 通知响铃、跨时区与设置 GUI / 真机验收 |
 | 公司政策 | 模板、公司码、版本更新、大小周、月末周六 |
 | 平台能力 | Live Activity、App Intents、Shortcuts |
 | 里程碑 | 模板、颜色自定义、SQLite / GRDB、Live Activity |
@@ -80,7 +80,7 @@
 
 1. CloudKit + 系统备份 + 加密导出的三路迁移方案。
 2. 里程碑 `auto` 精度策略和秒级展示边界。
-3. 智能闹钟 60 天响铃计划预览。
+3. 智能闹钟 60 天响铃计划预览已落码。
 4. 公司政策引擎和公司码分发。
 5. 日记自动生成日程骨架。
 6. 本地自然语言问答。
@@ -91,5 +91,5 @@
 
 1. 把 MVP 缺口拆成可验收的 PR 系列。
 2. 为多条提醒和 Live Activity 补实现细节。
-3. 为 `WorkdayResolver` 和 `SyncProvider` 各写一份 ADR。
+3. 为 `SyncProvider` 写一份 ADR。
 4. 把 `design-gap.md` 纳入每次 milestone 结束时刷新。

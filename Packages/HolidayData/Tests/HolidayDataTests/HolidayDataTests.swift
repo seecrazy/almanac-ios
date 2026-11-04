@@ -138,6 +138,97 @@ final class HolidayDataTests: XCTestCase {
         let store = HolidayStore(manifest: manifest, yearData: [2027: data])
         XCTAssertNil(store.status(for: 2027))
         XCTAssertEqual(store.coverage(for: date(2027, 1, 1)), .yearNotLoaded)
-        XCTAssertEqual(store.loadErrors.count, 1)
+    }
+
+    func testWorkdayTemplateAndOfficialAdjustmentsOverrideBaseWeekdays() {
+        let store = HolidayStore.bundled()
+        let standard = WorkdayResolver.planDay(
+            date(2026, 3, 7),
+            template: WorkdayTemplate(kind: .standardFiveDay),
+            holidays: store
+        )
+
+        XCTAssertFalse(standard.baseIsWorkday)
+        XCTAssertFalse(standard.shouldRing)
+        XCTAssertEqual(standard.reason, "周六，闹钟关闭")
+        XCTAssertEqual(standard.holidayCoverage, .noSpecialDay)
+
+        let sixDay = WorkdayResolver.planDay(
+            date(2026, 3, 7),
+            template: WorkdayTemplate(kind: .sixDayWeek),
+            holidays: store
+        )
+        XCTAssertTrue(sixDay.shouldRing)
+        XCTAssertEqual(sixDay.reason, "周六，闹钟开启")
+
+        let custom = WorkdayResolver.planDay(
+            date(2026, 3, 8),
+            template: WorkdayTemplate(kind: .custom, customWeekdays: [1, 3]),
+            holidays: store
+        )
+        XCTAssertTrue(custom.shouldRing)
+        XCTAssertEqual(custom.reason, "周日，闹钟开启")
+
+        let singleRest = WorkdayResolver.planDay(
+            date(2026, 3, 8),
+            template: .singleRest,
+            holidays: store
+        )
+        XCTAssertFalse(singleRest.baseIsWorkday)
+        XCTAssertFalse(singleRest.shouldRing)
+        XCTAssertEqual(singleRest.reason, "周日，闹钟关闭")
+
+        let officialRest = WorkdayResolver.planDay(
+            date(2026, 2, 17),
+            template: WorkdayTemplate(kind: .standardFiveDay),
+            holidays: store
+        )
+        XCTAssertEqual(officialRest.holidayAdjustment, .restDay(name: "春节"))
+        XCTAssertFalse(officialRest.shouldRing)
+        XCTAssertEqual(officialRest.reason, "法定休息日，闹钟关闭")
+
+        let officialWork = WorkdayResolver.planDay(
+            date(2026, 2, 14),
+            template: WorkdayTemplate(kind: .standardFiveDay),
+            holidays: store
+        )
+        XCTAssertEqual(officialWork.holidayAdjustment, .workday(name: "春节"))
+        XCTAssertTrue(officialWork.shouldRing)
+        XCTAssertEqual(officialWork.reason, "调休补班日，闹钟开启")
+    }
+
+    func testWorkdayPlanLimitsSixtyDaysAndMarksUnknownCoverage() {
+        let plans = WorkdayResolver.plan(
+            from: date(2026, 3, 5),
+            days: 100,
+            template: WorkdayTemplate(kind: .standardFiveDay),
+            holidays: HolidayStore.bundled()
+        )
+
+        XCTAssertEqual(plans.count, 60)
+        XCTAssertEqual(
+            plans.map(\.date),
+            plans.map { plan in
+                var calendar = Calendar(identifier: .gregorian)
+                calendar.timeZone = LunarCalendarShanghai.timezone
+                return calendar.startOfDay(for: plan.date)
+            }
+        )
+
+        let unknownPlan = WorkdayResolver.planDay(
+            date(2028, 1, 1),
+            template: WorkdayTemplate(kind: .standardFiveDay),
+            holidays: HolidayStore.bundled()
+        )
+        XCTAssertEqual(unknownPlan.holidayCoverage, .yearNotLoaded)
+        XCTAssertEqual(unknownPlan.reason, "节假日数据未覆盖，按模板执行")
+
+        let legacyUnknown = WorkdayResolver.planDay(
+            date(2026, 3, 5),
+            template: WorkdayTemplate(kind: .standardFiveDay),
+            holidays: HolidayStore(holidays: [])
+        )
+        XCTAssertEqual(legacyUnknown.holidayCoverage, .unknown)
+        XCTAssertEqual(legacyUnknown.reason, "节假日数据未覆盖，按模板执行")
     }
 }

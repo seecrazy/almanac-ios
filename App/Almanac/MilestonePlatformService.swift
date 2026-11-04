@@ -9,6 +9,8 @@ enum MilestoneNotificationAuthorizationState: Equatable {
 }
 
 final class MilestonePlatformService {
+    private static let identifierPrefix = "milestone."
+
     private let notificationCenter = UNUserNotificationCenter.current()
     private let fileManager = FileManager.default
 
@@ -65,7 +67,7 @@ final class MilestonePlatformService {
         }
 
         guard authorization == .granted else {
-            notificationCenter.removeAllPendingNotificationRequests()
+            await removePendingMilestoneNotifications()
             return (authorization, snapshotAvailable)
         }
 
@@ -99,7 +101,7 @@ final class MilestonePlatformService {
 
         let allRequests = requests + anniversaryRequests
 
-        notificationCenter.removeAllPendingNotificationRequests()
+        await removePendingMilestoneNotifications()
         for request in allRequests {
             let content = UNMutableNotificationContent()
             content.title = request.title
@@ -120,6 +122,14 @@ final class MilestonePlatformService {
         }
 
         return (authorization, snapshotAvailable)
+    }
+
+    private func removePendingMilestoneNotifications() async {
+        let pending = await notificationCenter.pendingNotificationRequests()
+        let identifiers = pending
+            .map(\.identifier)
+            .filter { $0.hasPrefix(Self.identifierPrefix) }
+        notificationCenter.removePendingNotificationRequests(withIdentifiers: identifiers)
     }
 
     func readSnapshot() -> MilestoneSnapshot? {

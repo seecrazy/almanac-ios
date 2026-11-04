@@ -28,7 +28,7 @@
 | D-150 | 搜索 v2 | `event-search-v2.md` | 代码已接入；GUI / 真机验收待完成 |
 | D-160 | 黄历面板 | `almanac-panel.md` | 代码已接入；GUI / 真机验收待完成 |
 | D-161 | 农历生日 / 纪念日 | `lunar-anniversaries.md` | 代码已接入；GUI / 真机验收待完成 |
-| D-170 | 工作日智能闹钟 | `workday-alarm.md` | 设计已冻结，先实现引擎 |
+| D-170 | 工作日智能闹钟 | `workday-alarm.md` | 代码已接入；GUI / 真机验收待完成 |
 
 实现顺序默认按 Task ID。若用户指定优先级，以用户指定为准。
 
@@ -82,4 +82,4 @@
 3. D-130：已接入里程碑提醒、快照与基础 Widget。
 4. D-140：已补齐基础视图矩阵。
 5. D-150 / D-160 / D-161 已接入。
-6. D-170：先实现 WorkdayResolver 纯逻辑，再接通知 UI。
+6. D-170：WorkdayResolver、设置页与本地通知已接入；剩余通知响铃和 GUI / 真机验收。

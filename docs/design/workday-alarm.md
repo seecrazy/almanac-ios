@@ -1,7 +1,7 @@
 # 工作日智能闹钟设计 v1
 
-状态：设计已冻结；先实现纯逻辑引擎（2026-11-02）  
-架构依据：[ADR-007](../architecture/adr/ADR-007-cross-platform.md)  
+状态：代码已接入（2026-11-04）；通知响铃与设置 GUI / 真机验收待完成<br>
+架构依据：[ADR-007](../architecture/adr/ADR-007-cross-platform.md) · [ADR-009](../architecture/adr/ADR-009-workday-alarm.md)
 关联设计：[官方节假日数据管道](holiday-data-pipeline.md)
 
 ## 1. 目标
@@ -117,6 +117,7 @@ workday-alarm.yyyy-MM-dd
 - 时区变化后重算。
 - 用户关闭总开关后取消全部。
 - 每天最多一个智能闹钟。
+- 里程碑与智能闹钟按 `milestone.` / `workday-alarm.` 前缀隔离重建，互不清空。
 
 ## 7. 边界
 
@@ -130,14 +131,22 @@ workday-alarm.yyyy-MM-dd
 
 ## 8. 验收清单
 
-- [ ] WorkdayResolver 纯逻辑包无 UI / EventKit 依赖。
-- [ ] 标准双休计划正确。
-- [ ] 单休计划正确。
-- [ ] 六天工作计划正确。
-- [ ] 自定义周几正确。
-- [ ] 法定休覆盖模板。
-- [ ] 官方补班覆盖模板。
-- [ ] 未来 60 天预览正确。
-- [ ] 数据未覆盖时标记 unknown。
-- [ ] 通知权限拒绝不崩溃。
-- [ ] 模板变化后重算并取消旧通知。
+- [x] WorkdayResolver 纯逻辑包无 UI / EventKit 依赖。
+- [x] 标准双休计划正确。（XCTest 已覆盖）
+- [x] 单休计划正确。（XCTest 已覆盖）
+- [x] 六天工作计划正确。（XCTest 已覆盖）
+- [x] 自定义周几正确。（XCTest 已覆盖）
+- [x] 法定休覆盖模板。（XCTest 已覆盖）
+- [x] 官方补班覆盖模板。（XCTest 已覆盖）
+- [x] 未来 60 天预览正确。（XCTest 已覆盖上限与上海日期；GUI 验收待完成）
+- [x] 数据未覆盖时标记 unknown。（XCTest 已覆盖）
+- [x] 通知权限拒绝不崩溃。（代码已接入；真机验收待完成）
+- [x] 模板变化后重算并取消旧通知。（代码已接入；真机验收待完成）
+
+## 9. 当前落地说明
+
+- `WorkdayResolver` 位于 `HolidayData`，复用 `HolidayStore.effect(for:)`、`coverage(for:)` 和固定 `Asia/Shanghai` 语义。
+- 设置页提供模板、自定义周几、响铃时间、通知授权状态和前 10 天计划预览；设置持久化为 `workday.alarm.settings.v1`。
+- App 层只为 `shouldRing` 且未来的计划创建本地通知；总开关关闭或权限拒绝时清理本功能前缀。
+- 里程碑通知同步同样只清理 `milestone.` 前缀，避免两个功能互相覆盖。
+- 通知响铃、跨时区修改和真机权限路径仍需人工验收。

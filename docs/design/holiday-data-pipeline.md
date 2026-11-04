@@ -135,7 +135,7 @@ store.status(for year: Int) -> HolidayYearStatus?
 - [x] App 能区分 official / sample / estimated。
 - [x] 2027 官方通知发布后，按流程可在不改算法代码的情况下新增数据。
 - [x] 未覆盖年份不影响月视图渲染，并显示未覆盖状态。
-- [x] `swift test` 全绿（HolidayData 12 项）。
+- [x] `swift test` 全绿（HolidayData 14 项，含 WorkdayResolver）。
 - [x] Xcode iOS Simulator build 全绿。
 
 ## 9. 当前落地说明
