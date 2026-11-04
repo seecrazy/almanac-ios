@@ -1,4 +1,5 @@
 import SwiftUI
+import EventKitMapping
 
 /// 日程详情。可写事件从这里进入编辑，删除也在这里显式确认。
 struct EventDetailView: View {
@@ -11,6 +12,7 @@ struct EventDetailView: View {
 
     @State private var editContext: EditEventContext?
     @State private var isDeleteConfirmationPresented = false
+    @State private var isDeleteScopeDialogPresented = false
     @State private var errorMessage: String?
     @State private var isDeleting = false
 
@@ -41,7 +43,7 @@ struct EventDetailView: View {
                     detailRow("日历", currentEvent.calendarTitle)
                     detailRow("写入权限", currentEvent.isWritable ? "可编辑" : "只读")
                     if currentEvent.hasRecurrenceRules {
-                        detailRow("重复日程", "v1 只能修改或删除当前这一次")
+                        detailRow("重复日程", "编辑或删除时可选择影响范围")
                     }
                 }
 
@@ -54,7 +56,11 @@ struct EventDetailView: View {
                         }
 
                         Button(role: .destructive) {
-                            isDeleteConfirmationPresented = true
+                            if currentEvent.hasRecurrenceRules {
+                                isDeleteScopeDialogPresented = true
+                            } else {
+                                isDeleteConfirmationPresented = true
+                            }
                         } label: {
                             if isDeleting {
                                 ProgressView()
@@ -91,10 +97,22 @@ struct EventDetailView: View {
             .alert("删除这条日程？", isPresented: $isDeleteConfirmationPresented) {
                 Button("取消", role: .cancel) {}
                 Button("删除", role: .destructive) {
-                    delete()
+                    delete(scope: .thisEvent)
                 }
             } message: {
                 Text("该操作会从系统日历中删除这条日程，且不能在宜历内撤销。")
+            }
+            .confirmationDialog(
+                "删除重复日程的范围",
+                isPresented: $isDeleteScopeDialogPresented,
+                titleVisibility: .visible
+            ) {
+                Button("仅此发生") { delete(scope: .thisEvent) }
+                Button("此次及未来") { delete(scope: .futureEvents) }
+                Button("整个系列") { delete(scope: .wholeSeries) }
+                Button("取消", role: .cancel) {}
+            } message: {
+                Text("该操作会通过 EventKit 删除对应范围的日程，且不能在宜历内撤销。")
             }
             .onChange(of: eventService.events) { events in
                 // 事件被移出当前加载区间或被删除时，关闭已过期的详情。
@@ -134,13 +152,13 @@ struct EventDetailView: View {
         return "\(formatter.string(from: currentEvent.startDate)) – \(formatter.string(from: currentEvent.endDate))"
     }
 
-    private func delete() {
+    private func delete(scope: EventEditScope) {
         errorMessage = nil
         isDeleting = true
 
         Task {
             do {
-                try await eventService.deleteEvent(currentEvent)
+                try await eventService.deleteEvent(currentEvent, scope: scope)
                 isDeleting = false
                 onDeleted()
                 dismiss()
@@ -175,6 +193,7 @@ struct EventEditView: View {
     @State private var selectedCalendarID: String?
     @State private var errorMessage: String?
     @State private var isSaving = false
+    @State private var editScope: EventEditScope = .thisEvent
 
     private let calendar = Calendar.current
 
@@ -238,6 +257,17 @@ struct EventEditView: View {
                     TextField("备注（可选）", text: $notes)
                 }
 
+                if event.hasRecurrenceRules {
+                    Section("影响范围") {
+                        Picker("影响范围", selection: $editScope) {
+                            ForEach(EventEditScope.allCases) { scope in
+                                Text(scope.title).tag(scope)
+                            }
+                        }
+                        .pickerStyle(.inline)
+                    }
+                }
+
                 Section("提醒") {
                     Picker("提醒", selection: $reminderOption) {
                         ForEach(EventReminderOption.formOptions(hasUnsupportedAlarms: event.hasUnsupportedAlarms)) { option in
@@ -250,7 +280,7 @@ struct EventEditView: View {
                     EventRecurrenceEditor(
                         draft: $recurrenceDraft,
                         startDate: startDate,
-                        isProtected: event.hasRecurrenceRules
+                        isProtected: isRecurrenceProtected
                     )
                 }
 
@@ -292,7 +322,7 @@ struct EventEditView: View {
                     }
                 } footer: {
                     if event.hasRecurrenceRules {
-                        Text("这是重复日程。v1 只会修改当前这一次，不会影响其他日期。")
+                        Text(scopeFootnote)
                     } else {
                         Text("修改会保存到系统日历。")
                     }
@@ -314,7 +344,24 @@ struct EventEditView: View {
 
     private var canSave: Bool {
         !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        (isAllDay || endDate > startDate)
+        (isAllDay || endDate > startDate) &&
+        recurrenceDraft.canRepresent(startDate: startDate)
+    }
+
+    private var isRecurrenceProtected: Bool {
+        recurrenceDraft.mode == .preserveExisting ||
+        (event.hasRecurrenceRules && editScope == .thisEvent)
+    }
+
+    private var scopeFootnote: String {
+        switch editScope {
+        case .thisEvent:
+            return "这是重复日程。仅此发生只修改当前这一次，重复规则保持不变。"
+        case .futureEvents:
+            return "这是重复日程。此次及未来会从当前发生开始生效。"
+        case .wholeSeries:
+            return "这是重复日程。整个系列会修改 series master。"
+        }
     }
 
     private func save() {
@@ -334,7 +381,8 @@ struct EventEditView: View {
                     notes: notes,
                     calendarIdentifier: calendarID,
                     reminderOption: reminderOption,
-                    recurrenceDraft: recurrenceDraft
+                    recurrenceDraft: recurrenceDraft,
+                    editScope: editScope
                 )
                 dismiss()
             } catch {

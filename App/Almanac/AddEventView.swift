@@ -1,4 +1,6 @@
 import SwiftUI
+import EventKitMapping
+import NaturalInput
 
 /// 新建系统日历事件。v1 只保留 MVP 必填字段。
 struct AddEventView: View {
@@ -17,6 +19,7 @@ struct AddEventView: View {
     @State private var selectedCalendarID: String?
     @State private var errorMessage: String?
     @State private var isSaving = false
+    private let parseWarnings: [String]
 
     private let calendar = Calendar.current
 
@@ -27,11 +30,55 @@ struct AddEventView: View {
         _startDate = State(initialValue: start)
         _endDate = State(initialValue: end)
         _recurrenceDraft = State(initialValue: EventRecurrenceDraft(startDate: start))
+        self.parseWarnings = []
+    }
+
+    init(
+        initialDate: Date,
+        draft: QuickEventDraft?,
+        warnings: [String] = []
+    ) {
+        let start = draft?.startDate
+            ?? Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: initialDate)
+            ?? Calendar.current.startOfDay(for: initialDate)
+        let end = draft?.endDate
+            ?? Calendar.current.date(byAdding: .hour, value: 1, to: start)
+            ?? start
+
+        _title = State(initialValue: draft?.title ?? "")
+        _startDate = State(initialValue: start)
+        _endDate = State(initialValue: end)
+        _isAllDay = State(initialValue: draft?.isAllDay ?? false)
+        _location = State(initialValue: draft?.location ?? "")
+        _notes = State(initialValue: draft?.notes ?? "")
+
+        let recurrenceMode = EventRecurrenceMode(
+            rawValue: draft?.recurrence.mode.rawValue ?? EventRecurrenceMode.none.rawValue
+        ) ?? .none
+        let recurrenceEnd = Calendar.current.date(byAdding: .month, value: 3, to: start) ?? start
+        _recurrenceDraft = State(
+            initialValue: EventRecurrenceDraft(
+                mode: recurrenceMode,
+                endMode: .never,
+                endDate: recurrenceEnd
+            )
+        )
+        self.parseWarnings = warnings
     }
 
     var body: some View {
         NavigationView {
             Form {
+                if !parseWarnings.isEmpty {
+                    Section("解析提醒") {
+                        ForEach(parseWarnings, id: \.self) { warning in
+                            Text(warning)
+                                .font(.footnote)
+                                .foregroundColor(palette.holidayRed)
+                        }
+                    }
+                }
+
                 Section("基本信息") {
                     TextField("标题", text: $title)
                     Toggle("全天", isOn: $isAllDay)

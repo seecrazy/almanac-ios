@@ -1,6 +1,7 @@
 import SwiftUI
 import LunarKit
 import HolidayData
+import NaturalInput
 
 enum WeekStartDay: String, CaseIterable, Identifiable {
     case monday
@@ -27,14 +28,22 @@ struct MonthView: View {
     @Environment(\.palette) private var palette
     @EnvironmentObject private var eventService: EventStoreService
 
-    @State private var visibleMonth: Date = MonthView.firstOfMonth(Date())
+    @Binding var visibleMonth: Date
+    @Binding var selectedDate: Date
     @State private var selectedDay: Date?
-    @State private var quickComposerDate: Date?
+    @State private var quickComposerContext: QuickComposerContext?
+    @State private var quickInput = ""
     @State private var calendarFilterIsPresented = false
     @State private var searchIsPresented = false
     @AppStorage("month.week.start.day") private var weekStartDayRaw = WeekStartDay.monday.rawValue
 
     private let holidayStore = HolidayStore.bundled()
+    private let inputParser = NaturalInputParser()
+
+    init(visibleMonth: Binding<Date>, selectedDate: Binding<Date>) {
+        _visibleMonth = visibleMonth
+        _selectedDate = selectedDate
+    }
 
     private var weekStartDay: WeekStartDay {
         WeekStartDay(rawValue: weekStartDayRaw) ?? .monday
@@ -55,19 +64,21 @@ struct MonthView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
+            quickInputBar
             weekdayHeader
             grid
             Spacer(minLength: 0)
         }
         .background(palette.background.ignoresSafeArea())
-        .task(id: visibleMonth.timeIntervalSince1970) {
-            await loadMonthEvents()
-        }
         .sheet(item: $selectedDay) { day in
             DayDetail(date: day, holidayStore: holidayStore)
         }
-        .sheet(item: $quickComposerDate) { date in
-            AddEventView(initialDate: date)
+        .sheet(item: $quickComposerContext) { context in
+            AddEventView(
+                initialDate: context.date,
+                draft: context.draft,
+                warnings: context.warnings
+            )
         }
         .sheet(isPresented: $calendarFilterIsPresented) {
             CalendarFilterSheet()
@@ -84,6 +95,13 @@ struct MonthView: View {
                     shiftMonth(value.translation.width < 0 ? 1 : -1)
                 }
         )
+        .onChange(of: selectedDate) { newValue in
+            let newMonth = Self.firstOfMonth(newValue)
+            let currentMonth = Self.firstOfMonth(visibleMonth)
+            if !calendar.isDate(newMonth, inSameDayAs: currentMonth) {
+                visibleMonth = newMonth
+            }
+        }
     }
 
     // MARK: 头部
@@ -118,7 +136,11 @@ struct MonthView: View {
             }
             .accessibilityLabel("日历筛选")
             Button {
-                quickComposerDate = Date()
+                quickComposerContext = QuickComposerContext(
+                    date: Date(),
+                    draft: nil,
+                    warnings: []
+                )
             } label: {
                 Image(systemName: "plus.circle")
                     .font(.system(size: 19, weight: .medium))
@@ -146,6 +168,69 @@ struct MonthView: View {
         .padding(.horizontal, 20)
         .padding(.top, 8)
         .padding(.bottom, 12)
+    }
+
+    // MARK: 快速输入
+
+    private var quickInputBar: some View {
+        HStack(spacing: 10) {
+            TextField(
+                "明天下午3点到5点 开会 @会议室 #重要",
+                text: $quickInput
+            )
+            .textFieldStyle(.plain)
+            .font(.system(size: 14))
+            .submitLabel(.go)
+            .onSubmit { parseQuickInput() }
+            .accessibilityLabel("自然语言创建日程")
+
+            Button {
+                parseQuickInput()
+            } label: {
+                Text("解析")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(canParseQuickInput ? palette.accent : palette.secondary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(palette.card)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(palette.separator)
+                            )
+                    )
+            }
+            .disabled(!canParseQuickInput)
+            .accessibilityLabel("解析自然语言日程")
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 9)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(palette.card)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(palette.separator)
+                )
+        )
+        .padding(.horizontal, 20)
+        .padding(.bottom, 10)
+    }
+
+    private var canParseQuickInput: Bool {
+        !quickInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private func parseQuickInput() {
+        guard canParseQuickInput else { return }
+        let result = inputParser.parse(quickInput, reference: Date())
+        quickComposerContext = QuickComposerContext(
+            date: Date(),
+            draft: result.draft,
+            warnings: result.warnings
+        )
+        quickInput = ""
     }
 
     private var titleText: String {
@@ -200,9 +285,13 @@ struct MonthView: View {
                             isToday: calendar.isDate(day, inSameDayAs: Date()),
                             lunarText: LunarCalendar.displayText(for: LunarCalendar.lunar(from: day)),
                             effect: holidayStore.effect(for: day),
+                            holidaySource: holidayStore.source(for: day),
                             eventColors: eventColors[calendar.startOfDay(for: day)] ?? [])
                         .contentShape(Rectangle())
-                        .onTapGesture { selectedDay = day }
+                        .onTapGesture {
+                            selectedDate = day
+                            selectedDay = day
+                        }
                 } else {
                     Color.clear.frame(height: 76)
                 }
@@ -234,6 +323,7 @@ struct DayCell: View {
     let isToday: Bool
     let lunarText: String
     let effect: DayEffect?
+    let holidaySource: HolidaySource?
     var hasEvents: Bool = false
     var eventColors: [CalendarColorComponents] = []
 
@@ -284,11 +374,20 @@ struct DayCell: View {
 
     @ViewBuilder
     private var badge: some View {
+        let source = holidaySource ?? .official
         switch effect {
         case .restDay:
-            badgeText("休", color: palette.holidayRed)
+            if source == .estimated {
+                badgeText("休估", color: palette.makeupGray.opacity(0.85))
+            } else {
+                badgeText("休", color: palette.holidayRed)
+            }
         case .workday:
-            badgeText("班", color: palette.makeupGray)
+            if source == .estimated {
+                badgeText("班估", color: palette.makeupGray.opacity(0.85))
+            } else {
+                badgeText("班", color: palette.makeupGray)
+            }
         case nil:
             EmptyView()
         }

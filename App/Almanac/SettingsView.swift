@@ -1,4 +1,5 @@
 import SwiftUI
+import HolidayData
 
 struct SettingsView: View {
     @Environment(\.palette) private var palette
@@ -8,6 +9,8 @@ struct SettingsView: View {
     @AppStorage("showSolarTerms") private var showSolarTerms = true
     @AppStorage("showHuangLi") private var showHuangLi = false
     @AppStorage("month.week.start.day") private var weekStartDayRaw = WeekStartDay.monday.rawValue
+
+    private let holidayStore = HolidayStore.bundled()
 
     var body: some View {
         ScrollView {
@@ -23,6 +26,49 @@ struct SettingsView: View {
                     Divider().background(palette.separator)
                     toggleRow("黄历（宜忌/冲煞）", binding: $showHuangLi)
                 }
+                .background(RoundedRectangle(cornerRadius: 16).fill(palette.card))
+
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("节假日数据")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(palette.ink)
+
+                    if holidayStore.statuses.isEmpty {
+                        Text("节假日数据未加载")
+                            .font(.system(size: 13))
+                            .foregroundColor(palette.secondary)
+                    } else {
+                        ForEach(holidayStore.statuses, id: \.year) { status in
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("\(status.year) · \(status.source.title)")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(palette.ink)
+                                if let sourceName = status.sourceName {
+                                    Text(sourceName)
+                                        .font(.system(size: 12))
+                                        .foregroundColor(palette.secondary)
+                                }
+                                if let issuedAt = status.issuedAt {
+                                    Text("更新时间：\(issuedAt)")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(palette.secondary)
+                                }
+                            }
+                        }
+                    }
+
+                    if !holidayStore.loadErrors.isEmpty {
+                        Text("部分年度数据加载失败，已按未覆盖处理。")
+                            .font(.system(size: 12))
+                            .foregroundColor(palette.holidayRed)
+                    }
+
+                    Text("当前内置数据仍为示例；官方通知发布后按数据管道更新。")
+                        .font(.system(size: 12))
+                        .foregroundColor(palette.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(16)
                 .background(RoundedRectangle(cornerRadius: 16).fill(palette.card))
 
                 VStack(alignment: .leading, spacing: 12) {
@@ -77,7 +123,7 @@ struct SettingsView: View {
                 .padding(16)
                 .background(RoundedRectangle(cornerRadius: 16).fill(palette.card))
 
-                Text("黄历默认关闭，v1.1 提供完整面板。当前版本设置不参与同步。")
+                Text("黄历默认关闭；开关控制日详情中的黄历面板。当前版本设置不参与同步。")
                     .font(.system(size: 13))
                     .foregroundColor(palette.secondary)
             }

@@ -1,4 +1,5 @@
 import Foundation
+import MilestoneKit
 
 enum MilestoneCategory: String, Codable, CaseIterable, Identifiable {
     case exam
@@ -38,9 +39,68 @@ struct Milestone: Identifiable, Codable, Hashable {
     var category: MilestoneCategory
     var notes: String
     var createdAt: Date
+    var reminders: [MilestoneReminder]
 
     var effectiveSortDate: Date {
         isAllDay ? Calendar.current.startOfDay(for: targetDate) : targetDate
+    }
+
+    init(
+        id: UUID,
+        title: String,
+        targetDate: Date,
+        isAllDay: Bool,
+        category: MilestoneCategory,
+        notes: String,
+        createdAt: Date,
+        reminders: [MilestoneReminder] = []
+    ) {
+        self.id = id
+        self.title = title
+        self.targetDate = targetDate
+        self.isAllDay = isAllDay
+        self.category = category
+        self.notes = notes
+        self.createdAt = createdAt
+        self.reminders = reminders
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case title
+        case targetDate
+        case isAllDay
+        case category
+        case notes
+        case createdAt
+        case reminders
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        title = try container.decode(String.self, forKey: .title)
+        targetDate = try container.decode(Date.self, forKey: .targetDate)
+        isAllDay = try container.decode(Bool.self, forKey: .isAllDay)
+        category = try container.decode(MilestoneCategory.self, forKey: .category)
+        notes = try container.decode(String.self, forKey: .notes)
+        createdAt = try container.decode(Date.self, forKey: .createdAt)
+        reminders = try container.decodeIfPresent(
+            [MilestoneReminder].self,
+            forKey: .reminders
+        ) ?? []
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(title, forKey: .title)
+        try container.encode(targetDate, forKey: .targetDate)
+        try container.encode(isAllDay, forKey: .isAllDay)
+        try container.encode(category, forKey: .category)
+        try container.encode(notes, forKey: .notes)
+        try container.encode(createdAt, forKey: .createdAt)
+        try container.encode(reminders, forKey: .reminders)
     }
 }
 
@@ -54,13 +114,21 @@ struct MilestoneCountdown: Hashable {
 @MainActor
 final class MilestoneStore: ObservableObject {
     @Published private(set) var milestones: [Milestone] = []
+    @Published private(set) var notificationAuthorization: MilestoneNotificationAuthorizationState = .notDetermined
+    @Published private(set) var snapshotAvailable = false
 
     private let defaults: UserDefaults
     private let storageKey: String
+    private let platformService: MilestonePlatformService
 
-    init(defaults: UserDefaults = .standard, storageKey: String = "milestones.v1") {
+    init(
+        defaults: UserDefaults = .standard,
+        storageKey: String = "milestones.v1",
+        platformService: MilestonePlatformService = MilestonePlatformService()
+    ) {
         self.defaults = defaults
         self.storageKey = storageKey
+        self.platformService = platformService
         loadMilestones()
     }
 
@@ -85,18 +153,30 @@ final class MilestoneStore: ObservableObject {
         }
     }
 
-    func save(_ milestone: Milestone) {
+    func save(_ milestone: Milestone) async {
         if let index = milestones.firstIndex(where: { $0.id == milestone.id }) {
             milestones[index] = milestone
         } else {
             milestones.append(milestone)
         }
         persist()
+        await refreshPlatformState(shouldRequestAuthorization: !milestone.reminders.isEmpty)
     }
 
-    func remove(_ milestone: Milestone) {
+    func remove(_ milestone: Milestone) async {
         milestones.removeAll { $0.id == milestone.id }
         persist()
+        await refreshPlatformState(shouldRequestAuthorization: false)
+    }
+
+    func refreshPlatformState(shouldRequestAuthorization: Bool = false) async {
+        let result = await platformService.sync(
+            milestones: milestones,
+            referenceDate: Date(),
+            shouldRequestAuthorization: shouldRequestAuthorization
+        )
+        notificationAuthorization = result.authorization
+        snapshotAvailable = result.snapshotAvailable
     }
 
     func countdown(for milestone: Milestone, at referenceDate: Date) -> MilestoneCountdown {

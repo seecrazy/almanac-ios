@@ -5,18 +5,19 @@
 #   仅 Command Line Tools → swiftc 直编 + *Sanity 可执行验证
 set -e
 cd "$(dirname "$0")"
-PKGS=(LunarKit HolidayData RecurrenceEngine)
+SWIFTPM_PKGS=(LunarKit HolidayData RecurrenceEngine NaturalInput EventKitMapping MilestoneKit EventSearchKit)
+CLT_PKGS=(LunarKit HolidayData RecurrenceEngine)
 MC=/tmp/swift-module-cache
 mkdir -p "$MC"
 
 if xcrun --find xctest >/dev/null 2>&1; then
   echo "==> 构建路径: SwiftPM (完整 Xcode)"
-  for pkg in $PKGS; do
+  for pkg in $SWIFTPM_PKGS; do
     echo "==> swift build  $pkg"
     (cd Packages/$pkg && swift build)
   done
   if [ "$1" = "test" ]; then
-    for pkg in $PKGS; do
+    for pkg in $SWIFTPM_PKGS; do
       echo "==> swift test   $pkg"
       (cd Packages/$pkg && swift test)
     done
@@ -26,7 +27,7 @@ if xcrun --find xctest >/dev/null 2>&1; then
 fi
 
 echo "==> 构建路径: swiftc 直编 (Command Line Tools)"
-for pkg in $PKGS; do
+for pkg in $CLT_PKGS; do
   echo "==> $pkg"
   (cd Packages/$pkg
    mkdir -p .bin
@@ -45,7 +46,7 @@ for pkg in $PKGS; do
 done
 
 if [ "$1" = "test" ]; then
-  for pkg in $PKGS; do
+  for pkg in $CLT_PKGS; do
     echo "==> 验证 $pkg"
     (cd Packages/$pkg && .bin/$pkg-sanity)
   done

@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "years": [
+    {
+      "year": 2026,
+      "file": "holiday-2026.json",
+      "source": "sample",
+      "sourceName": "内置示例",
+      "sourceURL": null,
+      "issuedAt": "2026-11-02"
+    },
+    {
+      "year": 2027,
+      "file": "holiday-2027.json",
+      "source": "sample",
+      "sourceName": "内置示例",
+      "sourceURL": null,
+      "issuedAt": "2026-11-03"
+    }
+  ]
+}

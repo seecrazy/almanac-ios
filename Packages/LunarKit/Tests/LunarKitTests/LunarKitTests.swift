@@ -76,4 +76,66 @@ final class LunarKitTests: XCTestCase {
         XCTAssertEqual(GanZhi.yearGanZhi(forGregorianYear: 2026).zodiac, "马")
         XCTAssertEqual(GanZhi.yearGanZhi(forGregorianYear: 2024).ganZhi, "甲辰")
     }
+
+    // MARK: 黄历
+
+    func testBundledAlmanacRulesDecodeTwentyFourActivities() throws {
+        let rules = try XCTUnwrap(AlmanacRuleSet.bundled())
+        XCTAssertEqual(rules.version, 1)
+        XCTAssertEqual(rules.duties.count, 12)
+        XCTAssertEqual(rules.clash.count, 12)
+        XCTAssertEqual(rules.activities.count, 24)
+        XCTAssertEqual(Set(rules.duties).count, 12)
+        XCTAssertEqual(Set(rules.clash.map(\.dayBranch)).count, 12)
+        XCTAssertEqual(Set(rules.activities.map(\.id)).count, 24)
+        XCTAssertTrue(rules.activities.allSatisfy {
+            Set($0.suitableDuties).isDisjoint(with: $0.avoidDuties)
+        })
+    }
+
+    func testAlmanacMonthYearAndRuleFiltering() throws {
+        let rules = try XCTUnwrap(AlmanacRuleSet.bundled())
+        let springFestival = AlmanacCalendar.day(for: date(2026, 2, 17), rules: rules)
+
+        XCTAssertEqual(springFestival.yearGanZhi, "丙午")
+        XCTAssertEqual(springFestival.monthGanZhi, "庚寅")
+        XCTAssertEqual(springFestival.zodiac, "马")
+        XCTAssertEqual(springFestival.dayGanZhi, GanZhi.dayGanZhi(for: date(2026, 2, 17)))
+        XCTAssertEqual(springFestival.source, .rule)
+        XCTAssertFalse(springFestival.suitable.isEmpty)
+        XCTAssertFalse(springFestival.avoid.isEmpty)
+        XCTAssertTrue(
+            Set(springFestival.suitable.map(\.id))
+                .isDisjoint(with: Set(springFestival.avoid.map(\.id)))
+        )
+    }
+
+    func testAlmanacClashUsesDayBranchRule() throws {
+        let rules = try XCTUnwrap(AlmanacRuleSet.bundled())
+        let anchor = AlmanacCalendar.day(for: date(1949, 10, 1), rules: rules)
+
+        XCTAssertEqual(anchor.dayGanZhi, "甲子")
+        XCTAssertEqual(anchor.clash?.conflictBranch, "午")
+        XCTAssertEqual(anchor.clash?.direction, "南")
+    }
+
+    func testAlmanacDateOutsideLunarSupportIsExplicit() throws {
+        let rules = try XCTUnwrap(AlmanacRuleSet.bundled())
+        XCTAssertNil(AlmanacCalendar.day(for: date(1899, 12, 31), rules: rules).lunar)
+        XCTAssertNil(AlmanacCalendar.day(for: date(2102, 3, 1), rules: rules).lunar)
+        XCTAssertEqual(
+            AlmanacCalendar.day(for: date(2102, 3, 1), rules: rules).yearGanZhi,
+            "壬戌"
+        )
+    }
+
+    func testCorruptAlmanacRulesStillProduceCoreFields() throws {
+        let data = Data("not-json".utf8)
+        XCTAssertThrowsError(try AlmanacRuleSet.decode(from: data))
+        let day = AlmanacCalendar.day(for: date(2026, 2, 17), rules: nil)
+
+        XCTAssertEqual(day.yearGanZhi, "丙午")
+        XCTAssertTrue(day.suitable.isEmpty)
+        XCTAssertTrue(day.avoid.isEmpty)
+    }
 }

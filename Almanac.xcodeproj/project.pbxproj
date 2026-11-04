@@ -21,9 +21,19 @@
 		7A1111110000000000000087 /* EventSearchSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000088 /* EventSearchSheet.swift */; };
 		7A1111110000000000000090 /* MilestoneStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000091 /* MilestoneStore.swift */; };
 		7A1111110000000000000092 /* MilestoneViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000093 /* MilestoneViews.swift */; };
+		7A1111110000000000000097 /* QuickComposerContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000098 /* QuickComposerContext.swift */; };
+		7A1111110000000000000131 /* MilestonePlatformService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000130 /* MilestonePlatformService.swift */; };
+		7A1111110000000000000160 /* CalendarViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000161 /* CalendarViews.swift */; };
+		7A1111110000000000000148 /* MilestoneWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000137 /* MilestoneWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		7A1111110000000000000120 /* EventKitMapping in Frameworks */ = {isa = PBXBuildFile; productRef = 7A1111110000000000000121 /* EventKitMapping */; };
+		7A1111110000000000000152 /* MilestoneKit in Frameworks */ = {isa = PBXBuildFile; productRef = 7A1111110000000000000151 /* MilestoneKit */; };
+		7A1111110000000000000162 /* EventSearchKit in Frameworks */ = {isa = PBXBuildFile; productRef = 7A1111110000000000000163 /* EventSearchKit */; };
 		7A1111110000000000000080 /* LunarKit in Frameworks */ = {isa = PBXBuildFile; productRef = 7A1111110000000000000070 /* LunarKit */; };
 		7A1111110000000000000081 /* HolidayData in Frameworks */ = {isa = PBXBuildFile; productRef = 7A1111110000000000000071 /* HolidayData */; };
 		7A1111110000000000000082 /* RecurrenceEngine in Frameworks */ = {isa = PBXBuildFile; productRef = 7A1111110000000000000072 /* RecurrenceEngine */; };
+		7A1111110000000000000096 /* NaturalInput in Frameworks */ = {isa = PBXBuildFile; productRef = 7A1111110000000000000095 /* NaturalInput */; };
+		7A1111110000000000000153 /* MilestoneWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000135 /* MilestoneWidget.swift */; };
+		7A1111110000000000000154 /* MilestoneKit in Frameworks */ = {isa = PBXBuildFile; productRef = 7A1111110000000000000155 /* MilestoneKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -42,6 +52,14 @@
 		7A1111110000000000000088 /* EventSearchSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventSearchSheet.swift; sourceTree = "<group>"; };
 		7A1111110000000000000091 /* MilestoneStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MilestoneStore.swift; sourceTree = "<group>"; };
 		7A1111110000000000000093 /* MilestoneViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MilestoneViews.swift; sourceTree = "<group>"; };
+		7A1111110000000000000098 /* QuickComposerContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickComposerContext.swift; sourceTree = "<group>"; };
+		7A1111110000000000000130 /* MilestonePlatformService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MilestonePlatformService.swift; sourceTree = "<group>"; };
+		7A1111110000000000000161 /* CalendarViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarViews.swift; sourceTree = "<group>"; };
+		7A1111110000000000000132 /* Almanac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml.entitlements; path = Almanac.entitlements; sourceTree = "<group>"; };
+		7A1111110000000000000133 /* MilestoneWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml.entitlements; path = MilestoneWidget.entitlements; sourceTree = "<group>"; };
+		7A1111110000000000000134 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		7A1111110000000000000135 /* MilestoneWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MilestoneWidget.swift; sourceTree = "<group>"; };
+		7A1111110000000000000137 /* MilestoneWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MilestoneWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,6 +70,18 @@
 				7A1111110000000000000080 /* LunarKit in Frameworks */,
 				7A1111110000000000000081 /* HolidayData in Frameworks */,
 				7A1111110000000000000082 /* RecurrenceEngine in Frameworks */,
+				7A1111110000000000000096 /* NaturalInput in Frameworks */,
+				7A1111110000000000000120 /* EventKitMapping in Frameworks */,
+				7A1111110000000000000152 /* MilestoneKit in Frameworks */,
+				7A1111110000000000000162 /* EventSearchKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7A1111110000000000000140 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7A1111110000000000000154 /* MilestoneKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -62,6 +92,7 @@
 			isa = PBXGroup;
 			children = (
 				7A1111110000000000000004 /* App/Almanac */,
+				7A1111110000000000000136 /* MilestoneWidget */,
 				7A1111110000000000000003 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -70,6 +101,7 @@
 			isa = PBXGroup;
 			children = (
 				7A1111110000000000000020 /* Almanac.app */,
+				7A1111110000000000000137 /* MilestoneWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -80,9 +112,13 @@
 				7A1111110000000000000041 /* AlmanacApp.swift */,
 				7A1111110000000000000042 /* Theme.swift */,
 				7A1111110000000000000043 /* RootView.swift */,
+				7A1111110000000000000161 /* CalendarViews.swift */,
 				7A1111110000000000000044 /* MonthView.swift */,
 				7A1111110000000000000045 /* DayDetail.swift */,
 				7A1111110000000000000047 /* SettingsView.swift */,
+				7A1111110000000000000098 /* QuickComposerContext.swift */,
+				7A1111110000000000000132 /* Almanac.entitlements */,
+				7A1111110000000000000130 /* MilestonePlatformService.swift */,
 				7A1111110000000000000048 /* EventService.swift */,
 				7A1111110000000000000049 /* AddEventView.swift */,
 				7A1111110000000000000050 /* EventDetailView.swift */,
@@ -95,6 +131,16 @@
 			path = App/Almanac;
 			sourceTree = "<group>";
 		};
+		7A1111110000000000000136 /* MilestoneWidget */ = {
+			isa = PBXGroup;
+			children = (
+				7A1111110000000000000135 /* MilestoneWidget.swift */,
+				7A1111110000000000000134 /* Info.plist */,
+				7A1111110000000000000133 /* MilestoneWidget.entitlements */,
+			);
+			path = MilestoneWidget;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -105,20 +151,46 @@
 				7A1111110000000000000011 /* Sources */,
 				7A1111110000000000000012 /* Frameworks */,
 				7A1111110000000000000013 /* Resources */,
+				7A1111110000000000000147 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				7A1111110000000000000146 /* PBXTargetDependency */,
 			);
 			name = Almanac;
 			packageProductDependencies = (
 				7A1111110000000000000070 /* LunarKit */,
 				7A1111110000000000000071 /* HolidayData */,
 				7A1111110000000000000072 /* RecurrenceEngine */,
+				7A1111110000000000000095 /* NaturalInput */,
+				7A1111110000000000000121 /* EventKitMapping */,
+				7A1111110000000000000151 /* MilestoneKit */,
+				7A1111110000000000000163 /* EventSearchKit */,
 			);
 			productName = Almanac;
 			productReference = 7A1111110000000000000020 /* Almanac.app */;
 			productType = "com.apple.product-type.application";
+		};
+		7A1111110000000000000138 /* MilestoneWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7A1111110000000000000142 /* Build configuration list for PBXNativeTarget "MilestoneWidget" */;
+			buildPhases = (
+				7A1111110000000000000139 /* Sources */,
+				7A1111110000000000000140 /* Frameworks */,
+				7A1111110000000000000141 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MilestoneWidget;
+			packageProductDependencies = (
+				7A1111110000000000000155 /* MilestoneKit */,
+			);
+			productName = MilestoneWidget;
+			productReference = 7A1111110000000000000137 /* MilestoneWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -131,6 +203,9 @@
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
 					7A1111110000000000000010 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					7A1111110000000000000138 = {
 						CreatedOnToolsVersion = 16.0;
 					};
 				};
@@ -149,18 +224,54 @@
 				7A1111110000000000000060 /* XCLocalSwiftPackageReference "Packages/LunarKit" */,
 				7A1111110000000000000061 /* XCLocalSwiftPackageReference "Packages/HolidayData" */,
 				7A1111110000000000000062 /* XCLocalSwiftPackageReference "Packages/RecurrenceEngine" */,
+				7A1111110000000000000094 /* XCLocalSwiftPackageReference "Packages/NaturalInput" */,
+				7A1111110000000000000122 /* XCLocalSwiftPackageReference "Packages/EventKitMapping" */,
+				7A1111110000000000000150 /* XCLocalSwiftPackageReference "Packages/MilestoneKit" */,
+				7A1111110000000000000164 /* XCLocalSwiftPackageReference "Packages/EventSearchKit" */,
 			);
 			productRefGroup = 7A1111110000000000000003 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				7A1111110000000000000010 /* Almanac */,
+				7A1111110000000000000138 /* MilestoneWidget */,
 			);
 		};
 /* End PBXProject section */
 
+/* Begin PBXContainerItemProxy section */
+		7A1111110000000000000145 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7A1111110000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7A1111110000000000000138;
+			remoteInfo = MilestoneWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		7A1111110000000000000147 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				7A1111110000000000000148 /* MilestoneWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXResourcesBuildPhase section */
 		7A1111110000000000000013 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7A1111110000000000000141 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -188,6 +299,17 @@
 				7A1111110000000000000087 /* EventSearchSheet.swift in Sources */,
 				7A1111110000000000000090 /* MilestoneStore.swift in Sources */,
 				7A1111110000000000000092 /* MilestoneViews.swift in Sources */,
+				7A1111110000000000000097 /* QuickComposerContext.swift in Sources */,
+				7A1111110000000000000131 /* MilestonePlatformService.swift in Sources */,
+				7A1111110000000000000160 /* CalendarViews.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7A1111110000000000000139 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7A1111110000000000000153 /* MilestoneWidget.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -260,6 +382,7 @@
 		7A1111110000000000000034 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = App/Almanac/Almanac.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = DFB7P62Y8F;
@@ -287,6 +410,7 @@
 		7A1111110000000000000035 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = App/Almanac/Almanac.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = DFB7P62Y8F;
@@ -305,6 +429,56 @@
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yili.almanac;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		7A1111110000000000000143 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = MilestoneWidget/MilestoneWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = DFB7P62Y8F;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MilestoneWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yili.almanac.milestonewidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		7A1111110000000000000144 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = MilestoneWidget/MilestoneWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = DFB7P62Y8F;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MilestoneWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yili.almanac.milestonewidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -332,7 +506,24 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		7A1111110000000000000142 /* Build configuration list for PBXNativeTarget "MilestoneWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7A1111110000000000000143 /* Debug */,
+				7A1111110000000000000144 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
+
+/* Begin PBXTargetDependency section */
+		7A1111110000000000000146 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7A1111110000000000000138 /* MilestoneWidget */;
+			targetProxy = 7A1111110000000000000145 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCLocalSwiftPackageReference section */
 		7A1111110000000000000060 /* XCLocalSwiftPackageReference "Packages/LunarKit" */ = {
@@ -346,6 +537,22 @@
 		7A1111110000000000000062 /* XCLocalSwiftPackageReference "Packages/RecurrenceEngine" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/RecurrenceEngine;
+		};
+		7A1111110000000000000094 /* XCLocalSwiftPackageReference "Packages/NaturalInput" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/NaturalInput;
+		};
+		7A1111110000000000000122 /* XCLocalSwiftPackageReference "Packages/EventKitMapping" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/EventKitMapping;
+		};
+		7A1111110000000000000150 /* XCLocalSwiftPackageReference "Packages/MilestoneKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/MilestoneKit;
+		};
+		7A1111110000000000000164 /* XCLocalSwiftPackageReference "Packages/EventSearchKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/EventSearchKit;
 		};
 /* End XCLocalSwiftPackageReference section */
 
@@ -364,6 +571,31 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 7A1111110000000000000062 /* XCLocalSwiftPackageReference "Packages/RecurrenceEngine" */;
 			productName = RecurrenceEngine;
+		};
+		7A1111110000000000000095 /* NaturalInput */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7A1111110000000000000094 /* XCLocalSwiftPackageReference "Packages/NaturalInput" */;
+			productName = NaturalInput;
+		};
+		7A1111110000000000000121 /* EventKitMapping */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7A1111110000000000000122 /* XCLocalSwiftPackageReference "Packages/EventKitMapping" */;
+			productName = EventKitMapping;
+		};
+		7A1111110000000000000151 /* MilestoneKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7A1111110000000000000150 /* XCLocalSwiftPackageReference "Packages/MilestoneKit" */;
+			productName = MilestoneKit;
+		};
+		7A1111110000000000000155 /* MilestoneKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7A1111110000000000000150 /* XCLocalSwiftPackageReference "Packages/MilestoneKit" */;
+			productName = MilestoneKit;
+		};
+		7A1111110000000000000163 /* EventSearchKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7A1111110000000000000164 /* XCLocalSwiftPackageReference "Packages/EventSearchKit" */;
+			productName = EventSearchKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

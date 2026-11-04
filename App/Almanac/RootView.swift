@@ -5,8 +5,8 @@ struct RootView: View {
 
     var body: some View {
         TabView {
-            MonthView()
-                .tabItem { Label("月历", systemImage: "calendar") }
+            CalendarScreen()
+                .tabItem { Label("日历", systemImage: "calendar") }
             CountdownView()
                 .tabItem { Label("倒计时", systemImage: "hourglass") }
             SettingsView()

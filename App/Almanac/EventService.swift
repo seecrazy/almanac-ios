@@ -1,4 +1,6 @@
 import EventKit
+import EventKitMapping
+import EventSearchKit
 import Foundation
 import CoreGraphics
 
@@ -263,6 +265,8 @@ final class EventStoreService: ObservableObject {
     @Published private(set) var searchResults: [CalendarEvent] = []
     @Published private(set) var isSearching = false
     @Published private(set) var searchErrorMessage: String?
+    @Published private(set) var searchRangeWasCapped = false
+    @Published private(set) var searchResultLimitReached = false
 
     private let store = EKEventStore()
     private var changeObserver: NSObjectProtocol?
@@ -327,18 +331,28 @@ final class EventStoreService: ObservableObject {
         }
     }
 
-    func loadEvents(from start: Date, to end: Date) async {
+    func loadEvents(from start: Date, to end: Date, appending: Bool = false) async {
         refreshAuthorizationState()
         guard accessState == .granted else { return }
         let interval = DateInterval(start: start, end: max(start, end))
-        loadedInterval = interval
+        if appending, let current = loadedInterval {
+            loadedInterval = DateInterval(
+                start: min(current.start, interval.start),
+                end: max(current.end, interval.end)
+            )
+        } else {
+            loadedInterval = interval
+        }
 
         let fetchedEvents = await Task.detached(priority: .userInitiated) { [store] in
             let predicate = store.predicateForEvents(withStart: interval.start, end: interval.end, calendars: nil)
             return store.events(matching: predicate).map(CalendarEvent.init(from:))
         }.value
 
-        events = fetchedEvents
+        let combinedEvents = appending ? events + fetchedEvents : fetchedEvents
+        var seenIDs = Set<String>()
+        events = combinedEvents
+            .filter { seenIDs.insert($0.id).inserted }
             .filter { isCalendarVisible($0.calendarIdentifier) }
             .sorted {
                 if $0.isAllDay != $1.isAllDay { return $0.isAllDay }
@@ -441,40 +455,56 @@ final class EventStoreService: ObservableObject {
         searchResults = []
         isSearching = false
         searchErrorMessage = nil
+        searchRangeWasCapped = false
+        searchResultLimitReached = false
     }
 
-    func searchEvents(query: String, from start: Date, to end: Date) async {
+    func searchEvents(query: EventSearchQuery) async {
         refreshAuthorizationState()
-        let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        searchRequestGeneration += 1
+        let requestGeneration = searchRequestGeneration
+        let trimmedQuery = query.trimmedKeyword
 
         guard accessState == .granted else {
             searchResults = []
             isSearching = false
             searchErrorMessage = "未授权读取系统日历"
+            searchRangeWasCapped = false
+            searchResultLimitReached = false
             return
         }
 
-        guard !trimmedQuery.isEmpty else {
+        guard query.canSearch else {
             searchResults = []
             isSearching = false
             searchErrorMessage = nil
+            searchRangeWasCapped = false
+            searchResultLimitReached = false
             return
         }
 
         isSearching = true
         searchErrorMessage = nil
-        let interval = DateInterval(start: start, end: max(start, end))
-        let requestGeneration = searchRequestGeneration
+        let resolvedInterval = query.resolvedInterval(referenceDate: Date(), calendar: .current)
+        let interval = resolvedInterval.interval
+        let selectedCalendars = query.calendarIDs.map { identifiers in
+            store.calendars(for: .event).filter { identifiers.contains($0.calendarIdentifier) }
+        }
 
-        let matchedEvents = await Task.detached(priority: .userInitiated) { [store] in
-            let predicate = store.predicateForEvents(withStart: interval.start, end: interval.end, calendars: nil)
+        let matchedEvents = await Task.detached(priority: .userInitiated) { [store, selectedCalendars] in
+            let predicate = store.predicateForEvents(
+                withStart: interval.start,
+                end: interval.end,
+                calendars: selectedCalendars?.isEmpty == true ? [] : selectedCalendars
+            )
             return store.events(matching: predicate).map(CalendarEvent.init(from:))
         }.value
 
         guard requestGeneration == searchRequestGeneration else { return }
 
-        searchResults = matchedEvents
+        let filteredEvents = matchedEvents
             .filter { isCalendarVisible($0.calendarIdentifier) }
+            .filter { query.includeAllDay || !$0.isAllDay }
             .filter { event in
                 let fields = [
                     event.title,
@@ -483,10 +513,18 @@ final class EventStoreService: ObservableObject {
                 ].compactMap { $0 }
                 return fields.contains { $0.localizedStandardContains(trimmedQuery) }
             }
-            .sorted { $0.startDate < $1.startDate }
-            .prefix(100)
-            .map { $0 }
+            .sorted { lhs, rhs in
+                let currentCalendar = Calendar.current
+                if currentCalendar.isDate(lhs.startDate, inSameDayAs: rhs.startDate),
+                   lhs.isAllDay != rhs.isAllDay {
+                    return lhs.isAllDay
+                }
+                return lhs.startDate < rhs.startDate
+            }
 
+        searchResultLimitReached = filteredEvents.count > 200
+        searchResults = Array(filteredEvents.prefix(200))
+        searchRangeWasCapped = resolvedInterval.wasCapped
         isSearching = false
     }
 
@@ -523,7 +561,7 @@ final class EventStoreService: ObservableObject {
         event.location = trimmedLocation?.isEmpty == false ? trimmedLocation : nil
         event.notes = trimmedNotes?.isEmpty == false ? trimmedNotes : nil
         event.calendar = targetCalendar
-        applyRecurrence(recurrenceDraft, to: event, isExistingRecurring: false)
+        applyRecurrence(recurrenceDraft, to: event, shouldPreserve: false)
         applyReminder(reminderOption, to: event)
 
         do {
@@ -546,15 +584,17 @@ final class EventStoreService: ObservableObject {
         notes: String?,
         calendarIdentifier: String?,
         reminderOption: EventReminderOption,
-        recurrenceDraft: EventRecurrenceDraft
+        recurrenceDraft: EventRecurrenceDraft,
+        editScope: EventEditScope = .thisEvent
     ) async throws {
         refreshAuthorizationState()
         guard accessState == .granted else { throw EventStoreError.accessDenied }
         guard isAllDay || endDate > startDate else { throw EventStoreError.invalidDates }
 
-        guard let storedEvent = ekEvent(matching: model) else {
+        guard let matchedEvent = ekEvent(matching: model) else {
             throw EventStoreError.eventNotFound
         }
+        let storedEvent = masterEventIfNeeded(matchedEvent, model: model, scope: editScope)
         guard storedEvent.calendar?.allowsContentModifications == true else {
             throw EventStoreError.readOnlyEvent
         }
@@ -576,11 +616,15 @@ final class EventStoreService: ObservableObject {
         storedEvent.location = trimmedLocation?.isEmpty == false ? trimmedLocation : nil
         storedEvent.notes = trimmedNotes?.isEmpty == false ? trimmedNotes : nil
         storedEvent.calendar = targetCalendar
-        applyRecurrence(recurrenceDraft, to: storedEvent, isExistingRecurring: model.hasRecurrenceRules)
+        applyRecurrence(
+            recurrenceDraft,
+            to: storedEvent,
+            shouldPreserve: model.hasRecurrenceRules && editScope == .thisEvent
+        )
         applyReminder(reminderOption, to: storedEvent)
 
         do {
-            try store.save(storedEvent, span: .thisEvent)
+            try store.save(storedEvent, span: saveSpan(for: model, scope: editScope))
         } catch {
             throw EventStoreError.saveFailed(error.localizedDescription)
         }
@@ -589,19 +633,23 @@ final class EventStoreService: ObservableObject {
         await reloadIfNecessary()
     }
 
-    func deleteEvent(_ model: CalendarEvent) async throws {
+    func deleteEvent(
+        _ model: CalendarEvent,
+        scope: EventEditScope = .thisEvent
+    ) async throws {
         refreshAuthorizationState()
         guard accessState == .granted else { throw EventStoreError.accessDenied }
 
-        guard let storedEvent = ekEvent(matching: model) else {
+        guard let matchedEvent = ekEvent(matching: model) else {
             throw EventStoreError.eventNotFound
         }
+        let storedEvent = masterEventIfNeeded(matchedEvent, model: model, scope: scope)
         guard storedEvent.calendar?.allowsContentModifications == true else {
             throw EventStoreError.readOnlyEvent
         }
 
         do {
-            try store.remove(storedEvent, span: .thisEvent)
+            try store.remove(storedEvent, span: saveSpan(for: model, scope: scope))
         } catch {
             throw EventStoreError.deleteFailed(error.localizedDescription)
         }
@@ -683,6 +731,29 @@ final class EventStoreService: ObservableObject {
         }
     }
 
+    private func masterEventIfNeeded(
+        _ event: EKEvent,
+        model: CalendarEvent,
+        scope: EventEditScope
+    ) -> EKEvent {
+        guard model.hasRecurrenceRules, scope == .wholeSeries,
+              let identifier = model.eventIdentifier,
+              let master = store.event(withIdentifier: identifier) else {
+            return event
+        }
+        return master
+    }
+
+    private func saveSpan(for model: CalendarEvent, scope: EventEditScope) -> EKSpan {
+        guard model.hasRecurrenceRules else { return .thisEvent }
+        switch scope {
+        case .thisEvent:
+            return .thisEvent
+        case .futureEvents, .wholeSeries:
+            return .futureEvents
+        }
+    }
+
     private func applyReminder(_ option: EventReminderOption, to event: EKEvent) {
         guard option != .preserveExisting else { return }
 
@@ -708,10 +779,9 @@ final class EventStoreService: ObservableObject {
     private func applyRecurrence(
         _ draft: EventRecurrenceDraft,
         to event: EKEvent,
-        isExistingRecurring: Bool
+        shouldPreserve: Bool
     ) {
-        // v1 不改写已有重复规则，避免误把“仅此次修改”变成系列修改。
-        guard !isExistingRecurring else { return }
+        guard !shouldPreserve, draft.mode != .preserveExisting else { return }
         event.recurrenceRules = draft.makeRule(startDate: event.startDate).map { [$0] }
     }
 

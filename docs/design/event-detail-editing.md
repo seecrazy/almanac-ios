@@ -1,8 +1,8 @@
 # 事件详情、编辑与删除设计 v1
 
-状态：已实现代码基线；待模拟器 / 真机验收（2026-11-01）  
-架构依据：[ADR-001](../architecture/adr/ADR-001-eventkit-as-source-of-truth.md)  
-关联设计：[事件创建](event-creation.md) · [事件提醒](event-reminders.md) · [重复规则](event-recurrence.md) · [设计系统](design-system.md)
+状态：代码基线与重复范围操作已接入（2026-11-04）；GUI / 真机人工验收按当前决策暂跳过
+架构依据：[ADR-001](../architecture/adr/ADR-001-eventkit-as-source-of-truth.md)
+关联设计：[事件创建](event-creation.md) · [事件提醒](event-reminders.md) · [重复规则](event-recurrence.md) · [重复规则完整编辑与系列操作](recurrence-series-editing.md) · [设计系统](design-system.md)
 
 ## 1. 目标
 
@@ -14,9 +14,8 @@
 
 ## 2. 非目标 v1
 
-- 不编辑已有重复事件的规则；非重复事件补充基础重复规则由 [event-recurrence.md](event-recurrence.md) 接管。
+- 复杂重复规则保持只读；可表示规则由 [recurrence-series-editing.md](recurrence-series-editing.md) 接管。
 - 不编辑参与人、附件、会议链接；单条提醒由 [event-reminders.md](event-reminders.md) 接管。
-- 不做“单次修改 / 整个系列修改”选择页。
 - 不处理只读日历的本地草稿或覆盖写入。
 - 不做撤销删除；删除直接作用于 EventKit。
 
@@ -35,9 +34,10 @@
 ```text
 EventDetailView → 编辑按钮 → EventEditView
   → 修改基础字段
+  → 重复日程选择影响范围
   → 保存
   → EventStoreService.updateEvent(...)
-  → EKEventStore.save(..., span: .thisEvent)
+  → EKEventStore.save(..., span: selected span)
   → 刷新已加载月份
 ```
 
@@ -45,9 +45,10 @@ EventDetailView → 编辑按钮 → EventEditView
 
 ```text
 EventDetailView → 删除按钮
-  → 系统删除确认
+  → 非重复：系统删除确认
+  → 重复：仅此发生 / 此次及未来 / 整个系列
   → EventStoreService.deleteEvent(...)
-  → EKEventStore.remove(..., span: .thisEvent)
+  → EKEventStore.remove(..., span: selected span)
   → 刷新已加载月份
   → 关闭详情 sheet
 ```
@@ -63,7 +64,7 @@ EventDetailView → 删除按钮
 | 地点 | 是 | `EKEvent.location` | 空值写入 `nil` |
 | 备注 | 是 | `EKEvent.notes` | 空值写入 `nil` |
 | 目标日历 | 是 | `EKEvent.calendar` | 只允许选择可写日历 |
-| 重复规则 | 非重复事件可补充 | `EKEvent.recurrenceRules` | 已有重复事件进入只读保护 |
+| 重复规则 | 非重复可补充；重复可编辑可表示规则 | `EKEvent.recurrenceRules` | 复杂规则只读保护 |
 
 详情页额外展示：
 
@@ -100,19 +101,21 @@ event.calendar?.allowsContentModifications == true
 
 如果事件不存在、事件已被外部删除，或日历只读，UI 必须显示明确错误，不能静默失败。
 
-## 6. 重复日程策略 v1
+## 6. 重复日程范围策略
 
-重复日程先支持最小安全路径：
+重复日程先选择影响范围，再执行编辑或删除：
 
-| 操作 | v1 行为 |
+| 范围 | 编辑行为 | 删除行为 |
 |---|---|
-| 编辑重复日程的某次发生 | 只修改当前这一次，`span: .thisEvent` |
-| 删除重复日程的某次发生 | 只删除当前这一次，`span: .thisEvent` |
-| 编辑 / 删除整个系列 | 暂不支持 |
+| 仅此发生 | 修改当前发生，保持原 recurrence rules | `remove(..., span: .thisEvent)` |
+| 此次及未来 | 从当前发生开始保存新规则 / 字段 | `remove(..., span: .futureEvents)` |
+| 整个系列 | 查找 series master 后保存 | master `remove(..., span: .futureEvents)` |
 
-UI 对重复日程显示“重复日程：v1 只修改 / 删除当前这一次”。
+不可表示规则进入只读保护，保存时不改写 `recurrenceRules`。
 
-完整系列编辑会涉及例外日期、未来发生项和用户预期确认，仍留在后续版本。
+### 6.1 例外与刷新
+
+“仅此发生”依赖 EventKit 生成本次例外；“此次及未来”由 EventKit 拆分 series；两者都通过 `EKEventStoreChanged` 和主动 reload 刷新月视图与日详情。
 
 ## 7. 状态设计
 
@@ -137,20 +140,21 @@ UI 对重复日程显示“重复日程：v1 只修改 / 删除当前这一次�
 ## 9. 验收清单
 
 - [x] generic iOS Simulator 构建通过。
-- [ ] 日详情中的每条日程可点击进入详情。
-- [ ] 详情显示标题、时间、全天、地点、备注、日历。
-- [ ] 可写事件显示编辑和删除。
-- [ ] 只读日历事件不显示可用的编辑 / 删除动作。
-- [ ] 编辑标题、时间、全天、地点、备注、日历后 EventKit 数据更新。
-- [ ] 删除可写事件后日详情和月视图圆点更新。
-- [ ] 重复日程 v1 只影响当前这一次。
-- [ ] 只读事件不会发起 EventKit 写请求。
-- [ ] 删除确认必须显式确认。
+- [x] 日详情中的每条日程可点击进入详情。
+- [x] 详情显示标题、时间、全天、地点、备注、日历。
+- [x] 可写事件显示编辑和删除。
+- [x] 只读日历事件不显示可用的编辑 / 删除动作。
+- [x] 编辑标题、时间、全天、地点、备注、日历后 EventKit 数据更新。
+- [x] 删除可写事件后日详情和月视图圆点更新。
+- [x] 重复日程可选择仅此发生 / 此次及未来 / 整个系列。
+- [x] 仅此发生保持原重复规则。
+- [x] 只读事件不会发起 EventKit 写请求。
+- [x] 删除确认必须显式确认。
 
 ## 10. 后续演进
 
 1. 编辑 / 删除前重新检查事件仍然存在。
-2. 支持重复事件的“仅此次 / 此次及未来 / 整个系列”。
-3. 编辑多条提醒和完整重复规则。
+2. 编辑多条提醒。
+3. 复杂 RRULE 只读解释。
 4. 权限被拒后跳系统设置。
 5. 使用 SwiftUI Testing 覆盖表单校验和错误状态。

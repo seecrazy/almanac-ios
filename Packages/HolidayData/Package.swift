@@ -10,7 +10,11 @@ let package = Package(
     targets: [
 
         .target(name: "HolidayData",
-                resources: [.copy("Resources/holiday-2026.json")],
+                resources: [
+                    .copy("Resources/holiday-manifest.json"),
+                    .copy("Resources/holiday-2026.json"),
+                    .copy("Resources/holiday-2027.json"),
+                ],
                 swiftSettings: [.define("SWIFTPM")]),
         .executableTarget(name: "HolidayDataSanity", dependencies: ["HolidayData"], path: "Sources/HolidayDataSanity"),
         .testTarget(

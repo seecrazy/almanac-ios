@@ -1,4 +1,5 @@
 import SwiftUI
+import MilestoneKit
 
 struct MilestoneEditorContext: Identifiable {
     let id = UUID()
@@ -67,9 +68,13 @@ struct CountdownView: View {
                         .padding(.horizontal, 20)
                     }
 
-                    Text("里程碑保存在本机，v1.1 接入提醒和小组件。")
+                    Text("里程碑保存在本机；提醒通过本地通知调度，小组件读取共享快照。")
                         .font(.system(size: 13))
                         .foregroundColor(palette.secondary)
+                        .padding(.horizontal, 24)
+                    Text(milestoneStore.snapshotAvailable ? "小组件快照已更新。" : "无法写入小组件快照；请确认 App Group 可用。")
+                        .font(.system(size: 12))
+                        .foregroundColor(milestoneStore.snapshotAvailable ? palette.secondary : palette.holidayRed)
                         .padding(.horizontal, 24)
                     Spacer()
                 }
@@ -107,6 +112,11 @@ private struct MilestoneCard: View {
                 Text(milestone.category.title)
                     .font(.system(size: 10, weight: .medium))
                     .foregroundColor(palette.secondary)
+                if !milestone.reminders.isEmpty {
+                    Text("提醒 \(milestone.reminders.count) 项")
+                        .font(.system(size: 10))
+                        .foregroundColor(palette.secondary)
+                }
             }
 
             Spacer()
@@ -157,6 +167,7 @@ struct MilestoneEditorView: View {
     @State private var isAllDay = true
     @State private var category: MilestoneCategory = .custom
     @State private var notes = ""
+    @State private var reminders: [MilestoneReminder] = []
     @State private var deleteConfirmationIsPresented = false
 
     private let calendar = Calendar.current
@@ -171,6 +182,7 @@ struct MilestoneEditorView: View {
             _isAllDay = State(initialValue: milestone.isAllDay)
             _category = State(initialValue: milestone.category)
             _notes = State(initialValue: milestone.notes)
+            _reminders = State(initialValue: milestone.reminders)
         } else {
             _targetDate = State(initialValue: defaultDate)
         }
@@ -207,6 +219,27 @@ struct MilestoneEditorView: View {
                     TextField("备注（可选）", text: $notes)
                 }
 
+                Section("提醒") {
+                    ForEach(MilestoneReminderKind.allCases) { kind in
+                        Toggle(kind.title, isOn: reminderBinding(for: kind))
+                    }
+
+                    switch milestoneStore.notificationAuthorization {
+                    case .granted:
+                        Text("通知已授权，将按计划响铃。")
+                            .font(.system(size: 12))
+                            .foregroundColor(palette.secondary)
+                    case .notDetermined:
+                        Text(hasEnabledReminders ? "保存后宜历会请求通知权限。" : "启用提醒后，保存时会请求通知权限。")
+                            .font(.system(size: 12))
+                            .foregroundColor(palette.secondary)
+                    case .denied:
+                        Text("通知未授权；提醒设置会保存，但不会响铃。")
+                            .font(.system(size: 12))
+                            .foregroundColor(palette.holidayRed)
+                    }
+                }
+
                 Section {
                     Button {
                         save()
@@ -232,7 +265,7 @@ struct MilestoneEditorView: View {
                         }
                     }
                 } footer: {
-                    Text("里程碑保存在本机。v1 暂不写入系统日历。")
+                    Text("里程碑保存在本机，不写入系统日历；提醒通过本地通知调度。")
                 }
             }
             .navigationTitle(milestone == nil ? "新建里程碑" : "编辑里程碑")
@@ -246,9 +279,11 @@ struct MilestoneEditorView: View {
                 Button("取消", role: .cancel) {}
                 Button("删除", role: .destructive) {
                     if let milestone {
-                        milestoneStore.remove(milestone)
+                        Task {
+                            await milestoneStore.remove(milestone)
+                            dismiss()
+                        }
                     }
-                    dismiss()
                 }
             } message: {
                 Text("删除后无法在宜历内撤销。")
@@ -258,6 +293,10 @@ struct MilestoneEditorView: View {
 
     private var canSave: Bool {
         !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var hasEnabledReminders: Bool {
+        reminders.contains { $0.isEnabled }
     }
 
     private func save() {
@@ -273,10 +312,32 @@ struct MilestoneEditorView: View {
             isAllDay: isAllDay,
             category: category,
             notes: notes.trimmingCharacters(in: .whitespacesAndNewlines),
-            createdAt: milestone?.createdAt ?? now
+            createdAt: milestone?.createdAt ?? now,
+            reminders: reminders
         )
-        milestoneStore.save(updated)
-        dismiss()
+        Task {
+            await milestoneStore.save(updated)
+            dismiss()
+        }
+    }
+
+    private func reminderBinding(for kind: MilestoneReminderKind) -> Binding<Bool> {
+        Binding<Bool>(
+            get: {
+                reminders.first { $0.kind == kind }?.isEnabled ?? false
+            },
+            set: { isEnabled in
+                if let index = reminders.firstIndex(where: { $0.kind == kind }) {
+                    if isEnabled {
+                        reminders[index].isEnabled = true
+                    } else {
+                        reminders.remove(at: index)
+                    }
+                } else if isEnabled {
+                    reminders.append(MilestoneReminder(kind: kind, isEnabled: true))
+                }
+            }
+        )
     }
 }
 

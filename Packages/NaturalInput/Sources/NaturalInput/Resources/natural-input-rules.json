@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "locale": "zh-Hans-CN",
+  "allDayMarkers": ["全天"],
+  "relativeDates": {
+    "今天": 0,
+    "今日": 0,
+    "明天": 1,
+    "后天": 2,
+    "大后天": 3
+  },
+  "nextWeekPrefixes": ["下星期", "下周", "下礼拜"],
+  "weekdayPrefixes": ["星期", "礼拜", "周"],
+  "weekdayAliases": {
+    "一": 2,
+    "二": 3,
+    "三": 4,
+    "四": 5,
+    "五": 6,
+    "六": 7,
+    "日": 1,
+    "天": 1
+  },
+  "recurrenceRules": [
+    {
+      "patterns": ["每天", "每日"],
+      "mode": "daily"
+    },
+    {
+      "patterns": ["每周一次", "每个星期", "每星期", "每周"],
+      "mode": "weekly"
+    },
+    {
+      "patterns": ["每两周", "隔周"],
+      "mode": "biweekly"
+    },
+    {
+      "patterns": ["每月"],
+      "mode": "monthly"
+    },
+    {
+      "patterns": ["每年"],
+      "mode": "yearly"
+    }
+  ],
+  "locationMarker": "@",
+  "notesMarker": "#"
+}

@@ -9,7 +9,12 @@ let package = Package(
     ],
     targets: [
 
-        .target(name: "LunarKit"),
+        .target(
+            name: "LunarKit",
+            resources: [
+                .process("Resources")
+            ]
+        ),
         .executableTarget(
             name: "LunarSanity",
             dependencies: ["LunarKit"],

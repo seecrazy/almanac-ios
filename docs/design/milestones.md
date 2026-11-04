@@ -1,7 +1,7 @@
 # 里程碑倒计时 v1
 
-状态：已实现代码基线；待模拟器 / 真机验收（2026-11-02）  
-架构依据：[ADR-001](../architecture/adr/ADR-001-eventkit-as-source-of-truth.md)  
+状态：基础闭环已实现；提醒与小组件由 [milestone-reminders-widgets.md](milestone-reminders-widgets.md) 接管（2026-11-04）
+架构依据：[ADR-001](../architecture/adr/ADR-001-eventkit-as-source-of-truth.md)
 关联设计：[设计系统](design-system.md) · [月视图交互](month-interaction.md)
 
 ## 1. 目标
@@ -13,11 +13,9 @@
 - 日详情中展示当天发生的里程碑横幅。
 - v1 使用本地 JSON / `UserDefaults` 持久化。
 
-## 2. 非目标 v1
+## 2. 非目标 v1（基础闭环边界）
 
 - 不写入 EventKit。
-- 不创建系统提醒。
-- 不做锁屏 / 桌面 Widget。
 - 不做 Live Activity。
 - 不做重复里程碑。
 - 不引入 SQLite / GRDB。
@@ -117,8 +115,7 @@ SQLite / GRDB 仍留在后续版本；v1 只解决模型和交互闭环。
 ## 10. 后续演进
 
 1. SQLite / GRDB 持久化。
-2. 里程碑提醒。
-3. 锁屏和桌面 Widget。
-4. Live Activity。
-5. 重复里程碑。
-6. 颜色与模板自定义。
+1. Live Activity。
+2. 重复里程碑。
+3. 颜色与模板自定义。
+4. SQLite / GRDB。

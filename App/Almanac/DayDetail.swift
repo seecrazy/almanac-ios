@@ -8,6 +8,7 @@ struct DayDetail: View {
     @EnvironmentObject private var milestoneStore: MilestoneStore
     @State private var composerContext: EventComposerContext?
     @State private var selectedEvent: CalendarEvent?
+    @AppStorage("showHuangLi") private var showHuangLi = false
 
     let date: Date
     let holidayStore: HolidayStore
@@ -26,6 +27,10 @@ struct DayDetail: View {
                 VStack(alignment: .leading, spacing: 18) {
                     header
                     holidayBanner
+                    if showHuangLi {
+                        AlmanacPanel(date: date)
+                    }
+                    holidayCoverageFootnote
                     milestoneBanners
                     nextHolidayFootnote
                     eventList
@@ -83,12 +88,51 @@ struct DayDetail: View {
 
     @ViewBuilder
     private var holidayBanner: some View {
+        let source = holidayStore.source(for: date)
         switch holidayStore.effect(for: date) {
         case .restDay(let name):
-            banner(text: "\(name) · 法定休", color: palette.holidayRed)
+            VStack(alignment: .leading, spacing: 6) {
+                banner(text: "\(name) · 法定休", color: palette.holidayRed)
+                sourceFootnote(for: source)
+            }
         case .workday(let name):
-            banner(text: "\(name)调休 · 补班日", color: palette.makeupGray)
+            VStack(alignment: .leading, spacing: 6) {
+                banner(text: "\(name)调休 · 补班日", color: palette.makeupGray)
+                sourceFootnote(for: source)
+            }
         case nil:
+            EmptyView()
+        }
+    }
+
+    @ViewBuilder
+    private var holidayCoverageFootnote: some View {
+        switch holidayStore.coverage(for: date) {
+        case .yearNotLoaded:
+            Text("该年份节假日数据未加载")
+                .font(.system(size: 12))
+                .foregroundColor(palette.secondary)
+        case .unknown:
+            Text("节假日数据未覆盖")
+                .font(.system(size: 12))
+                .foregroundColor(palette.secondary)
+        case .covered, .noSpecialDay:
+            EmptyView()
+        }
+    }
+
+    @ViewBuilder
+    private func sourceFootnote(for source: HolidaySource?) -> some View {
+        switch source {
+        case .sample:
+            Text("示例数据，仅供参考")
+                .font(.system(size: 12))
+                .foregroundColor(palette.secondary)
+        case .estimated:
+            Text("预测数据，未经官方确认")
+                .font(.system(size: 12))
+                .foregroundColor(palette.secondary)
+        case .official, nil:
             EmptyView()
         }
     }
@@ -125,7 +169,7 @@ struct DayDetail: View {
 
     @ViewBuilder
     private var nextHolidayFootnote: some View {
-        if holidayStore.effect(for: date) == nil,
+        if holidayStore.coverage(for: date) == .noSpecialDay,
            let next = holidayStore.nextHoliday(after: date) {
             let days = Calendar(identifier: .gregorian)
                 .dateComponents([.day], from: calendar.startOfDay(for: date), to: calendar.startOfDay(for: next.date)).day ?? 0
@@ -180,7 +224,7 @@ struct EventComposerContext: Identifiable {
     let date: Date
 }
 
-private struct EventRow: View {
+struct EventRow: View {
     @Environment(\.palette) private var palette
 
     let event: CalendarEvent
@@ -227,7 +271,7 @@ private struct EventRow: View {
     }
 }
 
-private struct MilestoneBanner: View {
+struct MilestoneBanner: View {
     @Environment(\.palette) private var palette
 
     let milestone: Milestone

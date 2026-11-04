@@ -1,7 +1,7 @@
 import Foundation
 
 /// 农历日期
-public struct LunarDate: Equatable {
+public struct LunarDate: Equatable, Hashable {
     public let year: Int
     public let month: Int
     public let day: Int
@@ -118,6 +118,18 @@ public enum LunarCalendar {
         for m in 1...12 { total += daysInLunarMonth(lunarYear, m, isLeapMonth: false) }
         if leap > 0 { total += daysInLunarMonth(lunarYear, leap, isLeapMonth: true) }
         return total
+    }
+
+    /// 日期是否严格落在农历数据支持范围内（1900-01-31 起至 2100 年腊月最后一天）
+    public static func isSupportedDate(_ date: Date) -> Bool {
+        let offset = dayOffset(from: date)
+        guard offset >= 0 else { return false }
+
+        var totalDays = 0
+        for year in LunarData.firstYear..<(LunarData.firstYear + LunarData.info.count) {
+            totalDays += daysInLunarYear(year)
+        }
+        return offset < totalDays
     }
 
     // MARK: - 文本（月视图用）
