@@ -214,6 +214,7 @@ private struct CalendarWeekView: View {
     @Environment(\.palette) private var palette
     @EnvironmentObject private var eventService: EventStoreService
     @AppStorage("month.week.start.day") private var weekStartDayRaw = WeekStartDay.monday.rawValue
+    @AppStorage("showSolarTerms") private var showSolarTerms = true
 
     @Binding var selectedDate: Date
     let holidayStore: HolidayStore
@@ -237,6 +238,7 @@ private struct CalendarWeekView: View {
     }
 
     var body: some View {
+        let solarTermNameMap = solarTermNameMap
         VStack(spacing: 0) {
             header
             weekdayHeader
@@ -249,6 +251,7 @@ private struct CalendarWeekView: View {
                             isToday: calendar.isDateInToday(day),
                             events: Array(eventService.events(on: day).prefix(3)),
                             totalEventCount: eventService.events(on: day).count,
+                            solarTermText: solarTermNameMap[solarTermDayKey(for: day)],
                             effect: holidayStore.effect(for: day),
                             onTap: { onSelectDay(day) }
                         )
@@ -267,6 +270,32 @@ private struct CalendarWeekView: View {
                     shiftWeek(value.translation.width < 0 ? 1 : -1)
                 }
         )
+    }
+
+    private var solarTermNameMap: [DateComponents: String] {
+        guard showSolarTerms else { return [:] }
+
+        var shanghaiCalendar = Calendar(identifier: .gregorian)
+        shanghaiCalendar.timeZone = LunarCalendar.timeZone
+        let years = Set(weekDays.map {
+            shanghaiCalendar.component(.year, from: $0)
+        })
+        let terms = years.compactMap { SolarTermCalendar.terms(inGregorianYear: $0) }
+        return Dictionary(
+            uniqueKeysWithValues: terms.flatMap { $0 }.map {
+                (dayKey($0.date, calendar: shanghaiCalendar), $0.name.rawValue)
+            }
+        )
+    }
+
+    private func solarTermDayKey(for date: Date) -> DateComponents {
+        var shanghaiCalendar = Calendar(identifier: .gregorian)
+        shanghaiCalendar.timeZone = LunarCalendar.timeZone
+        return dayKey(date, calendar: shanghaiCalendar)
+    }
+
+    private func dayKey(_ date: Date, calendar: Calendar) -> DateComponents {
+        calendar.dateComponents([.year, .month, .day], from: date)
     }
 
     private var header: some View {
@@ -344,6 +373,7 @@ private struct WeekDayColumn: View {
     let isToday: Bool
     let events: [CalendarEvent]
     let totalEventCount: Int
+    var solarTermText: String? = nil
     let effect: DayEffect?
     let onTap: () -> Void
 
@@ -353,9 +383,9 @@ private struct WeekDayColumn: View {
                 Text("\(Calendar.current.component(.day, from: day))")
                     .font(.system(size: 18, weight: isSelected ? .semibold : .regular))
                     .foregroundColor(dayColor)
-                Text(LunarCalendar.displayText(for: LunarCalendar.lunar(from: day)))
+                Text(solarTermText ?? LunarCalendar.displayText(for: LunarCalendar.lunar(from: day)))
                     .font(.system(size: 10))
-                    .foregroundColor(palette.secondary)
+                    .foregroundColor(solarTermText == nil ? palette.secondary : palette.solarGreen)
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity)
@@ -410,6 +440,7 @@ private struct CalendarDayView: View {
     @State private var composerContext: EventComposerContext?
     @State private var selectedEvent: CalendarEvent?
     @AppStorage("showHuangLi") private var showHuangLi = false
+    @AppStorage("showSolarTerms") private var showSolarTerms = true
 
     private let calendar = Calendar.current
 
@@ -457,6 +488,11 @@ private struct CalendarDayView: View {
                 Text(lunarLine)
                     .font(.system(size: 13))
                     .foregroundColor(palette.secondary)
+                if showSolarTerms, let solarTerm = SolarTermCalendar.term(on: selectedDate) {
+                    Text("节气 · \(solarTerm.name.rawValue)")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(palette.solarGreen)
+                }
             }
             Spacer()
             HStack(spacing: 4) {

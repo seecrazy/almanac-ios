@@ -9,6 +9,7 @@ struct DayDetail: View {
     @State private var composerContext: EventComposerContext?
     @State private var selectedEvent: CalendarEvent?
     @AppStorage("showHuangLi") private var showHuangLi = false
+    @AppStorage("showSolarTerms") private var showSolarTerms = true
 
     let date: Date
     let holidayStore: HolidayStore
@@ -70,6 +71,11 @@ struct DayDetail: View {
             Text(lunarLine)
                 .font(.system(size: 14))
                 .foregroundColor(palette.secondary)
+            if showSolarTerms, let solarTerm = SolarTermCalendar.term(on: date) {
+                Text("节气 · \(solarTerm.name.rawValue)")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(palette.solarGreen)
+            }
         }
     }
 

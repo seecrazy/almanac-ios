@@ -77,6 +77,95 @@ final class LunarKitTests: XCTestCase {
         XCTAssertEqual(GanZhi.yearGanZhi(forGregorianYear: 2024).ganZhi, "甲辰")
     }
 
+    // MARK: 二十四节气
+
+    func testSolarTermCatalogCompletenessAndOrder() throws {
+        XCTAssertEqual(SolarTermName.allCases.count, 24)
+        XCTAssertEqual(Set(SolarTermName.allCases.map(\.rawValue)).count, 24)
+
+        let terms = try XCTUnwrap(SolarTermCalendar.terms(inGregorianYear: 2026))
+        XCTAssertEqual(terms.count, 24)
+        XCTAssertEqual(terms.map(\.name), SolarTermName.allCases)
+        XCTAssertTrue(zip(terms, terms.dropFirst()).allSatisfy { $0.date < $1.date })
+        XCTAssertTrue(
+            terms.first!.date < terms.last!.date
+        )
+    }
+
+    func testSolarTermAnchorsUseShanghaiDay() throws {
+        var shanghaiCalendar = Calendar(identifier: .gregorian)
+        shanghaiCalendar.timeZone = LunarCalendar.timeZone
+        func isSameShanghaiDay(_ left: Date, _ right: Date) -> Bool {
+            shanghaiCalendar.isDate(left, inSameDayAs: right)
+        }
+
+        let supportedYears = [1900, 1949, 2024, 2026]
+        for year in supportedYears {
+            XCTAssertNotNil(SolarTermCalendar.terms(inGregorianYear: year))
+        }
+
+        let historicalAnchors: [(year: Int, SolarTermName, (month: Int, day: Int))] = [
+            (1900, .springBegins, (2, 4)),
+            (1900, .springEquinox, (3, 21)),
+            (1900, .summerSolstice, (6, 22)),
+            (1900, .winterSolstice, (12, 22)),
+            (1949, .springBegins, (2, 4)),
+            (1949, .springEquinox, (3, 21)),
+            (1949, .summerSolstice, (6, 22)),
+            (1949, .winterSolstice, (12, 22))
+        ]
+        for (year, name, anchor) in historicalAnchors {
+            let term = try XCTUnwrap(
+                SolarTermCalendar.terms(inGregorianYear: year)?.first { $0.name == name }
+            )
+            XCTAssertTrue(
+                isSameShanghaiDay(term.date, date(year, anchor.month, anchor.day)),
+                "\(year) \(name.rawValue) 应落在 \(anchor)"
+            )
+        }
+
+        let anchors: [(SolarTermName, (year: Int, month: Int, day: Int))] = [
+            (.springBegins, (2026, 2, 4)),
+            (.springEquinox, (2026, 3, 20)),
+            (.summerSolstice, (2026, 6, 21)),
+            (.winterSolstice, (2026, 12, 22))
+        ]
+
+        for (name, anchor) in anchors {
+            let term = try XCTUnwrap(
+                SolarTermCalendar.terms(inGregorianYear: 2026)?.first { $0.name == name }
+            )
+            XCTAssertTrue(
+                isSameShanghaiDay(term.date, date(anchor.year, anchor.month, anchor.day)),
+                "\(name.rawValue) 应落在 \(anchor)"
+            )
+        }
+
+        let anchors2024: [(SolarTermName, (year: Int, month: Int, day: Int))] = [
+            (.springBegins, (2024, 2, 4)),
+            (.springEquinox, (2024, 3, 20)),
+            (.summerSolstice, (2024, 6, 21)),
+            (.winterSolstice, (2024, 12, 21))
+        ]
+        for (name, anchor) in anchors2024 {
+            let term = try XCTUnwrap(
+                SolarTermCalendar.terms(inGregorianYear: 2024)?.first { $0.name == name }
+            )
+            XCTAssertTrue(
+                isSameShanghaiDay(term.date, date(anchor.year, anchor.month, anchor.day)),
+                "\(name.rawValue) 应落在 \(anchor)"
+            )
+        }
+    }
+
+    func testSolarTermDayLookupAndOutsideSupport() {
+        XCTAssertEqual(SolarTermCalendar.term(on: date(2026, 2, 4))?.name, .springBegins)
+        XCTAssertEqual(SolarTermCalendar.displayName(for: date(2026, 2, 4)), "立春")
+        XCTAssertNil(SolarTermCalendar.term(on: date(2026, 2, 5)))
+        XCTAssertNil(SolarTermCalendar.terms(inGregorianYear: 1899))
+        XCTAssertNil(SolarTermCalendar.terms(inGregorianYear: 2101))
+    }
+
     // MARK: 黄历
 
     func testBundledAlmanacRulesDecodeTwentyFourActivities() throws {

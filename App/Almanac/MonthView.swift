@@ -36,6 +36,7 @@ struct MonthView: View {
     @State private var calendarFilterIsPresented = false
     @State private var searchIsPresented = false
     @AppStorage("month.week.start.day") private var weekStartDayRaw = WeekStartDay.monday.rawValue
+    @AppStorage("showSolarTerms") private var showSolarTerms = true
 
     private let holidayStore = HolidayStore.bundled()
     private let inputParser = NaturalInputParser()
@@ -277,6 +278,7 @@ struct MonthView: View {
     private var grid: some View {
         let cells = monthCells(for: visibleMonth)
         let eventColors = eventService.eventCalendarColors(for: visibleMonth)
+        let solarTermNames = solarTermNames(for: visibleMonth)
         let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
         return LazyVGrid(columns: columns, spacing: 0) {
             ForEach(Array(cells.enumerated()), id: \.offset) { _, cell in
@@ -284,6 +286,7 @@ struct MonthView: View {
                     DayCell(day: day,
                             isToday: calendar.isDate(day, inSameDayAs: Date()),
                             lunarText: LunarCalendar.displayText(for: LunarCalendar.lunar(from: day)),
+                            solarTermText: solarTermNames[solarTermDayKey(for: day)],
                             effect: holidayStore.effect(for: day),
                             holidaySource: holidayStore.source(for: day),
                             eventColors: eventColors[calendar.startOfDay(for: day)] ?? [])
@@ -298,6 +301,30 @@ struct MonthView: View {
             }
         }
         .padding(.horizontal, 12)
+    }
+
+    private func solarTermNames(for month: Date) -> [DateComponents: String] {
+        guard showSolarTerms else { return [:] }
+
+        var shanghaiCalendar = Calendar(identifier: .gregorian)
+        shanghaiCalendar.timeZone = LunarCalendar.timeZone
+        let year = shanghaiCalendar.component(.year, from: month)
+        guard let terms = SolarTermCalendar.terms(inGregorianYear: year) else { return [:] }
+        return Dictionary(
+            uniqueKeysWithValues: terms.map {
+                (dayKey($0.date, calendar: shanghaiCalendar), $0.name.rawValue)
+            }
+        )
+    }
+
+    private func solarTermDayKey(for date: Date) -> DateComponents {
+        var shanghaiCalendar = Calendar(identifier: .gregorian)
+        shanghaiCalendar.timeZone = LunarCalendar.timeZone
+        return dayKey(date, calendar: shanghaiCalendar)
+    }
+
+    private func dayKey(_ date: Date, calendar: Calendar) -> DateComponents {
+        calendar.dateComponents([.year, .month, .day], from: date)
     }
 
     private func monthCells(for month: Date) -> [Date?] {
@@ -322,6 +349,7 @@ struct DayCell: View {
     let day: Date
     let isToday: Bool
     let lunarText: String
+    var solarTermText: String? = nil
     let effect: DayEffect?
     let holidaySource: HolidaySource?
     var hasEvents: Bool = false
@@ -340,9 +368,9 @@ struct DayCell: View {
                         .font(.system(size: 17, weight: isToday ? .semibold : .regular))
                         .foregroundColor(numberColor)
                 }
-                Text(lunarText)
+                Text(solarTermText ?? lunarText)
                     .font(.system(size: 10))
-                    .foregroundColor(lunarColor)
+                    .foregroundColor(solarTermText == nil ? lunarColor : palette.solarGreen)
                     .lineLimit(1)
                 if !eventColors.isEmpty {
                     HStack(spacing: 2) {

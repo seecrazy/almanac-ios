@@ -46,6 +46,12 @@ check(GanZhi.dayGanZhi(for: date(1949, 10, 1)) == "甲子", "1949-10-01 甲子�
 check(GanZhi.yearGanZhi(forGregorianYear: 2026).ganZhi == "丙午", "2026 丙午年")
 check(GanZhi.yearGanZhi(forGregorianYear: 2026).zodiac == "马", "2026 马年")
 
+// 二十四节气
+if let terms = SolarTermCalendar.terms(inGregorianYear: 2026) {
+    check(terms.count == 24, "2026 年有 24 个节气")
+    check(SolarTermCalendar.displayName(for: date(2026, 2, 4)) == "立春", "2026-02-04 立春")
+    check(SolarTermCalendar.displayName(for: date(2026, 12, 22)) == "冬至", "2026-12-22 冬至")
+}
 // 今天
 let today = LunarCalendar.lunar(from: Date())
 print("----")
