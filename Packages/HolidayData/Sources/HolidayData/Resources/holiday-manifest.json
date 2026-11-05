@@ -4,10 +4,10 @@
     {
       "year": 2026,
       "file": "holiday-2026.json",
-      "source": "sample",
-      "sourceName": "内置示例",
-      "sourceURL": null,
-      "issuedAt": "2026-11-02"
+      "source": "official",
+      "sourceName": "国务院办公厅通知",
+      "sourceURL": "https://www.gov.cn/zhengce/content/202511/content_7047090.htm",
+      "issuedAt": "2025-11-04"
     },
     {
       "year": 2027,

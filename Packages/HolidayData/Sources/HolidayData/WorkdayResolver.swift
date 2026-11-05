@@ -10,7 +10,7 @@ public enum WorkdayTemplateKind: String, Codable, CaseIterable, Identifiable, Ha
 
     public var title: String {
         switch self {
-        case .standardFiveDay: return "标准双休"
+        case .standardFiveDay: return "工作日"
         case .singleRestDay: return "单休"
         case .sixDayWeek: return "六天工作"
         case .custom: return "自定义"

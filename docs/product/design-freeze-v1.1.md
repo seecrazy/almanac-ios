@@ -21,7 +21,7 @@
 |---|---|---|---|
 | D-100 | 已接入能力 GUI 验收 | 各已有设计文档验收清单 | 待执行 |
 | D-101 | 自然语言输入验收 | `natural-language-input.md` | 代码已接入，待验收 |
-| D-110 | 官方节假日数据管道 | `holiday-data-pipeline.md` | 代码已接入；内置数据待官方替换 |
+| D-110 | 官方节假日数据管道 | `holiday-data-pipeline.md` | 代码已接入；2026 official / 2027 sample |
 | D-120 | 重复规则完整编辑 | `recurrence-series-editing.md` | 代码已接入 |
 | D-130 | 里程碑提醒与小组件 | `milestone-reminders-widgets.md` | 代码已接入 |
 | D-140 | 日 / 周 / 年 / 议程视图 | `views-navigation.md` | 代码已接入 |
@@ -31,6 +31,8 @@
 | D-170 | 工作日智能闹钟 | `workday-alarm.md` | 代码已接入；GUI / 真机验收待完成 |
 | D-180 | 二十四节气 | `solar-terms.md` | 代码已接入；GUI / 真机验收待完成 |
 | D-190 | 农历节日 | `lunar-festivals.md` | 代码已接入；GUI / 真机验收待完成 |
+| D-200 | 冲突检测与空闲时段 | `conflict-free-slots.md` | 代码已接入；GUI / 真机验收待完成 |
+| D-210 | 本地日历管理 | `local-calendar-management.md` | 代码已接入；GUI / 真机验收待完成 |
 
 实现顺序默认按 Task ID。若用户指定优先级，以用户指定为准。
 
@@ -87,3 +89,4 @@
 6. D-170：WorkdayResolver、设置页与本地通知已接入；剩余通知响铃和 GUI / 真机验收。
 7. D-180：节气引擎与月 / 周 / 日展示已接入；剩余 GUI / 真机验收。
 8. D-190：农历节日引擎与月 / 周 / 日展示已接入；剩余 GUI / 真机验收。
+9. D-200：CalendarAnalysis 纯逻辑、新建冲突提醒、日视图空闲时段与日详情冲突摘要已接入；剩余 GUI / 真机验收。

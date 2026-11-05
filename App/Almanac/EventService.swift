@@ -3,6 +3,7 @@ import EventKitMapping
 import EventSearchKit
 import Foundation
 import CoreGraphics
+import CalendarAnalysis
 
 /// App 内使用的轻量日程模型，避免 EventKit 类型穿透 UI。
 struct CalendarEvent: Identifiable, Hashable {
@@ -104,6 +105,18 @@ struct CalendarColorComponents: Hashable {
     }
 }
 
+extension CalendarEvent {
+    var analysisEvent: AnalysisEvent {
+        AnalysisEvent(
+            id: id,
+            title: title,
+            startDate: startDate,
+            endDate: endDate,
+            isAllDay: isAllDay
+        )
+    }
+}
+
 struct CalendarDisplayInfo: Identifiable, Hashable {
     let id: String
     let title: String
@@ -111,6 +124,7 @@ struct CalendarDisplayInfo: Identifiable, Hashable {
     let color: CalendarColorComponents
     let allowsContentModifications: Bool
     let isSubscribed: Bool
+    let isLocal: Bool
 }
 
 /// v1 只管理一条相对提醒；无法归一化的系统提醒保持只读保护。
@@ -221,10 +235,16 @@ enum EventStoreError: LocalizedError {
     case accessDenied
     case invalidDates
     case noWritableCalendar
+    case invalidCalendarName(CalendarNameValidationError)
+    case noLocalCalendarSource
+    case calendarNotFound
+    case calendarNotManageable
     case eventNotFound
     case readOnlyEvent
     case saveFailed(String)
     case deleteFailed(String)
+    case calendarSaveFailed(String)
+    case calendarDeleteFailed(String)
 
     var errorDescription: String? {
         switch self {
@@ -234,6 +254,17 @@ enum EventStoreError: LocalizedError {
             return "结束时间必须晚于开始时间"
         case .noWritableCalendar:
             return "没有可写入的日历"
+        case .invalidCalendarName(let reason):
+            switch reason {
+            case .empty: return "请输入日历名称"
+            case .tooLong: return "日历名称不能超过 \(CalendarManagementPolicy.maximumNameLength) 个字符"
+            }
+        case .noLocalCalendarSource:
+            return "没有可用的本机日历来源"
+        case .calendarNotFound:
+            return "日历不存在或已被删除"
+        case .calendarNotManageable:
+            return "仅支持管理本机可写日历"
         case .eventNotFound:
             return "日程不存在或已被删除"
         case .readOnlyEvent:
@@ -241,6 +272,10 @@ enum EventStoreError: LocalizedError {
         case .saveFailed(let message):
             return message
         case .deleteFailed(let message):
+            return message
+        case .calendarSaveFailed(let message):
+            return message
+        case .calendarDeleteFailed(let message):
             return message
         }
     }
@@ -400,7 +435,8 @@ final class EventStoreService: ObservableObject {
                     sourceTitle: calendar.source?.title ?? "本地",
                     color: CalendarColorComponents(cgColor: calendar.cgColor) ?? .fallback,
                     allowsContentModifications: calendar.allowsContentModifications,
-                    isSubscribed: calendar.isSubscribed
+                    isSubscribed: calendar.isSubscribed,
+                    isLocal: calendar.source?.sourceType == .local
                 )
             }
             .sorted { lhs, rhs in
@@ -439,6 +475,78 @@ final class EventStoreService: ObservableObject {
     func showAllCalendars() {
         hiddenCalendarIDs.removeAll()
         persistHiddenCalendarIDs()
+    }
+
+    func createLocalCalendar(title: String) async throws {
+        refreshAuthorizationState()
+        guard accessState == .granted else { throw EventStoreError.accessDenied }
+
+        let normalizedTitle = try CalendarManagementPolicy.normalizedTitle(title).get()
+        guard let localSource = store.sources.first(where: { $0.sourceType == .local }) else {
+            throw EventStoreError.noLocalCalendarSource
+        }
+
+        let calendar = EKCalendar(for: .event, eventStore: store)
+        calendar.title = normalizedTitle
+        calendar.source = localSource
+
+        do {
+            try store.saveCalendar(calendar, commit: true)
+        } catch {
+            throw EventStoreError.calendarSaveFailed(error.localizedDescription)
+        }
+
+        await refreshAfterCalendarMetadataChange()
+    }
+
+    func renameCalendar(id: String, title: String) async throws {
+        refreshAuthorizationState()
+        guard accessState == .granted else { throw EventStoreError.accessDenied }
+
+        let normalizedTitle = try CalendarManagementPolicy.normalizedTitle(title).get()
+        guard let calendar = store.calendar(withIdentifier: id) else {
+            throw EventStoreError.calendarNotFound
+        }
+        guard CalendarManagementPolicy.canManageCalendar(
+            isLocal: calendar.source?.sourceType == .local,
+            allowsContentModifications: calendar.allowsContentModifications
+        ) else {
+            throw EventStoreError.calendarNotManageable
+        }
+
+        calendar.title = normalizedTitle
+        do {
+            try store.saveCalendar(calendar, commit: true)
+        } catch {
+            throw EventStoreError.calendarSaveFailed(error.localizedDescription)
+        }
+
+        await refreshAfterCalendarMetadataChange()
+    }
+
+    func deleteCalendar(id: String) async throws {
+        refreshAuthorizationState()
+        guard accessState == .granted else { throw EventStoreError.accessDenied }
+
+        guard let calendar = store.calendar(withIdentifier: id) else {
+            throw EventStoreError.calendarNotFound
+        }
+        guard CalendarManagementPolicy.canManageCalendar(
+            isLocal: calendar.source?.sourceType == .local,
+            allowsContentModifications: calendar.allowsContentModifications
+        ) else {
+            throw EventStoreError.calendarNotManageable
+        }
+
+        do {
+            try store.removeCalendar(calendar, commit: true)
+        } catch {
+            throw EventStoreError.calendarDeleteFailed(error.localizedDescription)
+        }
+
+        hiddenCalendarIDs.remove(id)
+        persistHiddenCalendarIDs()
+        await refreshAfterCalendarMetadataChange()
     }
 
     func selectedWritableCalendarID(fallback: String?) -> String? {
@@ -490,6 +598,21 @@ final class EventStoreService: ObservableObject {
         let selectedCalendars = query.calendarIDs.map { identifiers in
             store.calendars(for: .event).filter { identifiers.contains($0.calendarIdentifier) }
         }
+        let visibleCalendarIDs = Set(
+            calendars
+                .filter { !hiddenCalendarIDs.contains($0.id) }
+                .map(\.id)
+        )
+        let effectiveCalendarIDs = query.calendarIDs.map { identifiers in
+            identifiers.intersection(visibleCalendarIDs)
+        } ?? visibleCalendarIDs
+        guard !effectiveCalendarIDs.isEmpty else {
+            searchResults = []
+            searchRangeWasCapped = resolvedInterval.wasCapped
+            searchResultLimitReached = false
+            isSearching = false
+            return
+        }
 
         let matchedEvents = await Task.detached(priority: .userInitiated) { [store, selectedCalendars] in
             let predicate = store.predicateForEvents(
@@ -502,30 +625,75 @@ final class EventStoreService: ObservableObject {
 
         guard requestGeneration == searchRequestGeneration else { return }
 
-        let filteredEvents = matchedEvents
-            .filter { isCalendarVisible($0.calendarIdentifier) }
-            .filter { query.includeAllDay || !$0.isAllDay }
-            .filter { event in
-                let fields = [
-                    event.title,
-                    event.location,
-                    event.notes
-                ].compactMap { $0 }
-                return fields.contains { $0.localizedStandardContains(trimmedQuery) }
+        let indexedEventIDs = await Task.detached(priority: .userInitiated) { () -> [String]? in
+            let records = matchedEvents.map { event in
+                IndexedEventRecord(
+                    eventID: event.id,
+                    calendarID: event.calendarIdentifier ?? "",
+                    title: event.title,
+                    location: event.location,
+                    notes: event.notes,
+                    startDate: event.startDate,
+                    endDate: event.endDate,
+                    isAllDay: event.isAllDay
+                )
             }
-            .sorted { lhs, rhs in
-                let currentCalendar = Calendar.current
-                if currentCalendar.isDate(lhs.startDate, inSameDayAs: rhs.startDate),
-                   lhs.isAllDay != rhs.isAllDay {
-                    return lhs.isAllDay
+
+            do {
+                let index = try EventSearchIndex(databaseURL: Self.searchIndexURL())
+                try index.replaceAll(records)
+                return try index.search(
+                    keyword: trimmedQuery,
+                    interval: interval,
+                    calendarIDs: effectiveCalendarIDs,
+                    includeAllDay: query.includeAllDay,
+                    limit: EventSearchIndex.resultLimit + 1
+                ).map(\.eventID)
+            } catch {
+                return nil
+            }
+        }.value
+
+        guard requestGeneration == searchRequestGeneration else { return }
+
+        let filteredEvents: [CalendarEvent]
+        if let indexedEventIDs {
+            let eventsByID = Dictionary(uniqueKeysWithValues: matchedEvents.map { ($0.id, $0) })
+            filteredEvents = indexedEventIDs.compactMap { eventsByID[$0] }
+        } else {
+            filteredEvents = matchedEvents
+                .filter { effectiveCalendarIDs.contains($0.calendarIdentifier ?? "") }
+                .filter { query.includeAllDay || !$0.isAllDay }
+                .filter { event in
+                    let fields = [
+                        event.title,
+                        event.location,
+                        event.notes
+                    ].compactMap { $0 }
+                    return fields.contains { $0.localizedStandardContains(trimmedQuery) }
                 }
-                return lhs.startDate < rhs.startDate
-            }
+                .sorted { lhs, rhs in
+                    let currentCalendar = Calendar.current
+                    if currentCalendar.isDate(lhs.startDate, inSameDayAs: rhs.startDate),
+                       lhs.isAllDay != rhs.isAllDay {
+                        return lhs.isAllDay
+                    }
+                    return lhs.startDate < rhs.startDate
+                }
+        }
 
         searchResultLimitReached = filteredEvents.count > 200
         searchResults = Array(filteredEvents.prefix(200))
         searchRangeWasCapped = resolvedInterval.wasCapped
         isSearching = false
+    }
+
+    private nonisolated static func searchIndexURL() -> URL {
+        let directory = FileManager.default.urls(
+            for: .applicationSupportDirectory,
+            in: .userDomainMask
+        )[0]
+        return directory.appendingPathComponent("EventSearchIndex.sqlite")
     }
 
     func saveEvent(
@@ -667,6 +835,15 @@ final class EventStoreService: ObservableObject {
         }
     }
 
+    func visibleAnalysisEvents(overlapping interval: DateInterval) -> [AnalysisEvent] {
+        events
+            .filter { event in
+                guard isCalendarVisible(event.calendarIdentifier) else { return false }
+                return event.startDate < interval.end && event.endDate > interval.start
+            }
+            .map(\.analysisEvent)
+    }
+
     func event(with model: CalendarEvent) -> CalendarEvent? {
         guard let storedEvent = ekEvent(matching: model) else { return nil }
         return CalendarEvent(from: storedEvent)
@@ -716,6 +893,12 @@ final class EventStoreService: ObservableObject {
     private func reloadIfNecessary() async {
         guard accessState == .granted, let interval = loadedInterval else { return }
         await loadEvents(from: interval.start, to: interval.end)
+    }
+
+    private func refreshAfterCalendarMetadataChange() async {
+        loadCalendars()
+        loadWritableCalendars()
+        await reloadIfNecessary()
     }
 
     private func ekEvent(matching model: CalendarEvent) -> EKEvent? {

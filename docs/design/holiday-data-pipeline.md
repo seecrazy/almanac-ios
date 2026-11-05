@@ -1,6 +1,6 @@
 # 官方节假日数据管道设计 v1
 
-状态：代码已接入（2026-11-03；2026/2027 内置数据仍为 sample，待官方通知替换）  
+状态：代码已接入；2026 已替换国务院办公厅 official 数据，2027 待官方通知后替换 sample（2026-11-05）
 架构依据：[ADR-007](../architecture/adr/ADR-007-cross-platform.md)  
 关联代码：`Packages/HolidayData`
 
@@ -38,8 +38,8 @@ Packages/HolidayData/Sources/HolidayData/Resources/
       "file": "holiday-2026.json",
       "source": "official",
       "sourceName": "国务院办公厅通知",
-      "sourceURL": "https://www.gov.cn/",
-      "issuedAt": "2025-11-01"
+      "sourceURL": "https://www.gov.cn/zhengce/content/202511/content_7047090.htm",
+      "issuedAt": "2025-11-04"
     }
   ]
 }
@@ -129,13 +129,14 @@ store.status(for year: Int) -> HolidayYearStatus?
 
 - [x] 2026 JSON 保持可加载。
 - [x] manifest 可解码。
-- [x] 支持加载 2026–2027 两个年度（当前均为 sample）。
+- [x] 支持加载 2026–2027 两个年度（2026 official，2027 sample）。
 - [x] 同一天不会同时为休和班。
 - [x] `nextHoliday` 跨年度可找到下一条。
 - [x] App 能区分 official / sample / estimated。
+- [x] 2026 已按《国务院办公厅关于2026年部分节假日安排的通知》（国办发明电〔2025〕7号）替换 official 数据，并记录来源链接与发布日期。
 - [x] 2027 官方通知发布后，按流程可在不改算法代码的情况下新增数据。
 - [x] 未覆盖年份不影响月视图渲染，并显示未覆盖状态。
-- [x] `swift test` 全绿（HolidayData 14 项，含 WorkdayResolver）。
+- [x] `swift test` 全绿（HolidayData 15 项，含 WorkdayResolver 与 2026 official 关键日期）。
 - [x] Xcode iOS Simulator build 全绿。
 
 ## 9. 当前落地说明

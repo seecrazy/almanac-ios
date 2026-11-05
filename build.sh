@@ -5,7 +5,7 @@
 #   仅 Command Line Tools → swiftc 直编 + *Sanity 可执行验证
 set -e
 cd "$(dirname "$0")"
-SWIFTPM_PKGS=(LunarKit HolidayData RecurrenceEngine NaturalInput EventKitMapping MilestoneKit EventSearchKit)
+SWIFTPM_PKGS=(LunarKit HolidayData RecurrenceEngine NaturalInput EventKitMapping MilestoneKit EventSearchKit CalendarAnalysis DiaryKit)
 CLT_PKGS=(LunarKit HolidayData RecurrenceEngine)
 MC=/tmp/swift-module-cache
 mkdir -p "$MC"

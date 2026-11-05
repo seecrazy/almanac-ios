@@ -1,23 +1,20 @@
 import SwiftUI
+import CalendarAnalysis
 import LunarKit
 import HolidayData
 
 enum CalendarViewMode: String, CaseIterable, Identifiable {
     case month
-    case week
-    case day
-    case agenda
     case year
+    case agenda
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
         case .month: return "月"
-        case .week: return "周"
-        case .day: return "日"
-        case .agenda: return "议程"
         case .year: return "年"
+        case .agenda: return "议程"
         }
     }
 }
@@ -44,6 +41,8 @@ struct CalendarScreen: View {
     @State private var selectedDate = Date()
     @State private var visibleMonth = MonthView.firstOfMonth(Date())
     @State private var agendaRange: AgendaRange = .thirty
+    @State private var isDateJumpPresented = false
+    @State private var dateJumpDraft = Date()
 
     private let holidayStore = HolidayStore.bundled()
 
@@ -70,10 +69,6 @@ struct CalendarScreen: View {
         switch mode {
         case .month:
             return "month-\(visibleMonth.timeIntervalSince1970)"
-        case .week:
-            return "week-\(selectedDate.timeIntervalSince1970)-\(weekStartDayRaw)"
-        case .day:
-            return "day-\(selectedDate.timeIntervalSince1970)"
         case .agenda:
             return "agenda-\(selectedDate.timeIntervalSince1970)-\(agendaRange.rawValue)"
         case .year:
@@ -84,6 +79,7 @@ struct CalendarScreen: View {
     var body: some View {
         VStack(spacing: 0) {
             modePicker
+            navigationBar
             accessBanner
             content
         }
@@ -97,18 +93,94 @@ struct CalendarScreen: View {
                 visibleMonth = newMonth
             }
         }
+        .sheet(isPresented: $isDateJumpPresented) {
+            dateJumpSheet
+        }
     }
 
     private var modePicker: some View {
-        Picker("视图", selection: $modeRaw) {
-            ForEach(CalendarViewMode.allCases) { mode in
-                Text(mode.title).tag(mode.rawValue)
+        HStack(spacing: 4) {
+            ForEach(CalendarViewMode.allCases) { item in
+                let isSelected = mode == item
+                Button {
+                    modeRaw = item.rawValue
+                } label: {
+                    Text(item.title)
+                        .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
+                        .foregroundColor(isSelected ? .white : palette.secondary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(Capsule().fill(isSelected ? palette.accent : Color.clear))
+                }
             }
         }
-        .pickerStyle(.segmented)
+        .padding(4)
+        .background(Capsule().fill(palette.card))
+        .padding(.horizontal, 16)
+        .padding(.top, 10)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("日历视图")
+    }
+
+    private var navigationBar: some View {
+        HStack(spacing: 8) {
+            Button {
+                isDateJumpPresented = true
+                dateJumpDraft = anchorDate
+            } label: {
+                Text(anchorTitle)
+                    .font(.system(size: 16, weight: .semibold, design: .serif))
+                    .foregroundColor(palette.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 9)
+                    .background(RoundedRectangle(cornerRadius: 14).fill(palette.card))
+            }
+            .accessibilityLabel("打开日期跳转，当前\(anchorTitle)")
+
+            Button {
+                let now = Date()
+                selectedDate = now
+                visibleMonth = MonthView.firstOfMonth(now)
+            } label: {
+                Text("今天")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(palette.accent)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 9)
+                    .background(Capsule().fill(palette.card))
+            }
+            .accessibilityLabel("回到今天")
+            .frame(maxWidth: 86)
+        }
         .padding(.horizontal, 16)
         .padding(.top, 8)
-        .accessibilityLabel("日历视图")
+        .padding(.bottom, 6)
+    }
+
+    private var anchorTitle: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "zh_CN")
+        formatter.dateFormat = mode == .year ? "yyyy年" : "yyyy年M月d日"
+        return formatter.string(from: anchorDate)
+    }
+
+    private var anchorDate: Date {
+        mode == .month || mode == .year ? visibleMonth : selectedDate
+    }
+
+    private var dateJumpSheet: some View {
+        DateJumpSheet(
+            initialDate: anchorDate,
+            onCancel: { isDateJumpPresented = false },
+            onConfirm: { date in
+                selectedDate = date
+                visibleMonth = MonthView.firstOfMonth(date)
+                isDateJumpPresented = false
+            }
+        )
+        .background(palette.background.ignoresSafeArea())
     }
 
     @ViewBuilder
@@ -136,23 +208,9 @@ struct CalendarScreen: View {
         switch mode {
         case .month:
             MonthView(visibleMonth: $visibleMonth, selectedDate: $selectedDate)
-        case .week:
-            CalendarWeekView(
-                selectedDate: $selectedDate,
-                holidayStore: holidayStore,
-                onSelectDay: { day in
-                    selectedDate = day
-                    modeRaw = CalendarViewMode.day.rawValue
-                }
-            )
-        case .day:
-            CalendarDayView(
-                selectedDate: $selectedDate,
-                holidayStore: holidayStore
-            )
         case .agenda:
             CalendarAgendaView(
-                startDate: selectedDate,
+                startDate: $selectedDate,
                 range: $agendaRange
             )
         case .year:
@@ -176,14 +234,6 @@ struct CalendarScreen: View {
             if let interval = calendar.dateInterval(of: .month, for: visibleMonth) {
                 await eventService.loadEvents(from: interval.start, to: interval.end)
             }
-        case .week:
-            if let interval = calendar.dateInterval(of: .weekOfYear, for: selectedDate) {
-                await eventService.loadEvents(from: interval.start, to: interval.end)
-            }
-        case .day:
-            let start = calendar.startOfDay(for: selectedDate)
-            let end = calendar.date(byAdding: .day, value: 1, to: start) ?? start
-            await eventService.loadEvents(from: start, to: end)
         case .agenda:
             let start = calendar.startOfDay(for: selectedDate)
             let end = calendar.date(byAdding: .day, value: agendaRange.rawValue, to: start) ?? start
@@ -210,461 +260,159 @@ struct CalendarScreen: View {
     }
 }
 
-private struct CalendarWeekView: View {
+struct DateJumpSheet: View {
     @Environment(\.palette) private var palette
-    @EnvironmentObject private var eventService: EventStoreService
-    @AppStorage("month.week.start.day") private var weekStartDayRaw = WeekStartDay.monday.rawValue
-    @AppStorage("showSolarTerms") private var showSolarTerms = true
-    @AppStorage("showLunarFestivals") private var showLunarFestivals = true
 
-    @Binding var selectedDate: Date
-    let holidayStore: HolidayStore
-    let onSelectDay: (Date) -> Void
+    let initialDate: Date
+    let onCancel: () -> Void
+    let onConfirm: (Date) -> Void
+
+    @State private var year: Int
+    @State private var month: Int
+    @State private var day: Int
+
+    private let years = Array(1900...2100)
 
     private var calendar: Calendar {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.firstWeekday = WeekStartDay(rawValue: weekStartDayRaw)?.firstWeekday ?? 2
+        calendar.timeZone = .current
         return calendar
     }
 
-    private var weekInterval: DateInterval {
-        calendar.dateInterval(of: .weekOfYear, for: selectedDate)
-            ?? DateInterval(start: selectedDate, duration: 7 * 24 * 60 * 60)
+    private var monthDate: Date? {
+        calendar.date(from: DateComponents(year: year, month: month, day: 1))
     }
 
-    private var weekDays: [Date] {
-        (0..<7).compactMap {
-            calendar.date(byAdding: .day, value: $0, to: weekInterval.start)
-        }
+    private var dayCount: Int {
+        guard let date = monthDate else { return 30 }
+        return calendar.range(of: .day, in: .month, for: date)?.count ?? 30
+    }
+
+    private var days: [Int] {
+        Array(1...dayCount)
+    }
+
+    init(
+        initialDate: Date,
+        onCancel: @escaping () -> Void,
+        onConfirm: @escaping (Date) -> Void
+    ) {
+        self.initialDate = initialDate
+        self.onCancel = onCancel
+        self.onConfirm = onConfirm
+        let calendar = Calendar(identifier: .gregorian)
+        _year = State(initialValue: calendar.component(.year, from: initialDate))
+        _month = State(initialValue: calendar.component(.month, from: initialDate))
+        _day = State(initialValue: calendar.component(.day, from: initialDate))
     }
 
     var body: some View {
-        let solarTermNameMap = solarTermNameMap
-        let festivalNameMap = festivalNameMap
-        VStack(spacing: 0) {
-            header
-            weekdayHeader
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(alignment: .top, spacing: 8) {
-                    ForEach(weekDays, id: \.timeIntervalSince1970) { day in
-                        WeekDayColumn(
-                            day: day,
-                            isSelected: calendar.isDate(day, inSameDayAs: selectedDate),
-                            isToday: calendar.isDateInToday(day),
-                            events: Array(eventService.events(on: day).prefix(3)),
-                            totalEventCount: eventService.events(on: day).count,
-                            festivalText: showLunarFestivals
-                                ? festivalNameMap[solarTermDayKey(for: day)]
-                                : nil,
-                            solarTermText: solarTermNameMap[solarTermDayKey(for: day)],
-                            effect: holidayStore.effect(for: day),
-                            onTap: { onSelectDay(day) }
-                        )
-                    }
-                }
-                .padding(.horizontal, 12)
+        VStack(alignment: .leading, spacing: 20) {
+            HStack {
+                Button("取消", action: onCancel)
+                    .foregroundColor(palette.secondary)
+
+                Spacer()
+
+                Text("跳转日期")
+                    .font(.system(size: 16, weight: .semibold, design: .serif))
+                    .foregroundColor(palette.ink)
+
+                Spacer()
+
+                Button("确定") { confirm() }
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(palette.accent)
             }
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("目标日期")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(palette.secondary)
+
+                Text("\(year)年\(month)月\(min(day, dayCount))日")
+                    .font(.system(size: 30, weight: .bold, design: .serif))
+                    .foregroundColor(palette.ink)
+            }
+            .padding(18)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: 22).fill(palette.card))
+
+            HStack(spacing: 8) {
+                jumpWheel(title: "年", selection: $year, items: years) { "\($0)" }
+                jumpWheel(title: "月", selection: $month, items: Array(1...12)) { "\($0)月" }
+                jumpWheel(title: "日", selection: $day, items: days) { "\($0)日" }
+            }
+            .onChange(of: month) { _ in clampDay() }
+            .onChange(of: year) { _ in clampDay() }
+
+            HStack(spacing: 10) {
+                quickButton("昨天") { setDate(Date().addingTimeInterval(-86_400)) }
+                quickButton("今天", isAccent: true) { setDate(Date()) }
+                quickButton("明天") { setDate(Date().addingTimeInterval(86_400)) }
+            }
+
             Spacer(minLength: 0)
         }
-        .gesture(
-            DragGesture(minimumDistance: 56)
-                .onEnded { value in
-                    let horizontal = abs(value.translation.width)
-                    let vertical = abs(value.translation.height)
-                    guard horizontal >= 56, horizontal >= vertical * 1.5 else { return }
-                    shiftWeek(value.translation.width < 0 ? 1 : -1)
+        .padding(20)
+    }
+
+    private func jumpWheel(
+        title: String,
+        selection: Binding<Int>,
+        items: [Int],
+        text: @escaping (Int) -> String
+    ) -> some View {
+        VStack(spacing: 4) {
+            Text(title)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(palette.secondary)
+
+            Picker(title, selection: selection) {
+                ForEach(items, id: \.self) { item in
+                    Text(text(item)).tag(item)
                 }
-        )
-    }
-
-    private var solarTermNameMap: [DateComponents: String] {
-        guard showSolarTerms else { return [:] }
-
-        var shanghaiCalendar = Calendar(identifier: .gregorian)
-        shanghaiCalendar.timeZone = LunarCalendar.timeZone
-        let years = Set(weekDays.map {
-            shanghaiCalendar.component(.year, from: $0)
-        })
-        let terms = years.compactMap { SolarTermCalendar.terms(inGregorianYear: $0) }
-        return Dictionary(
-            uniqueKeysWithValues: terms.flatMap { $0 }.map {
-                (dayKey($0.date, calendar: shanghaiCalendar), $0.name.rawValue)
             }
-        )
-    }
-
-    private var festivalNameMap: [DateComponents: String] {
-        guard showLunarFestivals else { return [:] }
-
-        var shanghaiCalendar = Calendar(identifier: .gregorian)
-        shanghaiCalendar.timeZone = LunarCalendar.timeZone
-        let lunarYears = Set(weekDays.map {
-            LunarCalendar.lunar(from: $0).year
-        })
-        let festivals = lunarYears.compactMap {
-            LunarFestivalCalendar.festivals(inLunarYear: $0)
-        }
-        return Dictionary(
-            uniqueKeysWithValues: festivals.flatMap { $0 }.map {
-                (dayKey($0.date, calendar: shanghaiCalendar), $0.name.rawValue)
-            }
-        )
-    }
-
-    private func solarTermDayKey(for date: Date) -> DateComponents {
-        var shanghaiCalendar = Calendar(identifier: .gregorian)
-        shanghaiCalendar.timeZone = LunarCalendar.timeZone
-        return dayKey(date, calendar: shanghaiCalendar)
-    }
-
-    private func dayKey(_ date: Date, calendar: Calendar) -> DateComponents {
-        calendar.dateComponents([.year, .month, .day], from: date)
-    }
-
-    private var header: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(titleText)
-                    .font(.system(size: 26, weight: .semibold, design: .serif))
-                    .foregroundColor(palette.ink)
-                Text(subtitleText)
-                    .font(.system(size: 12))
-                    .foregroundColor(palette.secondary)
-            }
-            Spacer()
-            Button { shiftWeek(-1) } label: {
-                Image(systemName: "chevron.left")
-                    .foregroundColor(palette.secondary)
-                    .frame(width: 36, height: 36)
-            }
-            Button { shiftWeek(1) } label: {
-                Image(systemName: "chevron.right")
-                    .foregroundColor(palette.secondary)
-                    .frame(width: 36, height: 36)
-            }
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 8)
-    }
-
-    private var weekdayHeader: some View {
-        let names = weekStartDayRaw == WeekStartDay.sunday.rawValue
-            ? ["日", "一", "二", "三", "四", "五", "六"]
-            : ["一", "二", "三", "四", "五", "六", "日"]
-        return HStack(spacing: 0) {
-            ForEach(names, id: \.self) { name in
-                Text(name)
-                    .font(.system(size: 11))
-                    .foregroundColor(palette.secondary)
-                    .frame(maxWidth: .infinity)
-            }
-        }
-        .padding(.horizontal, 12)
-        .padding(.bottom, 6)
-    }
-
-    private var titleText: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_CN")
-        formatter.dateFormat = "M月d日"
-        let start = formatter.string(from: weekInterval.start)
-        formatter.dateFormat = "d日"
-        let end = formatter.string(from: weekInterval.end.addingTimeInterval(-1))
-        return "\(start) – \(end)"
-    }
-
-    private var subtitleText: String {
-        let count = weekDays.reduce(0) { count, day in
-            count + eventService.events(on: day).count
-        }
-        return "本周 \(count) 个日程"
-    }
-
-    private func shiftWeek(_ delta: Int) {
-        selectedDate = calendar.date(
-            byAdding: .weekOfYear,
-            value: delta,
-            to: selectedDate
-        ) ?? selectedDate
-    }
-}
-
-private struct WeekDayColumn: View {
-    @Environment(\.palette) private var palette
-    let day: Date
-    let isSelected: Bool
-    let isToday: Bool
-    let events: [CalendarEvent]
-    let totalEventCount: Int
-    var festivalText: String? = nil
-    var solarTermText: String? = nil
-    let effect: DayEffect?
-    let onTap: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            VStack(alignment: .center, spacing: 3) {
-                Text("\(Calendar.current.component(.day, from: day))")
-                    .font(.system(size: 18, weight: isSelected ? .semibold : .regular))
-                    .foregroundColor(dayColor)
-                Text(
-                    festivalText
-                        ?? solarTermText
-                        ?? LunarCalendar.displayText(for: LunarCalendar.lunar(from: day))
-                )
-                    .font(.system(size: 10))
-                    .foregroundColor(subtitleColor)
-                    .lineLimit(1)
-            }
+            .pickerStyle(.wheel)
+            .labelsHidden()
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(isSelected ? palette.accent.opacity(0.16) : palette.card)
-            )
-
-            VStack(alignment: .leading, spacing: 5) {
-                if events.isEmpty {
-                    Text("无日程")
-                        .font(.system(size: 10))
-                        .foregroundColor(palette.secondary)
-                } else {
-                    ForEach(events) { event in
-                        Text(event.title)
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundColor(palette.ink)
-                            .lineLimit(2)
-                    }
-                    if totalEventCount > 3 {
-                        Text("+\(totalEventCount - 3)")
-                            .font(.system(size: 10))
-                            .foregroundColor(palette.secondary)
-                    }
-                }
-            }
-            .padding(.horizontal, 6)
+            .clipped()
         }
-        .frame(width: 96, alignment: .top)
-        .contentShape(Rectangle())
-        .onTapGesture(perform: onTap)
+        .padding(.vertical, 8)
+        .background(RoundedRectangle(cornerRadius: 18).fill(palette.card))
     }
 
-    private var dayColor: Color {
-        if isToday { return palette.accent }
-        if case .workday = effect { return palette.makeupGray }
-        if case .restDay = effect { return palette.holidayRed }
-        return palette.ink
-    }
-
-    private var subtitleColor: Color {
-        if festivalText != nil { return palette.holidayRed }
-        if solarTermText != nil { return palette.solarGreen }
-        return palette.secondary
-    }
-}
-
-private struct CalendarDayView: View {
-    @Environment(\.palette) private var palette
-    @EnvironmentObject private var eventService: EventStoreService
-    @EnvironmentObject private var milestoneStore: MilestoneStore
-
-    @Binding var selectedDate: Date
-    let holidayStore: HolidayStore
-
-    @State private var composerContext: EventComposerContext?
-    @State private var selectedEvent: CalendarEvent?
-    @AppStorage("showHuangLi") private var showHuangLi = false
-    @AppStorage("showSolarTerms") private var showSolarTerms = true
-    @AppStorage("showLunarFestivals") private var showLunarFestivals = true
-
-    private let calendar = Calendar.current
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                header
-                holidayBanner
-                milestoneBanners
-                anniversaryBanners
-                eventList
-                if showHuangLi {
-                    AlmanacPanel(date: selectedDate)
-                }
-            }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 24)
-        }
-        .sheet(item: $composerContext) { context in
-            AddEventView(initialDate: context.date)
-        }
-        .sheet(item: $selectedEvent) { event in
-            EventDetailView(event: event) {}
-        }
-        .gesture(
-            DragGesture(minimumDistance: 56)
-                .onEnded { value in
-                    let horizontal = abs(value.translation.width)
-                    let vertical = abs(value.translation.height)
-                    guard horizontal >= 56, horizontal >= vertical * 1.5 else { return }
-                    shiftDay(value.translation.width < 0 ? 1 : -1)
-                }
-        )
-    }
-
-    private var header: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("\(calendar.component(.day, from: selectedDate))")
-                    .font(.system(size: 52, weight: .semibold, design: .serif))
-                    .foregroundColor(palette.ink)
-                Text(dateLine)
-                    .font(.system(size: 14))
-                    .foregroundColor(palette.ink)
-                Text(lunarLine)
-                    .font(.system(size: 13))
-                    .foregroundColor(palette.secondary)
-                if showLunarFestivals, let festival = LunarFestivalCalendar.festival(on: selectedDate) {
-                    Text("农历节日 · \(festival.name.rawValue)")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(palette.holidayRed)
-                }
-                if showSolarTerms, let solarTerm = SolarTermCalendar.term(on: selectedDate) {
-                    Text("节气 · \(solarTerm.name.rawValue)")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(palette.solarGreen)
-                }
-            }
-            Spacer()
-            HStack(spacing: 4) {
-                Button { shiftDay(-1) } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(palette.secondary)
-                        .frame(width: 34, height: 34)
-                }
-                Button { shiftDay(1) } label: {
-                    Image(systemName: "chevron.right")
-                        .foregroundColor(palette.secondary)
-                        .frame(width: 34, height: 34)
-                }
-            }
-        }
-        .padding(.top, 8)
-    }
-
-    @ViewBuilder
-    private var holidayBanner: some View {
-        switch holidayStore.effect(for: selectedDate) {
-        case .restDay(let name):
-            Text("\(name) · 法定休")
+    private func quickButton(
+        _ title: String,
+        isAccent: Bool = false,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Text(title)
                 .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.white)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(Capsule().fill(palette.holidayRed))
-        case .workday(let name):
-            Text("\(name)调休 · 补班日")
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.white)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(Capsule().fill(palette.makeupGray))
-        case nil:
-            EmptyView()
+                .foregroundColor(isAccent ? .white : palette.ink)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 11)
+                .background(Capsule().fill(isAccent ? palette.accent : palette.card))
         }
     }
 
-    @ViewBuilder
-    private var milestoneBanners: some View {
-        let milestones = milestoneStore.milestones(on: selectedDate)
-        if !milestones.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("里程碑")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(palette.ink)
-                ForEach(milestones) { milestone in
-                    MilestoneBanner(
-                        milestone: milestone,
-                        countdown: milestoneStore.countdown(for: milestone, at: Date())
-                    )
-                }
-            }
-        }
+    private func clampDay() {
+        if day > dayCount { day = dayCount }
     }
 
-    @ViewBuilder
-    private var anniversaryBanners: some View {
-        let occurrences = milestoneStore.anniversaries(on: selectedDate)
-        if !occurrences.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("生日 / 纪念日")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(palette.ink)
-                ForEach(occurrences) { occurrence in
-                    HStack {
-                        Text("\(occurrence.anniversary.title)\(occurrence.countText.map { " · \($0)" } ?? "")")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(palette.ink)
-                        Spacer()
-                    }
-                    .padding(14)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(RoundedRectangle(cornerRadius: 16).fill(palette.card))
-                }
-            }
-        }
+    private func setDate(_ date: Date) {
+        let components = calendar.dateComponents([.year, .month, .day], from: date)
+        year = components.year ?? year
+        month = components.month ?? month
+        day = components.day ?? day
     }
 
-    private var eventList: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text("日程")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(palette.ink)
-                Spacer()
-                Button {
-                    composerContext = EventComposerContext(date: selectedDate)
-                } label: {
-                    Image(systemName: "plus.circle")
-                        .font(.system(size: 20))
-                        .foregroundColor(palette.accent)
-                }
-                .accessibilityLabel("新建日程")
-            }
-
-            let events = eventService.events(on: selectedDate)
-            if events.isEmpty {
-                Text(eventService.accessState == .denied ? "无法读取系统日历" : "这一天暂无日程")
-                    .font(.system(size: 13))
-                    .foregroundColor(palette.secondary)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 28)
-                    .background(RoundedRectangle(cornerRadius: 16).fill(palette.card))
-            } else {
-                ForEach(events) { event in
-                    EventRow(event: event)
-                        .contentShape(Rectangle())
-                        .onTapGesture { selectedEvent = event }
-                }
-            }
-        }
-    }
-
-    private var dateLine: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_CN")
-        formatter.dateFormat = "yyyy年M月d日 EEEE"
-        return formatter.string(from: selectedDate)
-    }
-
-    private var lunarLine: String {
-        let lunar = LunarCalendar.lunar(from: selectedDate)
-        let leap = lunar.isLeapMonth ? "闰" : ""
-        let ganZhi = GanZhi.dayGanZhi(for: selectedDate)
-        return "\(GanZhi.yearGanZhi(forGregorianYear: lunar.year).ganZhi)年 \(leap)\(LunarCalendar.monthNames[lunar.month])\(LunarCalendar.dayNames[lunar.day]) · \(ganZhi)日"
-    }
-
-    private func shiftDay(_ delta: Int) {
-        selectedDate = calendar.date(byAdding: .day, value: delta, to: selectedDate) ?? selectedDate
+    private func confirm() {
+        guard let date = calendar.date(
+            from: DateComponents(year: year, month: month, day: min(day, dayCount))
+        ) else { return }
+        onConfirm(date)
     }
 }
 
@@ -768,7 +516,7 @@ private struct CalendarAgendaView: View {
     @Environment(\.palette) private var palette
     @EnvironmentObject private var eventService: EventStoreService
 
-    let startDate: Date
+    @Binding var startDate: Date
     @Binding var range: AgendaRange
 
     @State private var visibleLimit = 200
@@ -805,6 +553,17 @@ private struct CalendarAgendaView: View {
         .onChange(of: range) { _ in
             visibleLimit = 200
         }
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 56).onEnded { value in
+                guard abs(value.translation.width) > abs(value.translation.height) * 1.5 else { return }
+                let direction = value.translation.width < 0 ? 1 : -1
+                startDate = calendar.date(
+                    byAdding: .day,
+                    value: direction * range.rawValue,
+                    to: startDate
+                ) ?? startDate
+            }
+        )
     }
 
     private var header: some View {
@@ -937,7 +696,7 @@ private struct CalendarYearView: View {
                 Text("\(year)年")
                     .font(.system(size: 28, weight: .semibold, design: .serif))
                     .foregroundColor(palette.ink)
-                    .padding(.top, 8)
+                .padding(.top, 8)
 
                 LazyVGrid(
                     columns: [
@@ -964,7 +723,18 @@ private struct CalendarYearView: View {
             .padding(.horizontal, 16)
             .padding(.bottom, 24)
         }
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 56).onEnded { value in
+                guard abs(value.translation.width) > abs(value.translation.height) * 1.5 else { return }
+                visibleMonth = calendar.date(
+                    byAdding: .year,
+                    value: value.translation.width < 0 ? 1 : -1,
+                    to: visibleMonth
+                ) ?? visibleMonth
+            }
+        )
     }
+
 }
 
 private struct MiniMonthView: View {
@@ -1061,4 +831,91 @@ private struct MiniMonthView: View {
         }
         return .clear
     }
+}
+
+struct EventConflictSection: View {
+    @Environment(\.palette) private var palette
+
+    let groups: [AnalysisConflictGroup]
+    let draftEventID: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ForEach(groups) { group in
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 13))
+                        .foregroundColor(palette.holidayRed)
+                    Text(conflictText(for: group))
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(palette.holidayRed)
+                }
+                .accessibilityElement(children: .combine)
+            }
+        }
+    }
+
+    private func conflictText(for group: AnalysisConflictGroup) -> String {
+        let titles = group.events
+            .filter { $0.id != draftEventID }
+            .map { "「\($0.title)」" }
+        return "与\(titles.joined())冲突 \(intervalText(group.interval))"
+    }
+}
+
+struct FreeSlotSection: View {
+    @Environment(\.palette) private var palette
+
+    let date: Date
+    let events: [AnalysisEvent]
+
+    var body: some View {
+        let slots = CalendarConflictAnalyzer.freeSlots(on: date, events: events)
+        if !slots.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("空闲时段")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(palette.secondary)
+                ForEach(slots) { slot in
+                    Text("\(slotText(slot)) · \(durationText(slot.duration))")
+                        .font(.system(size: 13))
+                        .foregroundColor(palette.ink)
+                }
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: 12).fill(palette.card))
+        }
+    }
+
+    private func slotText(_ slot: AnalysisFreeSlot) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "zh_CN")
+        formatter.dateFormat = "HH:mm"
+        return "\(formatter.string(from: slot.startDate)) – \(formatter.string(from: slot.endDate))"
+    }
+
+    private func durationText(_ duration: TimeInterval) -> String {
+        let minutes = Int(duration / 60)
+        if minutes < 60 { return "\(minutes) 分钟" }
+
+        let hours = Double(minutes) / 60
+        let text = hours == hours.rounded()
+            ? String(Int(hours))
+            : String(format: "%.1f", hours)
+        return "\(text) 小时"
+    }
+}
+
+private func intervalText(_ interval: DateInterval) -> String {
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "zh_CN")
+    formatter.dateFormat = "HH:mm"
+    if Calendar.current.isDate(interval.start, inSameDayAs: interval.end) {
+        return "\(formatter.string(from: interval.start))–\(formatter.string(from: interval.end))"
+    }
+
+    let start = formatter.string(from: interval.start)
+    formatter.dateFormat = "M月d日 HH:mm"
+    return "\(start)–\(formatter.string(from: interval.end))"
 }

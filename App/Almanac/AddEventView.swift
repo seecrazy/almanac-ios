@@ -1,4 +1,5 @@
 import SwiftUI
+import CalendarAnalysis
 import EventKitMapping
 import NaturalInput
 
@@ -116,6 +117,12 @@ struct AddEventView: View {
                     }
                 }
 
+                if !conflictGroups.isEmpty {
+                    Section("冲突提醒") {
+                        EventConflictSection(groups: conflictGroups, draftEventID: draftEvent.id)
+                    }
+                }
+
                 Section("详情") {
                     TextField("地点（可选）", text: $location)
                     TextField("备注（可选）", text: $notes)
@@ -194,6 +201,38 @@ struct AddEventView: View {
     private var canSave: Bool {
         !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
         (isAllDay || endDate > startDate)
+    }
+
+    private var draftEvent: AnalysisEvent {
+        let effectiveStart = isAllDay
+            ? calendar.startOfDay(for: startDate)
+            : startDate
+        let effectiveEnd = isAllDay
+            ? calendar.date(byAdding: .day, value: 1, to: effectiveStart) ?? endDate
+            : endDate
+
+        return AnalysisEvent(
+            id: "draft-event",
+            title: title,
+            startDate: effectiveStart,
+            endDate: effectiveEnd,
+            isAllDay: isAllDay
+        )
+    }
+
+    private var conflictGroups: [AnalysisConflictGroup] {
+        guard eventService.accessState == .granted,
+              draftEvent.endDate > draftEvent.startDate else { return [] }
+
+        let draftInterval = DateInterval(start: draftEvent.startDate, end: draftEvent.endDate)
+        let visibleEvents = eventService.visibleAnalysisEvents(overlapping: draftInterval)
+        return CalendarConflictAnalyzer.conflictGroups(
+            in: visibleEvents + [draftEvent],
+            within: draftInterval
+        )
+        .filter { group in
+            group.events.contains { $0.id == draftEvent.id }
+        }
     }
 
     private func save() {

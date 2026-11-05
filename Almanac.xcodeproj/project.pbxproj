@@ -34,6 +34,14 @@
 		7A1111110000000000000096 /* NaturalInput in Frameworks */ = {isa = PBXBuildFile; productRef = 7A1111110000000000000095 /* NaturalInput */; };
 		7A1111110000000000000153 /* MilestoneWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000135 /* MilestoneWidget.swift */; };
 		7A1111110000000000000154 /* MilestoneKit in Frameworks */ = {isa = PBXBuildFile; productRef = 7A1111110000000000000155 /* MilestoneKit */; };
+		7A1111110000000000000210 /* CalendarAnalysis in Frameworks */ = {isa = PBXBuildFile; productRef = 7A1111110000000000000211 /* CalendarAnalysis */; };
+		7A1111110000000000000250 /* DiaryKit in Frameworks */ = {isa = PBXBuildFile; productRef = 7A1111110000000000000251 /* DiaryKit */; };
+		7A1111110000000000000252 /* DiaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000253 /* DiaryView.swift */; };
+		7A1111110000000000000220 /* double-pulse.caf in Resources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000221 /* double-pulse.caf */; };
+		7A1111110000000000000222 /* light-bell.caf in Resources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000223 /* light-bell.caf */; };
+		7A1111110000000000000224 /* morning-chime.caf in Resources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000225 /* morning-chime.caf */; };
+		7A1111110000000000000230 /* WorkdayAlarmStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000231 /* WorkdayAlarmStore.swift */; };
+		7A1111110000000000000240 /* AlarmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000241 /* AlarmView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -59,7 +67,13 @@
 		7A1111110000000000000133 /* MilestoneWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml.entitlements; path = MilestoneWidget.entitlements; sourceTree = "<group>"; };
 		7A1111110000000000000134 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		7A1111110000000000000135 /* MilestoneWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MilestoneWidget.swift; sourceTree = "<group>"; };
+		7A1111110000000000000253 /* DiaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryView.swift; sourceTree = "<group>"; };
 		7A1111110000000000000137 /* MilestoneWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MilestoneWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		7A1111110000000000000221 /* double-pulse.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = "double-pulse.caf"; sourceTree = "<group>"; };
+		7A1111110000000000000223 /* light-bell.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = "light-bell.caf"; sourceTree = "<group>"; };
+		7A1111110000000000000225 /* morning-chime.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = "morning-chime.caf"; sourceTree = "<group>"; };
+		7A1111110000000000000231 /* WorkdayAlarmStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkdayAlarmStore.swift; sourceTree = "<group>"; };
+		7A1111110000000000000241 /* AlarmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -74,6 +88,8 @@
 				7A1111110000000000000120 /* EventKitMapping in Frameworks */,
 				7A1111110000000000000152 /* MilestoneKit in Frameworks */,
 				7A1111110000000000000162 /* EventSearchKit in Frameworks */,
+				7A1111110000000000000210 /* CalendarAnalysis in Frameworks */,
+				7A1111110000000000000250 /* DiaryKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -116,6 +132,8 @@
 				7A1111110000000000000044 /* MonthView.swift */,
 				7A1111110000000000000045 /* DayDetail.swift */,
 				7A1111110000000000000047 /* SettingsView.swift */,
+					7A1111110000000000000231 /* WorkdayAlarmStore.swift */,
+				7A1111110000000000000241 /* AlarmView.swift */,
 				7A1111110000000000000098 /* QuickComposerContext.swift */,
 				7A1111110000000000000132 /* Almanac.entitlements */,
 				7A1111110000000000000130 /* MilestonePlatformService.swift */,
@@ -127,8 +145,20 @@
 				7A1111110000000000000088 /* EventSearchSheet.swift */,
 				7A1111110000000000000091 /* MilestoneStore.swift */,
 				7A1111110000000000000093 /* MilestoneViews.swift */,
+				7A1111110000000000000253 /* DiaryView.swift */,
+					7A1111110000000000000226 /* AlarmSounds */,
 			);
 			path = App/Almanac;
+			sourceTree = "<group>";
+		};
+		7A1111110000000000000226 /* AlarmSounds */ = {
+			isa = PBXGroup;
+			children = (
+				7A1111110000000000000225 /* morning-chime.caf */,
+				7A1111110000000000000221 /* double-pulse.caf */,
+				7A1111110000000000000223 /* light-bell.caf */,
+			);
+			path = Resources/Sounds;
 			sourceTree = "<group>";
 		};
 		7A1111110000000000000136 /* MilestoneWidget */ = {
@@ -167,6 +197,8 @@
 				7A1111110000000000000121 /* EventKitMapping */,
 				7A1111110000000000000151 /* MilestoneKit */,
 				7A1111110000000000000163 /* EventSearchKit */,
+				7A1111110000000000000211 /* CalendarAnalysis */,
+				7A1111110000000000000251 /* DiaryKit */,
 			);
 			productName = Almanac;
 			productReference = 7A1111110000000000000020 /* Almanac.app */;
@@ -228,6 +260,8 @@
 				7A1111110000000000000122 /* XCLocalSwiftPackageReference "Packages/EventKitMapping" */,
 				7A1111110000000000000150 /* XCLocalSwiftPackageReference "Packages/MilestoneKit" */,
 				7A1111110000000000000164 /* XCLocalSwiftPackageReference "Packages/EventSearchKit" */,
+				7A1111110000000000000212 /* XCLocalSwiftPackageReference "Packages/CalendarAnalysis" */,
+				7A1111110000000000000254 /* XCLocalSwiftPackageReference "Packages/DiaryKit" */,
 			);
 			productRefGroup = 7A1111110000000000000003 /* Products */;
 			projectDirPath = "";
@@ -268,6 +302,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7A1111110000000000000220 /* double-pulse.caf in Resources */,
+				7A1111110000000000000222 /* light-bell.caf in Resources */,
+				7A1111110000000000000224 /* morning-chime.caf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -291,6 +328,9 @@
 				7A1111110000000000000054 /* MonthView.swift in Sources */,
 				7A1111110000000000000055 /* DayDetail.swift in Sources */,
 				7A1111110000000000000057 /* SettingsView.swift in Sources */,
+				7A1111110000000000000230 /* WorkdayAlarmStore.swift in Sources */,
+				7A1111110000000000000240 /* AlarmView.swift in Sources */,
+				7A1111110000000000000252 /* DiaryView.swift in Sources */,
 				7A1111110000000000000058 /* EventService.swift in Sources */,
 				7A1111110000000000000059 /* AddEventView.swift in Sources */,
 				7A1111110000000000000063 /* EventDetailView.swift in Sources */,
@@ -554,6 +594,14 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/EventSearchKit;
 		};
+		7A1111110000000000000212 /* XCLocalSwiftPackageReference "Packages/CalendarAnalysis" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/CalendarAnalysis;
+		};
+		7A1111110000000000000254 /* XCLocalSwiftPackageReference "Packages/DiaryKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/DiaryKit;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -596,6 +644,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 7A1111110000000000000164 /* XCLocalSwiftPackageReference "Packages/EventSearchKit" */;
 			productName = EventSearchKit;
+		};
+		7A1111110000000000000211 /* CalendarAnalysis */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7A1111110000000000000212 /* XCLocalSwiftPackageReference "Packages/CalendarAnalysis" */;
+			productName = CalendarAnalysis;
+		};
+		7A1111110000000000000251 /* DiaryKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7A1111110000000000000254 /* XCLocalSwiftPackageReference "Packages/DiaryKit" */;
+			productName = DiaryKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

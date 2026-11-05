@@ -12,12 +12,27 @@ final class HolidayDataTests: XCTestCase {
         calendar.date(from: DateComponents(year: year, month: month, day: day))!
     }
 
-    func testBundledSampleRestDay() {
+    private func date(_ year: Int, _ month: Int, _ day: Int, hour: Int, minute: Int = 0) -> Date {
+        calendar.date(from: DateComponents(year: year, month: month, day: day, hour: hour, minute: minute))!
+    }
+
+    func testBundledOfficialRestDay() {
         XCTAssertEqual(HolidayStore.bundled().effect(for: date(2026, 2, 17)), .restDay(name: "春节"))
     }
 
-    func testBundledSampleMakeupWorkday() {
+    func testBundledOfficialMakeupWorkday() {
         XCTAssertEqual(HolidayStore.bundled().effect(for: date(2026, 2, 14)), .workday(name: "春节"))
+    }
+
+    func testBundledOfficial2026Schedule() {
+        let store = HolidayStore.bundled()
+        XCTAssertEqual(store.effect(for: date(2026, 1, 4)), .workday(name: "元旦"))
+        XCTAssertEqual(store.effect(for: date(2026, 2, 23)), .restDay(name: "春节"))
+        XCTAssertEqual(store.effect(for: date(2026, 2, 28)), .workday(name: "春节"))
+        XCTAssertEqual(store.effect(for: date(2026, 5, 9)), .workday(name: "劳动节"))
+        XCTAssertEqual(store.effect(for: date(2026, 6, 20)), .restDay(name: "端午节"))
+        XCTAssertEqual(store.effect(for: date(2026, 9, 20)), .workday(name: "国庆节"))
+        XCTAssertEqual(store.effect(for: date(2026, 9, 26)), .restDay(name: "中秋节"))
     }
 
     func testOrdinaryDayHasNoEffect() {
@@ -26,7 +41,7 @@ final class HolidayDataTests: XCTestCase {
 
     func testNextHolidaySkipsWorkdayAndUsesRestDay() {
         let next = HolidayStore.bundled().nextHoliday(after: date(2026, 9, 30))
-        XCTAssertEqual(next?.name, "国庆")
+        XCTAssertEqual(next?.name, "国庆节")
         XCTAssertEqual(calendar.component(.month, from: next?.date ?? Date()), 10)
     }
 
@@ -53,7 +68,8 @@ final class HolidayDataTests: XCTestCase {
     func testBundledManifestLoadsMultipleYears() {
         let store = HolidayStore.bundled()
         XCTAssertEqual(store.statuses.map(\.year), [2026, 2027])
-        XCTAssertEqual(store.status(for: 2026)?.source, .sample)
+        XCTAssertEqual(store.status(for: 2026)?.source, .official)
+        XCTAssertEqual(store.status(for: 2026)?.sourceName, "国务院办公厅通知")
         XCTAssertEqual(store.status(for: 2027)?.source, .sample)
         XCTAssertTrue(store.loadErrors.isEmpty)
     }
@@ -230,5 +246,59 @@ final class HolidayDataTests: XCTestCase {
         )
         XCTAssertEqual(legacyUnknown.holidayCoverage, .unknown)
         XCTAssertEqual(legacyUnknown.reason, "节假日数据未覆盖，按模板执行")
+    }
+
+    func testWorkdayAlarmPlannerRespectsHolidayMakeupAndMultipleAlarms() {
+        let store = HolidayStore.bundled()
+        let reference = date(2026, 2, 14, hour: 6)
+        let early = WorkdayAlarm(name: "早班", time: date(2026, 2, 14, hour: 7, minute: 30))
+        let late = WorkdayAlarm(name: "晚班", time: date(2026, 2, 14, hour: 8, minute: 45))
+        let disabled = WorkdayAlarm(name: "休息", time: date(2026, 2, 14, hour: 9), isEnabled: false)
+
+        let occurrences = WorkdayAlarmPlanner.occurrences(
+            alarms: [early, late, disabled],
+            template: .standard,
+            holidays: store,
+            from: reference,
+            calendar: calendar
+        )
+
+        let makeupOccurrences = occurrences.filter {
+            calendar.isDate($0.plan.date, inSameDayAs: date(2026, 2, 14))
+        }
+        XCTAssertEqual(makeupOccurrences.count, 2)
+        XCTAssertEqual(makeupOccurrences.map(\.alarm.name), ["早班", "晚班"])
+        XCTAssertTrue(makeupOccurrences.allSatisfy { $0.plan.holidayAdjustment == .workday(name: "春节") })
+        XCTAssertEqual(calendar.dateComponents([.hour, .minute], from: occurrences[0].fireDate), DateComponents(hour: 7, minute: 30))
+        XCTAssertEqual(calendar.dateComponents([.hour, .minute], from: occurrences[1].fireDate), DateComponents(hour: 8, minute: 45))
+    }
+
+    func testWorkdayAlarmPlannerSkipsOfficialRestDaysAndCapsAlarmCount() {
+        let store = HolidayStore.bundled()
+        let reference = date(2026, 2, 15, hour: 6)
+        let alarms = (0..<WorkdayAlarmPlanner.maximumAlarmCount + 1).map { index in
+            WorkdayAlarm(
+                name: "闹钟 \(index)",
+                time: date(2026, 2, 15, hour: 8, minute: index)
+            )
+        }
+
+        let occurrences = WorkdayAlarmPlanner.occurrences(
+            alarms: alarms,
+            template: .standard,
+            holidays: store,
+            from: reference,
+            calendar: calendar
+        )
+
+        XCTAssertEqual(Set(occurrences.map(\.alarm.id)).count, WorkdayAlarmPlanner.maximumAlarmCount)
+        XCTAssertFalse(occurrences.contains {
+            calendar.isDate($0.plan.date, inSameDayAs: date(2026, 2, 16))
+        })
+        XCTAssertEqual(
+            occurrences.first.map { calendar.isDate($0.plan.date, inSameDayAs: date(2026, 2, 24)) },
+            true
+        )
+        XCTAssertTrue(occurrences.allSatisfy { !$0.plan.shouldRing || $0.fireDate > reference })
     }
 }

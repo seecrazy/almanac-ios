@@ -115,3 +115,7 @@ event.search.recent.v1
 - [ ] 超过 200 条时提示缩小范围。（GUI 验收待完成）
 - [ ] 无权限不崩溃。（GUI 验收待完成）
 - [x] XCTest 覆盖 query 构建和最近搜索去重。
+
+## 10. 后续演进
+
+- [本地搜索索引 v1](event-search-local-index.md)：SQLite FTS5 派生索引与降级路径。

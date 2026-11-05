@@ -150,18 +150,6 @@ struct MonthView: View {
                     .frame(width: 36, height: 36)
             }
             .accessibilityLabel("新建今日日程")
-            Button { shiftMonth(-1) } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(palette.secondary)
-                    .frame(width: 36, height: 36)
-            }
-            Button { shiftMonth(1) } label: {
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(palette.secondary)
-                    .frame(width: 36, height: 36)
-            }
         }
         .onAppear {
             Task { await eventService.requestAccessIfNeeded() }
@@ -265,8 +253,8 @@ struct MonthView: View {
         return HStack(spacing: 0) {
             ForEach(names, id: \.self) { name in
                 Text(name)
-                    .font(.system(size: 12))
-                    .foregroundColor(palette.secondary)
+                    .font(.system(size: 12, weight: name == "日" || name == "六" ? .semibold : .regular))
+                    .foregroundColor(name == "日" || name == "六" ? palette.holidayRed : palette.secondary)
                     .frame(maxWidth: .infinity)
             }
         }
@@ -294,6 +282,7 @@ struct MonthView: View {
                             solarTermText: solarTermNames[solarTermDayKey(for: day)],
                             effect: holidayStore.effect(for: day),
                             holidaySource: holidayStore.source(for: day),
+                            isWeekend: [1, 7].contains(calendar.component(.weekday, from: day)),
                             eventColors: eventColors[calendar.startOfDay(for: day)] ?? [])
                         .contentShape(Rectangle())
                         .onTapGesture {
@@ -373,6 +362,7 @@ struct DayCell: View {
     var solarTermText: String? = nil
     let effect: DayEffect?
     let holidaySource: HolidaySource?
+    var isWeekend: Bool = false
     var hasEvents: Bool = false
     var eventColors: [CalendarColorComponents] = []
 
@@ -407,17 +397,33 @@ struct DayCell: View {
             .frame(height: 76)
             badge
         }
+        .padding(2)
+        .background(RoundedRectangle(cornerRadius: 12).fill(cellBackground))
     }
 
     private var numberColor: Color {
         if isToday { return .white }
         if case .workday = effect { return palette.makeupGray }
+        if isWeekend || isRestDay { return palette.holidayRed }
         return palette.ink
+    }
+
+    private var isRestDay: Bool {
+        if case .restDay = effect { return true }
+        return false
+    }
+
+    private var cellBackground: Color {
+        if case .restDay = effect { return palette.holidayRed.opacity(0.08) }
+        if case .workday = effect { return palette.makeupGray.opacity(0.10) }
+        if isWeekend { return palette.holidayRed.opacity(0.05) }
+        return .clear
     }
 
     private var lunarColor: Color {
         if case .restDay = effect { return palette.holidayRed }
         if case .workday = effect { return palette.makeupGray }
+        if isWeekend { return palette.holidayRed.opacity(0.8) }
         return palette.secondary
     }
 

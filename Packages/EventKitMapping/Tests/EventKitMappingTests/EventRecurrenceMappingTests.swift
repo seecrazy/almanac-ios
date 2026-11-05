@@ -20,6 +20,33 @@ final class EventRecurrenceMappingTests: XCTestCase {
         ))!
     }
 
+    func testCalendarNameIsTrimmedAndValidated() {
+        XCTAssertEqual(
+            CalendarManagementPolicy.normalizedTitle("  宜历工作  "),
+            .success("宜历工作")
+        )
+        XCTAssertEqual(CalendarManagementPolicy.normalizedTitle("   "), .failure(.empty))
+        XCTAssertEqual(
+            CalendarManagementPolicy.normalizedTitle(String(repeating: "历", count: 65)),
+            .failure(.tooLong)
+        )
+    }
+
+    func testOnlyLocalModifiableCalendarsCanBeManaged() {
+        XCTAssertTrue(CalendarManagementPolicy.canManageCalendar(
+            isLocal: true,
+            allowsContentModifications: true
+        ))
+        XCTAssertFalse(CalendarManagementPolicy.canManageCalendar(
+            isLocal: false,
+            allowsContentModifications: true
+        ))
+        XCTAssertFalse(CalendarManagementPolicy.canManageCalendar(
+            isLocal: true,
+            allowsContentModifications: false
+        ))
+    }
+
     func testDailyIntervalAndCountRoundTrip() throws {
         let start = date(2026, 11, 3)
         let draft = EventRecurrenceDraft(

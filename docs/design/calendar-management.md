@@ -1,6 +1,6 @@
 # 多日历管理 v1
 
-状态：已实现代码基线；待模拟器 / 真机验收（2026-11-01）  
+状态：v1 已实现代码基线；v1.1 本机日历管理代码已接入，均待模拟器 / 真机验收（2026-11-05）
 架构依据：[ADR-001](../architecture/adr/ADR-001-eventkit-as-source-of-truth.md)  
 关联设计：[事件创建](event-creation.md) · [事件详情/编辑/删除](event-detail-editing.md)
 
@@ -130,7 +130,7 @@ store.calendars(for: .event)
 ## 11. 后续演进
 
 1. 日历管理入口迁移到设置页。
-2. 支持创建 / 重命名 / 删除本地日历。
+2. [本地日历管理 v1.1](local-calendar-management.md)：支持创建 / 重命名 / 删除本地日历。
 3. 支持订阅日历。
 4. 按账户批量显示 / 隐藏。
 5. 将筛选状态纳入跨设备同步。

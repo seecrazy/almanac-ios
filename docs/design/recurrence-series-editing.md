@@ -129,7 +129,7 @@ enum RecurrenceEnd {
 - [x] 删除重复事件可选择范围。
 - [x] 不支持规则保持只读且不丢规则。
 - [x] 保存失败保留表单并显示系统错误。
-- [x] 映射层 XCTest 全绿（EventKitMapping 6 项）。
+- [x] 映射层 XCTest 全绿（EventKitMapping 当前 8 项）。
 - [x] Xcode iOS Simulator build 全绿。
 
 ## 9. 当前落地说明

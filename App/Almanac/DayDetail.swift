@@ -1,4 +1,5 @@
 import SwiftUI
+import CalendarAnalysis
 import LunarKit
 import HolidayData
 
@@ -8,6 +9,7 @@ struct DayDetail: View {
     @EnvironmentObject private var milestoneStore: MilestoneStore
     @State private var composerContext: EventComposerContext?
     @State private var selectedEvent: CalendarEvent?
+    @State private var diaryDate: Date?
     @AppStorage("showHuangLi") private var showHuangLi = false
     @AppStorage("showSolarTerms") private var showSolarTerms = true
     @AppStorage("showLunarFestivals") private var showLunarFestivals = true
@@ -35,6 +37,7 @@ struct DayDetail: View {
                     holidayCoverageFootnote
                     milestoneBanners
                     anniversaryBanners
+                    diaryBanner
                     nextHolidayFootnote
                     eventList
                 }
@@ -47,6 +50,9 @@ struct DayDetail: View {
         }
         .sheet(item: $selectedEvent) { event in
             EventDetailView(event: event) {}
+        }
+        .sheet(item: $diaryDate) { date in
+            DiarySheetView(initialDate: date)
         }
     }
 
@@ -97,6 +103,31 @@ struct DayDetail: View {
         let leapPrefix = lunar.isLeapMonth ? "闰" : ""
         let gz = GanZhi.dayGanZhi(for: date)
         return "\(GanZhi.yearGanZhi(forGregorianYear: lunar.year).ganZhi)年 \(leapPrefix)\(LunarCalendar.monthNames[lunar.month])\(LunarCalendar.dayNames[lunar.day]) · \(gz)日"
+    }
+
+    @ViewBuilder
+    private var diaryBanner: some View {
+        Button {
+            diaryDate = date
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "book.closed")
+                    .font(.system(size: 14, weight: .semibold))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("日记")
+                        .font(.system(size: 14, weight: .semibold))
+                    Text("记录这一天的心情和感受")
+                        .font(.system(size: 11))
+                        .opacity(0.82)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .semibold))
+            }
+            .foregroundColor(.white)
+            .padding(14)
+            .background(RoundedRectangle(cornerRadius: 16).fill(palette.accent))
+        }
     }
 
     @ViewBuilder
@@ -233,6 +264,13 @@ struct DayDetail: View {
                 .accessibilityLabel("新建日程")
             }
             let dayEvents = eventService.events(on: date)
+            if eventService.accessState == .granted,
+               !CalendarConflictAnalyzer.conflictGroups(in: dayEvents.map(\.analysisEvent)).isEmpty {
+                EventConflictSection(
+                    groups: CalendarConflictAnalyzer.conflictGroups(in: dayEvents.map(\.analysisEvent)),
+                    draftEventID: ""
+                )
+            }
             if dayEvents.isEmpty {
                 Text("这一天暂无日程")
                     .font(.system(size: 13))

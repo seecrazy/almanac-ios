@@ -28,8 +28,8 @@ struct CountdownView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     HStack(alignment: .firstTextBaseline) {
-                        Text("重要日子")
-                            .font(.system(size: 28, weight: .semibold, design: .serif))
+                        Text("倒计时")
+                            .font(.system(size: 34, weight: .bold, design: .serif))
                             .foregroundColor(palette.ink)
                         Spacer()
                         Button {
@@ -43,6 +43,9 @@ struct CountdownView: View {
                         .accessibilityLabel("新建里程碑")
                     }
                     .padding(.horizontal, 20)
+
+                    let stats = countdownStats(milestones: milestones, now: now)
+                    statisticRow(stats)
 
                     anniversarySection(occurrences: anniversaryOccurrences)
 
@@ -104,6 +107,56 @@ struct CountdownView: View {
         .padding(.horizontal, 20)
     }
 
+    private func statisticRow(_ stats: (upcoming: Int, today: Int, past: Int)) -> some View {
+        HStack(spacing: 10) {
+            statisticCard(title: "即将到来", value: stats.upcoming, color: palette.accent)
+            statisticCard(title: "今天", value: stats.today, color: palette.holidayRed)
+            statisticCard(title: "已过期", value: stats.past, color: palette.makeupGray)
+        }
+        .padding(.horizontal, 20)
+    }
+
+    private func statisticCard(
+        title: String,
+        value: Int,
+        color: Color
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("\(value)")
+                .font(.system(size: 24, weight: .bold, design: .rounded))
+                .monospacedDigit()
+                .foregroundColor(color)
+            Text(title)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(palette.secondary)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 18).fill(palette.card))
+    }
+
+    private func countdownStats(
+        milestones: [Milestone],
+        now: Date
+    ) -> (upcoming: Int, today: Int, past: Int) {
+        let today = Calendar.current.startOfDay(for: now)
+        var upcoming = 0
+        var todayCount = 0
+        var past = 0
+        for milestone in milestones {
+            let date = milestone.effectiveSortDate
+            if date < today {
+                past += 1
+            } else if Calendar.current.isDate(date, inSameDayAs: today) {
+                todayCount += 1
+            } else {
+                upcoming += 1
+            }
+        }
+        return (upcoming, todayCount, past)
+    }
+
     private func anniversarySection(occurrences: [AnniversaryOccurrence]) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
@@ -151,52 +204,85 @@ private struct MilestoneCard: View {
     let countdown: MilestoneCountdown
 
     var body: some View {
-        HStack(alignment: .center, spacing: 16) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("\(milestone.category.icon) \(milestone.title)")
-                    .font(.system(size: 17, weight: .medium))
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 8) {
+                Text("\(milestone.category.icon)")
+                    .font(.system(size: 14))
+                Text(milestone.category.title)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(categoryColor)
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 4)
+                    .background(Capsule().fill(categoryColor.opacity(0.12)))
+
+                Spacer()
+
+                HStack(alignment: .firstTextBaseline, spacing: 3) {
+                    Text(countdown.primaryText)
+                        .font(.system(size: countdown.primaryText.count > 5 ? 24 : 40, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundColor(numberColor)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                    Text(countdown.unitText)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(palette.secondary)
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text(milestone.title)
+                    .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(palette.ink)
-                Text(targetText)
-                    .font(.system(size: 13))
-                    .foregroundColor(palette.secondary)
+                    .lineLimit(1)
                 if let notes = milestone.notes.nilIfEmpty {
                     Text(notes)
                         .font(.system(size: 12))
                         .foregroundColor(palette.secondary)
-                        .lineLimit(1)
-                }
-                Text(milestone.category.title)
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(palette.secondary)
-                if !milestone.reminders.isEmpty {
-                    Text("提醒 \(milestone.reminders.count) 项")
-                        .font(.system(size: 10))
-                        .foregroundColor(palette.secondary)
+                        .lineLimit(2)
                 }
             }
 
-            Spacer()
-
-            VStack(alignment: .trailing, spacing: 2) {
-                Text(countdown.primaryText)
-                    .font(.system(size: countdown.primaryText.count > 6 ? 26 : 44, weight: .semibold, design: .serif))
-                    .foregroundColor(countdown.isPast ? palette.makeupGray : palette.holidayRed)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                if !countdown.unitText.isEmpty {
-                    Text(countdown.unitText)
-                        .font(.system(size: 12))
-                        .foregroundColor(palette.secondary)
-                }
-                if let detail = countdown.detailText {
-                    Text(detail)
-                        .font(.system(size: 10))
-                        .foregroundColor(palette.secondary)
+            HStack(spacing: 8) {
+                Image(systemName: "calendar")
+                    .font(.system(size: 11))
+                    .foregroundColor(palette.secondary)
+                Text(targetText)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(palette.secondary)
+                if !milestone.reminders.isEmpty {
+                    Spacer()
+                    Text("提醒 \(milestone.reminders.count) 项")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(palette.accent)
                 }
             }
         }
         .padding(20)
-        .background(RoundedRectangle(cornerRadius: 16).fill(palette.card))
+        .background(
+            RoundedRectangle(cornerRadius: 22)
+                .fill(palette.card)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 22)
+                        .stroke(isEmphasized ? palette.holidayRed.opacity(0.45) : palette.separator, lineWidth: 1)
+                )
+        )
+    }
+
+    private var isToday: Bool { countdown.primaryText == "今天" }
+    private var isEmphasized: Bool { isToday || countdown.isPast }
+    private var numberColor: Color {
+        countdown.isPast ? palette.makeupGray : palette.holidayRed
+    }
+
+    private var categoryColor: Color {
+        switch milestone.category {
+        case .exam: return palette.holidayRed
+        case .project: return palette.solarGreen
+        case .travel: return palette.accent
+        case .anniversary: return .yellow
+        case .custom: return palette.secondary
+        }
     }
 
     private var targetText: String {
@@ -405,47 +491,56 @@ private struct AnniversaryCard: View {
     private var anniversary: Anniversary { occurrence.anniversary }
 
     var body: some View {
-        HStack(alignment: .center, spacing: 16) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text(cardTitle)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(palette.ink)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Text(kindIcon)
+                    .font(.system(size: 14))
+                Text(anniversary.kind.title)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(palette.accent)
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 4)
+                    .background(Capsule().fill(palette.accent.opacity(0.12)))
+                Spacer()
+                if let countText = occurrence.countText {
+                    Text(countText)
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .foregroundColor(palette.holidayRed)
+                }
+            }
+
+            Text(cardTitle)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(palette.ink)
+                .lineLimit(1)
+
+            VStack(alignment: .leading, spacing: 4) {
                 Text(dateSpecText)
-                    .font(.system(size: 13))
+                    .font(.system(size: 12, weight: .medium))
                     .foregroundColor(palette.secondary)
                 Text("下一次 \(nextDateText)")
                     .font(.system(size: 12))
                     .foregroundColor(palette.secondary)
-                if let countText = occurrence.countText {
-                    Text(countText)
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(palette.accent)
-                }
                 if let fallback = occurrence.fallbackNote {
                     Text(fallback)
                         .font(.system(size: 11))
                         .foregroundColor(palette.makeupGray)
                         .lineLimit(2)
                 }
-                if !anniversary.reminders.isEmpty {
-                    Text("提醒 \(anniversary.reminders.count) 项")
-                        .font(.system(size: 10))
-                        .foregroundColor(palette.secondary)
-                }
             }
 
-            Spacer()
-
-            VStack(alignment: .trailing, spacing: 4) {
-                Text(kindIcon)
-                    .font(.system(size: 24))
-                Text(anniversary.kind.title)
-                    .font(.system(size: 10))
-                    .foregroundColor(palette.secondary)
+            if !anniversary.reminders.isEmpty {
+                Text("提醒 \(anniversary.reminders.count) 项")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(palette.accent)
             }
         }
         .padding(16)
-        .background(RoundedRectangle(cornerRadius: 16).fill(palette.card))
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(palette.card)
+                .overlay(RoundedRectangle(cornerRadius: 20).stroke(palette.separator, lineWidth: 1))
+        )
     }
 
     private var cardTitle: String {

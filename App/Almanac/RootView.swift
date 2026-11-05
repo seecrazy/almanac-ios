@@ -9,6 +9,8 @@ struct RootView: View {
                 .tabItem { Label("日历", systemImage: "calendar") }
             CountdownView()
                 .tabItem { Label("倒计时", systemImage: "hourglass") }
+            AlarmView()
+                .tabItem { Label("闹钟", systemImage: "alarm") }
             SettingsView()
                 .tabItem { Label("设置", systemImage: "gearshape") }
         }
