@@ -253,4 +253,137 @@ final class MilestoneKitTests: XCTestCase {
         XCTAssertEqual(occurrence?.date, date(2027, 9, 30))
         XCTAssertEqual(occurrence?.countText, "29 岁")
     }
+
+    // MARK: - 日程小组件快照
+
+    private func scheduleItem(
+        _ id: String,
+        _ year: Int, _ month: Int, _ day: Int,
+        startHour: Int, endHour: Int,
+        isAllDay: Bool = false
+    ) -> ScheduleWidgetEventItem {
+        ScheduleWidgetEventItem(
+            id: id,
+            title: "事件 \(id)",
+            startDate: date(year, month, day, hour: startHour),
+            endDate: date(year, month, day, hour: endHour),
+            isAllDay: isAllDay,
+            location: nil,
+            calendarTitle: "工作",
+            colorRGBA: nil
+        )
+    }
+
+    func testScheduleSnapshotSortsAllDayFirstAndCapsSix() {
+        let day = date(2026, 11, 9)
+        let items = [
+            scheduleItem("a", 2026, 11, 9, startHour: 14, endHour: 15),
+            scheduleItem("allday", 2026, 11, 9, startHour: 0, endHour: 24, isAllDay: true),
+            scheduleItem("b", 2026, 11, 9, startHour: 9, endHour: 10),
+            scheduleItem("other-day", 2026, 11, 10, startHour: 9, endHour: 10),
+            scheduleItem("c", 2026, 11, 9, startHour: 11, endHour: 12),
+            scheduleItem("d", 2026, 11, 9, startHour: 16, endHour: 17),
+            scheduleItem("e", 2026, 11, 9, startHour: 18, endHour: 19),
+            scheduleItem("f", 2026, 11, 9, startHour: 20, endHour: 21),
+            ScheduleWidgetEventItem(
+                id: "overnight",
+                title: "跨午夜",
+                startDate: date(2026, 11, 8, hour: 22),
+                endDate: date(2026, 11, 9, hour: 2),
+                isAllDay: false,
+                location: nil,
+                calendarTitle: "工作",
+                colorRGBA: nil
+            )
+        ]
+
+        let snapshot = ScheduleWidgetSnapshotBuilder.make(
+            items: items,
+            for: day,
+            generatedAt: date(2026, 11, 9, hour: 8),
+            calendar: calendar
+        )
+
+        XCTAssertEqual(calendar.startOfDay(for: snapshot.day), day)
+        XCTAssertEqual(snapshot.events.count, ScheduleWidgetSnapshot.maximumCount)
+        XCTAssertEqual(snapshot.events.first?.id, "allday", "全天事件应置顶")
+        XCTAssertEqual(
+            snapshot.events.dropFirst().map(\.id),
+            ["overnight", "b", "c", "a", "d"],
+            "时刻事件按开始时间升序，第 7 条起截断"
+        )
+        XCTAssertFalse(snapshot.events.contains { $0.id == "other-day" })
+        XCTAssertTrue(snapshot.events.contains { $0.id == "overnight" }, "跨日重叠事件应包含")
+    }
+
+    func testScheduleSnapshotExcludesUnrelatedDays() {
+        let day = date(2026, 11, 9)
+        let items = [
+            scheduleItem("before", 2026, 11, 7, startHour: 9, endHour: 10),
+            scheduleItem("after", 2026, 11, 12, startHour: 9, endHour: 10)
+        ]
+
+        let snapshot = ScheduleWidgetSnapshotBuilder.make(
+            items: items,
+            for: day,
+            generatedAt: date(2026, 11, 9, hour: 8),
+            calendar: calendar
+        )
+
+        XCTAssertTrue(snapshot.events.isEmpty)
+    }
+
+    // MARK: - 联系人生日导入
+
+    func testContactBirthdayMapperProducesAnniversary() {
+        let candidate = ContactBirthdayCandidate(
+            contactID: "c-1",
+            displayName: "张三",
+            month: 5,
+            day: 20,
+            year: 1990
+        )
+        let anniversary = ContactBirthdayMapper.anniversary(for: candidate)
+
+        XCTAssertNotNil(anniversary)
+        XCTAssertEqual(anniversary?.title, "张三的生日")
+        XCTAssertEqual(anniversary?.kind, .birthday)
+        XCTAssertEqual(anniversary?.calendar, .solar)
+        XCTAssertEqual(anniversary?.solarDate?.year, 1990)
+        XCTAssertEqual(anniversary?.solarDate?.month, 5)
+        XCTAssertEqual(anniversary?.solarDate?.day, 20)
+        XCTAssertEqual(anniversary?.notes, "contact:c-1")
+        XCTAssertEqual(anniversary?.showAge, true)
+    }
+
+    func testContactBirthdayMapperYearlessBirthdayHidesAge() {
+        let candidate = ContactBirthdayCandidate(
+            contactID: "c-2",
+            displayName: "李四",
+            month: 11,
+            day: 9,
+            year: nil
+        )
+        let anniversary = ContactBirthdayMapper.anniversary(for: candidate)
+
+        XCTAssertEqual(anniversary?.showAge, false)
+        XCTAssertNil(anniversary?.solarDate?.year)
+    }
+
+    func testContactBirthdayMapperRejectsInvalidDatesAndDuplicates() {
+        XCTAssertNil(ContactBirthdayMapper.anniversary(for: ContactBirthdayCandidate(
+            contactID: "x", displayName: "王五", month: 13, day: 1, year: nil
+        )))
+        XCTAssertNil(ContactBirthdayMapper.anniversary(for: ContactBirthdayCandidate(
+            contactID: "x", displayName: "王五", month: 2, day: 30, year: nil
+        )))
+
+        let imported = ContactBirthdayMapper.anniversary(for: ContactBirthdayCandidate(
+            contactID: "dup", displayName: "赵六", month: 3, day: 8, year: 1985
+        ))!
+        XCTAssertNil(ContactBirthdayMapper.anniversary(
+            for: ContactBirthdayCandidate(contactID: "dup", displayName: "赵六", month: 3, day: 8, year: 1985),
+            existing: [imported]
+        ))
+    }
 }

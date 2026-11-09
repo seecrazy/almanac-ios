@@ -145,19 +145,15 @@ struct EventRecurrenceEditor: View {
     }
 
     private var previewText: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_CN")
-        formatter.dateFormat = "M月d日"
         let occurrences = draft.previewOccurrences(startDate: startDate)
-        let dates = occurrences.map { formatter.string(from: $0) }.joined(separator: "、")
+        let dates = occurrences
+            .map { AppFormatters.monthDay.string(from: $0) }
+            .joined(separator: "、")
         let endText: String
         switch draft.endMode {
         case .never: endText = "一直重复"
         case .onDate:
-            let endFormatter = DateFormatter()
-            endFormatter.locale = Locale(identifier: "zh_CN")
-            endFormatter.dateFormat = "yyyy年M月d日"
-            endText = "重复至 \(endFormatter.string(from: draft.endDate))"
+            endText = "重复至 \(AppFormatters.fullDate.string(from: draft.endDate))"
         case .afterCount: endText = "重复 \(draft.occurrenceCount) 次"
         }
         return "下次：\(dates)。\(endText)。"

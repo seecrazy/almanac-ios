@@ -288,8 +288,182 @@ final class EventSearchKitTests: XCTestCase {
         XCTAssertEqual(try index.search(
             keyword: "会议",
             interval: DateInterval(start: start, duration: 24 * 3600),
-            calendarIDs: nil,
-            includeAllDay: true
+        calendarIDs: nil,
+        includeAllDay: true
         ).count, EventSearchIndex.resultLimit)
+    }
+
+    // MARK: - 索引指纹
+
+    private func sampleRecords() -> [IndexedEventRecord] {
+        [
+            IndexedEventRecord(
+                eventID: "e1",
+                calendarID: "c1",
+                title: "团队会议",
+                location: "会议室 A",
+                notes: nil,
+                startDate: dateTime(2026, 11, 2, hour: 9),
+                endDate: dateTime(2026, 11, 2, hour: 10),
+                isAllDay: false
+            ),
+            IndexedEventRecord(
+                eventID: "e2",
+                calendarID: "c1",
+                title: "体检",
+                location: nil,
+                notes: "空腹",
+                startDate: date(2026, 11, 5),
+                endDate: date(2026, 11, 6),
+                isAllDay: true
+            )
+        ]
+    }
+
+    func testReplaceAllIfNeededSkipsUnchangedRecordsAcrossInstances() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("event-search-index-\(UUID().uuidString)", isDirectory: true)
+        let url = directory.appendingPathComponent("Index.sqlite")
+        let records = sampleRecords()
+
+        let first = try EventSearchIndex(databaseURL: url)
+        XCTAssertTrue(try first.replaceAllIfNeeded(records), "首次写入应重建")
+        XCTAssertEqual(first.recordCount, records.count)
+
+        // 同一实例：未变化跳过。
+        XCTAssertFalse(try first.replaceAllIfNeeded(records))
+
+        // 新实例（跨搜索）：指纹持久在库中，同样跳过。
+        let second = try EventSearchIndex(databaseURL: url)
+        XCTAssertFalse(try second.replaceAllIfNeeded(records))
+        XCTAssertEqual(second.recordCount, records.count)
+    }
+
+    func testReplaceAllIfNeededRebuildsWhenRecordsChange() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("event-search-index-\(UUID().uuidString)", isDirectory: true)
+        let url = directory.appendingPathComponent("Index.sqlite")
+        var records = sampleRecords()
+
+        let index = try EventSearchIndex(databaseURL: url)
+        XCTAssertTrue(try index.replaceAllIfNeeded(records))
+
+        records[0] = IndexedEventRecord(
+            eventID: "e1",
+            calendarID: "c1",
+            title: "全员大会",
+            location: "会议室 A",
+            notes: nil,
+            startDate: dateTime(2026, 11, 2, hour: 9),
+            endDate: dateTime(2026, 11, 2, hour: 10),
+            isAllDay: false
+        )
+        XCTAssertTrue(try index.replaceAllIfNeeded(records), "标题变化应触发重建")
+        XCTAssertEqual(index.recordCount, records.count)
+
+        XCTAssertFalse(try index.replaceAllIfNeeded(Array(records.reversed())), "指纹与顺序无关，重排不应重建")
+    }
+
+    // MARK: - 拼音搜索
+
+    func testPinyinTransform() {
+        XCTAssertEqual(PinyinText.plain("团队会议"), "tuanduihuiyi")
+        XCTAssertEqual(PinyinText.initials("团队会议"), "tdhy")
+        XCTAssertEqual(PinyinText.plain("OK 会议"), "okhuiyi", "非汉字原样保留")
+        XCTAssertEqual(PinyinText.initials("OK 会议"), "hy", "非汉字不参与首字母")
+        XCTAssertEqual(PinyinText.plain(""), "")
+        XCTAssertEqual(PinyinText.initials(""), "")
+    }
+
+    func testSearchByPinyinPlainAndInitials() throws {
+        let index = try makeIndex()
+        let records = [
+            IndexedEventRecord(
+                eventID: "p1",
+                calendarID: "c1",
+                title: "团队会议",
+                location: "会议室",
+                notes: nil,
+                startDate: dateTime(2026, 11, 10, hour: 9),
+                endDate: dateTime(2026, 11, 10, hour: 10),
+                isAllDay: false
+            ),
+            IndexedEventRecord(
+                eventID: "p2",
+                calendarID: "c1",
+                title: "体检",
+                location: nil,
+                notes: nil,
+                startDate: dateTime(2026, 11, 11, hour: 8),
+                endDate: dateTime(2026, 11, 11, hour: 9),
+                isAllDay: false
+            )
+        ]
+        try index.replaceAll(records)
+        let interval = DateInterval(
+            start: date(2026, 11, 1),
+            end: date(2026, 11, 30)
+        )
+
+        // 全拼子串与首字母。
+        XCTAssertEqual(
+            try index.search(keyword: "tuanduihuiyi", interval: interval, calendarIDs: nil, includeAllDay: true).map(\.eventID),
+            ["p1"]
+        )
+        XCTAssertEqual(
+            try index.search(keyword: "tuandui", interval: interval, calendarIDs: nil, includeAllDay: true).map(\.eventID),
+            ["p1"],
+            "全拼前缀子串也应命中"
+        )
+        XCTAssertEqual(
+            try index.search(keyword: "tdhy", interval: interval, calendarIDs: nil, includeAllDay: true).map(\.eventID),
+            ["p1"]
+        )
+        // 地点拼音。
+        XCTAssertEqual(
+            try index.search(keyword: "huiyishi", interval: interval, calendarIDs: nil, includeAllDay: true).map(\.eventID),
+            ["p1"]
+        )
+        // 日期过滤叠加：窗口不含 p1 时不命中。
+        let narrow = DateInterval(
+            start: date(2026, 11, 11),
+            end: date(2026, 11, 12)
+        )
+        XCTAssertTrue(
+            try index.search(keyword: "tdhy", interval: narrow, calendarIDs: nil, includeAllDay: true).isEmpty
+        )
+        // 中文关键词路径不受影响。
+        XCTAssertEqual(
+            try index.search(keyword: "体检", interval: interval, calendarIDs: nil, includeAllDay: true).map(\.eventID),
+            ["p2"]
+        )
+    }
+
+    func testSchemaVersionMigrationRebuildsOldIndex() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("event-search-index-\(UUID().uuidString)", isDirectory: true)
+        let url = directory.appendingPathComponent("Index.sqlite")
+
+        var first: EventSearchIndex? = try EventSearchIndex(databaseURL: url)
+        let record = IndexedEventRecord(
+            eventID: "m1",
+            calendarID: "c1",
+            title: "旧数据",
+            location: nil,
+            notes: nil,
+            startDate: date(2026, 11, 2),
+            endDate: date(2026, 11, 3),
+            isAllDay: true
+        )
+        try first?.replaceAll([record])
+        // 伪造旧 schema 版本，模拟升级场景；随后关闭旧连接避免库锁。
+        try first?.executeRawForTesting("UPDATE index_meta SET value = '1' WHERE key = 'schemaVersion'")
+        first = nil
+
+        let second = try EventSearchIndex(databaseURL: url)
+        XCTAssertEqual(second.recordCount, 0, "版本迁移应清空并重建表")
+        let migrated = [record]
+        try second.replaceAll(migrated)
+        XCTAssertEqual(second.recordCount, 1)
     }
 }

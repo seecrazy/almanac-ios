@@ -7,6 +7,17 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7A1111110000000000000281 /* AppRouterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000280 /* AppRouterTests.swift */; };
+		7A1111110000000000000261 /* AppFormatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000260 /* AppFormatters.swift */; };
+		7A1111110000000000000263 /* ScheduleWidgetSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000262 /* ScheduleWidgetSync.swift */; };
+		7A1111110000000000000265 /* ScheduleWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000264 /* ScheduleWidget.swift */; };
+		7A1111110000000000000267 /* DailyBriefingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000266 /* DailyBriefingService.swift */; };
+		7A1111110000000000000269 /* SpotlightIndexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000268 /* SpotlightIndexer.swift */; };
+		7A1111110000000000000271 /* AppRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000270 /* AppRouter.swift */; };
+		7A1111110000000000000273 /* QuickEventIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000272 /* QuickEventIntent.swift */; };
+		7A1111110000000000000275 /* ContactImportSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000274 /* ContactImportSheet.swift */; };
+		7A1111110000000000000277 /* LiveActivityScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000276 /* LiveActivityScheduler.swift */; };
+		7A1111110000000000000279 /* MilestoneLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000278 /* MilestoneLiveActivity.swift */; };
 		7A1111110000000000000051 /* AlmanacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000041 /* AlmanacApp.swift */; };
 		7A1111110000000000000052 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000042 /* Theme.swift */; };
 		7A1111110000000000000053 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000043 /* RootView.swift */; };
@@ -45,7 +56,19 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		7A1111110000000000000280 /* AppRouterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlmanacTests/AppRouterTests.swift; sourceTree = "<group>"; };
+		7A1111110000000000000282 /* AlmanacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AlmanacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7A1111110000000000000020 /* Almanac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Almanac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7A1111110000000000000260 /* AppFormatters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppFormatters.swift; sourceTree = "<group>"; };
+		7A1111110000000000000262 /* ScheduleWidgetSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleWidgetSync.swift; sourceTree = "<group>"; };
+		7A1111110000000000000264 /* ScheduleWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleWidget.swift; sourceTree = "<group>"; };
+		7A1111110000000000000266 /* DailyBriefingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyBriefingService.swift; sourceTree = "<group>"; };
+		7A1111110000000000000268 /* SpotlightIndexer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotlightIndexer.swift; sourceTree = "<group>"; };
+		7A1111110000000000000270 /* AppRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRouter.swift; sourceTree = "<group>"; };
+		7A1111110000000000000272 /* QuickEventIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickEventIntent.swift; sourceTree = "<group>"; };
+		7A1111110000000000000274 /* ContactImportSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactImportSheet.swift; sourceTree = "<group>"; };
+		7A1111110000000000000276 /* LiveActivityScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityScheduler.swift; sourceTree = "<group>"; };
+		7A1111110000000000000278 /* MilestoneLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MilestoneLiveActivity.swift; sourceTree = "<group>"; };
 		7A1111110000000000000041 /* AlmanacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlmanacApp.swift; sourceTree = "<group>"; };
 		7A1111110000000000000042 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		7A1111110000000000000043 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
@@ -108,6 +131,7 @@
 			isa = PBXGroup;
 			children = (
 				7A1111110000000000000004 /* App/Almanac */,
+				7A1111110000000000000283 /* AppTests */,
 				7A1111110000000000000136 /* MilestoneWidget */,
 				7A1111110000000000000003 /* Products */,
 			);
@@ -127,6 +151,14 @@
 			children = (
 				7A1111110000000000000041 /* AlmanacApp.swift */,
 				7A1111110000000000000042 /* Theme.swift */,
+				7A1111110000000000000260 /* AppFormatters.swift */,
+				7A1111110000000000000262 /* ScheduleWidgetSync.swift */,
+				7A1111110000000000000266 /* DailyBriefingService.swift */,
+				7A1111110000000000000268 /* SpotlightIndexer.swift */,
+				7A1111110000000000000270 /* AppRouter.swift */,
+				7A1111110000000000000272 /* QuickEventIntent.swift */,
+				7A1111110000000000000274 /* ContactImportSheet.swift */,
+				7A1111110000000000000276 /* LiveActivityScheduler.swift */,
 				7A1111110000000000000043 /* RootView.swift */,
 				7A1111110000000000000161 /* CalendarViews.swift */,
 				7A1111110000000000000044 /* MonthView.swift */,
@@ -161,10 +193,20 @@
 			path = Resources/Sounds;
 			sourceTree = "<group>";
 		};
+		7A1111110000000000000283 /* AppTests */ = {
+			isa = PBXGroup;
+			children = (
+				7A1111110000000000000280 /* AppRouterTests.swift */,
+			);
+			path = AppTests;
+			sourceTree = "<group>";
+		};
 		7A1111110000000000000136 /* MilestoneWidget */ = {
 			isa = PBXGroup;
 			children = (
 				7A1111110000000000000135 /* MilestoneWidget.swift */,
+				7A1111110000000000000264 /* ScheduleWidget.swift */,
+				7A1111110000000000000278 /* MilestoneLiveActivity.swift */,
 				7A1111110000000000000134 /* Info.plist */,
 				7A1111110000000000000133 /* MilestoneWidget.entitlements */,
 			);
@@ -204,6 +246,25 @@
 			productReference = 7A1111110000000000000020 /* Almanac.app */;
 			productType = "com.apple.product-type.application";
 		};
+		7A1111110000000000000288 /* AlmanacTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7A1111110000000000000289 /* Build configuration list for PBXNativeTarget "AlmanacTests" */;
+			buildPhases = (
+				7A1111110000000000000284 /* Sources */,
+				7A1111110000000000000285 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				7A1111110000000000000287 /* PBXTargetDependency */,
+			);
+			name = AlmanacTests;
+			packageProductDependencies = (
+			);
+			productName = AlmanacTests;
+			productReference = 7A1111110000000000000282 /* AlmanacTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		7A1111110000000000000138 /* MilestoneWidget */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 7A1111110000000000000142 /* Build configuration list for PBXNativeTarget "MilestoneWidget" */;
@@ -240,6 +301,10 @@
 					7A1111110000000000000138 = {
 						CreatedOnToolsVersion = 16.0;
 					};
+					7A1111110000000000000288 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = 7A1111110000000000000010;
+					};
 				};
 			};
 			buildConfigurationList = 7A1111110000000000000030 /* Build configuration list for PBXProject "Almanac" */;
@@ -269,6 +334,7 @@
 			targets = (
 				7A1111110000000000000010 /* Almanac */,
 				7A1111110000000000000138 /* MilestoneWidget */,
+				7A1111110000000000000288 /* AlmanacTests */,
 			);
 		};
 /* End PBXProject section */
@@ -280,6 +346,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 7A1111110000000000000138;
 			remoteInfo = MilestoneWidget;
+		};
+		7A1111110000000000000286 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7A1111110000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7A1111110000000000000010;
+			remoteInfo = Almanac;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -323,6 +396,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				7A1111110000000000000051 /* AlmanacApp.swift in Sources */,
+				7A1111110000000000000261 /* AppFormatters.swift in Sources */,
+				7A1111110000000000000263 /* ScheduleWidgetSync.swift in Sources */,
+				7A1111110000000000000267 /* DailyBriefingService.swift in Sources */,
+				7A1111110000000000000269 /* SpotlightIndexer.swift in Sources */,
+				7A1111110000000000000271 /* AppRouter.swift in Sources */,
+				7A1111110000000000000273 /* QuickEventIntent.swift in Sources */,
+				7A1111110000000000000275 /* ContactImportSheet.swift in Sources */,
+				7A1111110000000000000277 /* LiveActivityScheduler.swift in Sources */,
 				7A1111110000000000000052 /* Theme.swift in Sources */,
 				7A1111110000000000000053 /* RootView.swift in Sources */,
 				7A1111110000000000000054 /* MonthView.swift in Sources */,
@@ -350,6 +431,23 @@
 			buildActionMask = 2147483647;
 			files = (
 				7A1111110000000000000153 /* MilestoneWidget.swift in Sources */,
+				7A1111110000000000000265 /* ScheduleWidget.swift in Sources */,
+				7A1111110000000000000279 /* MilestoneLiveActivity.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7A1111110000000000000284 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7A1111110000000000000281 /* AppRouterTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7A1111110000000000000285 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -429,6 +527,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "宜历需要读取和写入系统日历，以便展示日程并新建事件。";
 				INFOPLIST_KEY_NSCalendarsUsageDescription = "宜历需要读取和写入系统日历，以便展示日程并新建事件。";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				INFOPLIST_KEY_NSContactsUsageDescription = "宜历可从通讯录读取联系人生日，用于创建生日倒计时与提醒；不读取其它字段。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -457,6 +557,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "宜历需要读取和写入系统日历，以便展示日程并新建事件。";
 				INFOPLIST_KEY_NSCalendarsUsageDescription = "宜历需要读取和写入系统日历，以便展示日程并新建事件。";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				INFOPLIST_KEY_NSContactsUsageDescription = "宜历可从通讯录读取联系人生日，用于创建生日倒计时与提醒；不读取其它字段。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -525,6 +627,44 @@
 			};
 			name = Release;
 		};
+		7A1111110000000000000290 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = DFB7P62Y8F;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yili.almanac.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Almanac.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Almanac";
+			};
+			name = Debug;
+		};
+		7A1111110000000000000291 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = DFB7P62Y8F;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yili.almanac.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Almanac.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Almanac";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -555,6 +695,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		7A1111110000000000000289 /* Build configuration list for PBXNativeTarget "AlmanacTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7A1111110000000000000290 /* Debug */,
+				7A1111110000000000000291 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin PBXTargetDependency section */
@@ -562,6 +711,11 @@
 			isa = PBXTargetDependency;
 			target = 7A1111110000000000000138 /* MilestoneWidget */;
 			targetProxy = 7A1111110000000000000145 /* PBXContainerItemProxy */;
+		};
+		7A1111110000000000000287 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7A1111110000000000000010 /* Almanac */;
+			targetProxy = 7A1111110000000000000286 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 

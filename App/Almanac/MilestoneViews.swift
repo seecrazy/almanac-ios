@@ -15,9 +15,11 @@ struct AnniversaryEditorContext: Identifiable {
 struct CountdownView: View {
     @Environment(\.palette) private var palette
     @EnvironmentObject private var milestoneStore: MilestoneStore
+    @EnvironmentObject private var router: AppRouter
 
     @State private var editorContext: MilestoneEditorContext?
     @State private var anniversaryEditorContext: AnniversaryEditorContext?
+    @State private var importSheetIsPresented = false
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: milestoneStore.refreshInterval)) { timeline in
@@ -87,6 +89,23 @@ struct CountdownView: View {
         }
         .sheet(item: $anniversaryEditorContext) { context in
             AnniversaryEditorView(anniversary: context.anniversary)
+        }
+        .sheet(isPresented: $importSheetIsPresented) {
+            ContactImportSheet()
+        }
+        .onReceive(router.$pendingMilestoneID) { id in
+            guard let id else { return }
+            if let milestone = milestoneStore.milestones.first(where: { $0.id == id }) {
+                editorContext = MilestoneEditorContext(milestone: milestone)
+            }
+            router.pendingMilestoneID = nil
+        }
+        .onReceive(router.$pendingAnniversaryID) { id in
+            guard let id else { return }
+            if let anniversary = milestoneStore.anniversaries.first(where: { $0.id == id }) {
+                anniversaryEditorContext = AnniversaryEditorContext(anniversary: anniversary)
+            }
+            router.pendingAnniversaryID = nil
         }
     }
 
@@ -164,6 +183,14 @@ struct CountdownView: View {
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(palette.ink)
                 Spacer()
+                Button {
+                    importSheetIsPresented = true
+                } label: {
+                    Image(systemName: "square.and.arrow.down.on.square")
+                        .font(.system(size: 17, weight: .medium))
+                        .foregroundColor(palette.accent)
+                }
+                .accessibilityLabel("从通讯录导入生日")
                 Button {
                     anniversaryEditorContext = AnniversaryEditorContext(anniversary: nil)
                 } label: {
@@ -286,14 +313,9 @@ private struct MilestoneCard: View {
     }
 
     private var targetText: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_CN")
-        if milestone.isAllDay {
-            formatter.dateFormat = "yyyy年M月d日"
-        } else {
-            formatter.dateFormat = "yyyy年M月d日 HH:mm"
-        }
-        return formatter.string(from: milestone.targetDate)
+        milestone.isAllDay
+            ? AppFormatters.fullDate.string(from: milestone.targetDate)
+            : AppFormatters.fullDateTime.string(from: milestone.targetDate)
     }
 }
 
@@ -586,10 +608,7 @@ private struct AnniversaryCard: View {
     }
 
     private var nextDateText: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_CN")
-        formatter.dateFormat = "yyyy年M月d日"
-        return formatter.string(from: occurrence.date)
+        AppFormatters.fullDate.string(from: occurrence.date)
     }
 }
 

@@ -78,16 +78,13 @@ final class DiaryViewModel: ObservableObject {
     func generateSkeleton() {
         guard let eventService else { return }
         let events = eventService.events(on: selectedDate)
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_CN")
 
         skeleton = events.map { event in
             let timeText: String
             if event.isAllDay {
                 timeText = "全天"
             } else {
-                formatter.dateFormat = "HH:mm"
-                timeText = "\(formatter.string(from: event.startDate))–\(formatter.string(from: event.endDate))"
+                timeText = "\(AppFormatters.hhmm.string(from: event.startDate))–\(AppFormatters.hhmm.string(from: event.endDate))"
             }
             return DiarySkeletonItem(
                 title: event.title,
@@ -127,6 +124,7 @@ final class DiaryViewModel: ObservableObject {
 
         do {
             try store.save(entry, calendar: .current)
+            SpotlightIndexer.indexDiary(date: selectedDate, moodTitle: entry.mood?.title)
             isEditing = false
             load()
         } catch {
@@ -139,6 +137,7 @@ final class DiaryViewModel: ObservableObject {
         errorMessage = nil
         do {
             try store.delete(on: selectedDate, calendar: .current)
+            SpotlightIndexer.removeDiary(date: selectedDate)
             currentEntry = nil
             mood = nil
             bodyText = ""

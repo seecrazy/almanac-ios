@@ -15,6 +15,7 @@ struct EventDetailView: View {
     @State private var isDeleteScopeDialogPresented = false
     @State private var errorMessage: String?
     @State private var isDeleting = false
+    @State private var shareURL: URL?
 
     private var currentEvent: CalendarEvent {
         eventService.events.first { $0.id == event.id } ?? event
@@ -48,6 +49,12 @@ struct EventDetailView: View {
                 }
 
                 Section {
+                    Button {
+                        shareURL = makeShareFile()
+                    } label: {
+                        Label("分享日程（.ics）", systemImage: "square.and.arrow.up")
+                    }
+
                     if currentEvent.isWritable {
                         Button {
                             editContext = EditEventContext(event: currentEvent)
@@ -90,6 +97,10 @@ struct EventDetailView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("完成") { dismiss() }
                 }
+            }
+            .sheet(item: $shareURL) { url in
+                ActivityShareSheet(items: [url])
+                    .ignoresSafeArea()
             }
             .sheet(item: $editContext) { context in
                 EventEditView(event: context.event)
@@ -135,21 +146,40 @@ struct EventDetailView: View {
     }
 
     private var timeText: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_CN")
         if currentEvent.isAllDay {
-            formatter.dateFormat = "yyyy年M月d日"
-            return formatter.string(from: currentEvent.startDate)
+            return AppFormatters.fullDate.string(from: currentEvent.startDate)
         }
 
         let sameDay = Calendar.current.isDate(currentEvent.startDate, inSameDayAs: currentEvent.endDate)
         if sameDay {
-            formatter.dateFormat = "yyyy年M月d日 HH:mm – HH:mm"
-            return formatter.string(from: currentEvent.startDate)
+            return "\(AppFormatters.fullDate.string(from: currentEvent.startDate)) \(AppFormatters.hhmm.string(from: currentEvent.startDate)) – \(AppFormatters.hhmm.string(from: currentEvent.endDate))"
         }
 
-        formatter.dateFormat = "yyyy年M月d日 HH:mm"
-        return "\(formatter.string(from: currentEvent.startDate)) – \(formatter.string(from: currentEvent.endDate))"
+        return "\(AppFormatters.fullDateTime.string(from: currentEvent.startDate)) – \(AppFormatters.fullDateTime.string(from: currentEvent.endDate))"
+    }
+
+    /// 生成临时 .ics 文件；重复日程只导出当前这一次发生。
+    private func makeShareFile() -> URL? {
+        let icsEvent = ICSEvent(
+            uid: currentEvent.eventIdentifier ?? currentEvent.id,
+            title: currentEvent.title,
+            startDate: currentEvent.startDate,
+            endDate: currentEvent.endDate,
+            isAllDay: currentEvent.isAllDay,
+            location: currentEvent.location,
+            notes: currentEvent.notes
+        )
+        let ics = ICSExporter.calendar(event: icsEvent)
+        let fileName = "宜历-\(ICSExporter.fileNameTitle(for: currentEvent.title)).ics"
+
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+        do {
+            try ics.data(using: .utf8)?.write(to: url, options: .atomic)
+            return url
+        } catch {
+            errorMessage = "生成分享文件失败"
+            return nil
+        }
     }
 
     private func delete(scope: EventEditScope) {
@@ -173,6 +203,21 @@ struct EventDetailView: View {
 struct EditEventContext: Identifiable {
     let id = UUID()
     let event: CalendarEvent
+}
+
+/// iOS 15 兼容的系统分享面板（ShareLink 需要 iOS 16）。
+struct ActivityShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
+
+extension URL: Identifiable {
+    public var id: String { absoluteString }
 }
 
 struct EventEditView: View {

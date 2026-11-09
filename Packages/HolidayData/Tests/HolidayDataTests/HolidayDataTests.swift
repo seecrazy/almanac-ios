@@ -301,4 +301,37 @@ final class HolidayDataTests: XCTestCase {
         )
         XCTAssertTrue(occurrences.allSatisfy { !$0.plan.shouldRing || $0.fireDate > reference })
     }
+
+    // MARK: - NotificationBudgetPlanner
+
+    func testNotificationBudgetTrimmingKeepsEarliestRequests() {
+        let occurrences = WorkdayAlarmPlanner.occurrences(
+            alarms: [WorkdayAlarm(name: "闹钟", time: date(2026, 2, 16, hour: 7, minute: 30))],
+            template: .standard,
+            holidays: HolidayStore.bundled(),
+            from: date(2026, 2, 15, hour: 6),
+            calendar: calendar
+        )
+        XCTAssertGreaterThan(occurrences.count, 3, "60 天窗口内应有多条计划")
+
+        let trimmed = NotificationBudgetPlanner.trimming(occurrences, budget: 3)
+        XCTAssertEqual(trimmed.count, 3)
+        XCTAssertEqual(trimmed, Array(occurrences.prefix(3)), "应保留最早触发的请求")
+    }
+
+    func testNotificationBudgetTrimmingBoundaries() {
+        XCTAssertTrue(NotificationBudgetPlanner.trimming([1, 2, 3], budget: 0).isEmpty)
+        XCTAssertTrue(NotificationBudgetPlanner.trimming([1, 2, 3], budget: -5).isEmpty)
+        XCTAssertEqual(NotificationBudgetPlanner.trimming([1, 2], budget: 10), [1, 2])
+    }
+
+    func testNotificationBudgetReservesOtherPrefixes() {
+        XCTAssertEqual(NotificationBudgetPlanner.budget(reserving: 0), NotificationBudgetPlanner.systemPendingLimit)
+        XCTAssertEqual(
+            NotificationBudgetPlanner.budget(reserving: 20),
+            NotificationBudgetPlanner.systemPendingLimit - 20
+        )
+        XCTAssertEqual(NotificationBudgetPlanner.budget(reserving: 100), 0)
+        XCTAssertEqual(NotificationBudgetPlanner.budget(reserving: -3), NotificationBudgetPlanner.systemPendingLimit)
+    }
 }

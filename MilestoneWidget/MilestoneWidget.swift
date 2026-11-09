@@ -251,10 +251,24 @@ struct MilestoneWidgetView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
 
-    private func targetText(_ milestone: MilestoneSnapshotItem) -> String {
+    private static let monthDayFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "zh_CN")
-        formatter.dateFormat = milestone.isAllDay ? "M月d日" : "M月d日 HH:mm"
+        formatter.dateFormat = "M月d日"
+        return formatter
+    }()
+
+    private static let monthDayTimeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "zh_CN")
+        formatter.dateFormat = "M月d日 HH:mm"
+        return formatter
+    }()
+
+    private func targetText(_ milestone: MilestoneSnapshotItem) -> String {
+        let formatter = milestone.isAllDay
+            ? Self.monthDayFormatter
+            : Self.monthDayTimeFormatter
         return formatter.string(from: milestone.targetDate)
     }
 
@@ -294,7 +308,7 @@ struct MilestoneWidgetView: View {
     }
 }
 
-private extension View {
+extension View {
     @ViewBuilder
     func widgetBackground() -> some View {
         if #available(iOS 17.0, *) {
@@ -331,5 +345,9 @@ struct MilestoneWidget: Widget {
 struct AlmanacMilestoneWidgetBundle: WidgetBundle {
     var body: some Widget {
         MilestoneWidget()
+        ScheduleWidget()
+        if #available(iOS 16.1, *) {
+            MilestoneLiveActivity()
+        }
     }
 }

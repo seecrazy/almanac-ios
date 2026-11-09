@@ -394,6 +394,8 @@ final class EventStoreService: ObservableObject {
                 if $0.startDate == $1.startDate { return $0.endDate < $1.endDate }
                 return $0.startDate < $1.startDate
             }
+
+        syncScheduleWidget()
     }
 
     func loadWritableCalendars() {
@@ -641,7 +643,8 @@ final class EventStoreService: ObservableObject {
 
             do {
                 let index = try EventSearchIndex(databaseURL: Self.searchIndexURL())
-                try index.replaceAll(records)
+                // 记录集未变化时跳过整表重建；索引每次搜索仍随数据重建，缓存语义不变。
+                try index.replaceAllIfNeeded(records)
                 return try index.search(
                     keyword: trimmedQuery,
                     interval: interval,
@@ -759,7 +762,7 @@ final class EventStoreService: ObservableObject {
         guard accessState == .granted else { throw EventStoreError.accessDenied }
         guard isAllDay || endDate > startDate else { throw EventStoreError.invalidDates }
 
-        guard let matchedEvent = ekEvent(matching: model) else {
+        guard let matchedEvent = await ekEvent(matching: model) else {
             throw EventStoreError.eventNotFound
         }
         let storedEvent = masterEventIfNeeded(matchedEvent, model: model, scope: editScope)
@@ -808,7 +811,7 @@ final class EventStoreService: ObservableObject {
         refreshAuthorizationState()
         guard accessState == .granted else { throw EventStoreError.accessDenied }
 
-        guard let matchedEvent = ekEvent(matching: model) else {
+        guard let matchedEvent = await ekEvent(matching: model) else {
             throw EventStoreError.eventNotFound
         }
         let storedEvent = masterEventIfNeeded(matchedEvent, model: model, scope: scope)
@@ -844,8 +847,8 @@ final class EventStoreService: ObservableObject {
             .map(\.analysisEvent)
     }
 
-    func event(with model: CalendarEvent) -> CalendarEvent? {
-        guard let storedEvent = ekEvent(matching: model) else { return nil }
+    func event(with model: CalendarEvent) async -> CalendarEvent? {
+        guard let storedEvent = await ekEvent(matching: model) else { return nil }
         return CalendarEvent(from: storedEvent)
     }
 
@@ -901,17 +904,21 @@ final class EventStoreService: ObservableObject {
         await reloadIfNecessary()
     }
 
-    private func ekEvent(matching model: CalendarEvent) -> EKEvent? {
+    /// EventKit 匹配查询在后台线程执行；日程多的账户上同步查询会卡主线程。
+    private func ekEvent(matching model: CalendarEvent) async -> EKEvent? {
         let searchStart = model.startDate.addingTimeInterval(-60 * 60 * 24)
         let searchEnd = model.endDate.addingTimeInterval(60 * 60 * 24)
-        let predicate = store.predicateForEvents(withStart: searchStart, end: searchEnd, calendars: nil)
 
-        return store.events(matching: predicate).first { candidate in
-            let candidateIdentifier = candidate.eventIdentifier ?? candidate.calendarItemExternalIdentifier
-            let identifierMatches = model.eventIdentifier == nil || candidateIdentifier == model.eventIdentifier
-            let occurrenceMatches = candidate.startDate == model.startDate && candidate.endDate == model.endDate
-            return identifierMatches && occurrenceMatches
-        }
+        return await Task.detached(priority: .userInitiated) { [store] in
+            let predicate = store.predicateForEvents(withStart: searchStart, end: searchEnd, calendars: nil)
+
+            return store.events(matching: predicate).first { candidate in
+                let candidateIdentifier = candidate.eventIdentifier ?? candidate.calendarItemExternalIdentifier
+                let identifierMatches = model.eventIdentifier == nil || candidateIdentifier == model.eventIdentifier
+                let occurrenceMatches = candidate.startDate == model.startDate && candidate.endDate == model.endDate
+                return identifierMatches && occurrenceMatches
+            }
+        }.value
     }
 
     private func masterEventIfNeeded(

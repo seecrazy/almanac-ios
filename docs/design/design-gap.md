@@ -1,6 +1,6 @@
 # 设计与实现差距清单
 
-状态：2026-11-05 审计。
+状态：2026-11-09 审计（平台能力批次后刷新）。
 范围：`docs/design/recovered-product-blueprint.md` + 现有 ADR + 当前代码
 
 图例：✅ 已实现 · 🟡 部分实现 · 🔴 未实现
@@ -12,44 +12,40 @@
 | EventKit 只读 | ✅ | 月份读取、月历圆点、日详情列表 |
 | EventKit 多日历筛选 | ✅ | 日历列表、颜色、来源分组、显示 / 隐藏、本地持久化；月视图最多 3 色圆点 |
 | EventKit 搜索 v2 | ✅ | `EventSearchKit` 预设 / 自定义日期范围、临时日历筛选、最近搜索、200 条上限与请求保护；GUI / 真机验收待完成 |
-| 搜索本地索引 | 🟡 | SQLite FTS5 批量重建、结构化过滤、CJK LIKE 兜底与内存降级已接入；故障注入验收、增量索引、拼音 / 模糊纠错和复杂查询未实现 |
-| 月视图基础交互 | ✅ | 左右滑动翻月；周一起始 / 周日起始设置本地持久化 |
+| 搜索本地索引 | ✅ | SQLite FTS5 批量重建、指纹跳过重建、结构化过滤、CJK LIKE 兜底、**拼音全拼 / 首字母（CFStringTransform）**、schema v2 自动迁移已接入；故障注入验收、模糊纠错和复杂查询未实现 |
+| 月视图基础交互 | ✅ | 左右滑动翻月；周一起始 / 周日起始设置本地持久化；**周模式收起 / 展开 + 选中日日程列表** |
 | 里程碑基础闭环 | ✅ | `Milestone` 模型、本地 JSON 持久化、列表、创建 / 编辑 / 删除、日详情横幅已实现 |
-| 农历生日 / 纪念日 | 🟡 | Anniversary 模型、Resolver、三种闰月 fallback、年龄 / 周年、倒计时区块、提醒与日详情横幅已接入；GUI / 真机验收未完成 |
-| 自然语言创建 v1 | 🟡 | `NaturalInput` 本地规则表解析 + 13 项测试；月视图输入框可预填创建表单；GUI / 真机验收、自然语言问答、复杂表达未实现 |
+| 农历生日 / 纪念日 | ✅ | Anniversary 模型、Resolver、三种闰月 fallback、年龄 / 周年、倒计时区块、提醒、**通讯录生日导入**与日详情横幅已接入；GUI / 真机验收未完成 |
+| 自然语言创建 v1 | ✅ | `NaturalInput` 本地规则表解析 + 13 项测试；月视图输入框预填；**App Intents「记日程」+ App Shortcuts** 已接入；GUI / 真机验收、自然语言问答、复杂表达未实现 |
 | EventKit 写入 | ✅ | 手动创建标题/全天/时间/地点/备注/目标日历 |
-| EventKit 编辑删除 | ✅ | 详情页可编辑标题/时间/全天/地点/备注/日历，可删除；重复日程支持仅此 / 未来 / 系列范围 |
+| EventKit 编辑删除 | ✅ | 详情页可编辑标题/时间/全天/地点/备注/日历，可删除；重复日程支持仅此 / 未来 / 系列范围；**单事件 .ics 分享** |
 | EventKit 单条提醒 | 🟡 | 新建/编辑支持不提醒、准时、提前 5/15/30/60 分钟、1 天；详情可展示。多条/自定义提醒默认保留，GUI 验收待完成 |
 | EventKit 基础重复规则 | ✅ | 新建/编辑支持基础频率、间隔、周几多选、每月规则和三种结束方式 |
-| Xcode 工程 | ✅ | Xcode 27.2 generic simulator build 通过 |
-| 核心引擎测试 | ✅ | LunarKit 19 / HolidayData 17 / RecurrenceEngine 6 / NaturalInput 13 / EventKitMapping 8 / MilestoneKit 10 / EventSearchKit 7 / CalendarAnalysis 7 / DiaryKit 6 |
+| Xcode 工程 | ✅ | Xcode 27.2 generic simulator build 通过；**AppTests unit-test target + 共享 scheme TestAction 跑通（模拟器 5 项）** |
+| 核心引擎测试 | ✅ | LunarKit 22 / HolidayData 20 / RecurrenceEngine 6 / NaturalInput 13 / EventKitMapping 12 / MilestoneKit 15 / EventSearchKit 12 / CalendarAnalysis 7 / DiaryKit 6 |
 | 设计系统 | 🟡 | token 和月格/日详情/创建表单基线已文档化；组件覆盖不全 |
 | 农历基础 | 🟡 | 公历↔农历、闰月、干支、生肖、月视图文本已实现；月柱为农历月近似，节气月柱未精确计算 |
 | 节假日 | 🟡 | manifest、2026 official / 2027 sample、跨年查询、覆盖状态与来源提示已接入；2027 官方数据待替换 |
 | 完整重复规则 | ✅ | 自定义周几、COUNT 结束、系列编辑、规则预览和复杂规则只读保护已接入；RRULE 手输与复杂规则解释未实现 |
-| 里程碑平台能力 | 🟡 | 四类本地提醒、桌面 small / medium Widget、锁屏 circular / inline / rectangular Widget 已接入；Live Activity、SQLite、模板和颜色自定义未实现 |
-| 秒级倒计时 | 🔴 | 未实现 |
-| Widget / Live Activity | 🟡 | Milestone Widget extension 已接入；Live Activity / 灵动岛未实现 |
-| 农历生日 / 纪念日 | 🟡 | 模型 / Resolver / 编辑器 / 提醒已接入；GUI / 真机验收未完成 |
-| 黄历 | 🟡 | `AlmanacCalendar` / JSON 规则 / 日详情折叠面板已接入；GUI / 真机验收和完整口径校准待完成 |
-| 二十四节气 | 🟡 | `SolarTermCalendar` 与月 / 周 / 日展示已接入；GUI / 真机验收未完成 |
+| 里程碑平台能力 | ✅ | 四类本地提醒、桌面 small / medium Widget、锁屏 circular / inline / rectangular Widget、**Live Activity（16.1 门控）**已接入；SQLite、模板和颜色自定义未实现 |
+| Widget 矩阵 | ✅ | 里程碑 + **日程（桌面 small / medium、锁屏 inline / rectangular）**两组 Widget；交互式 Widget 与 deep link 未实现 |
 | 农历节日 | 🟡 | 10 个常见节日、除夕动态推导与月 / 周 / 日展示已接入；GUI / 真机验收未完成 |
-| 智能闹钟 | 🟡 | 独立页签、规则与闹钟启用解耦、工作日模板、官方休 / 班优先级、最多 8 个闹钟、独立时间 / 开关、4 种铃声、高保真列表 / 下次响铃预览、旧设置迁移与前台声音代理已接入；真机响铃、铃声资源、跨时区和 GUI 验收未完成 |
+| 智能闹钟 | 🟡 | 独立页签、规则与闹钟启用解耦、工作日模板、官方休 / 班优先级、最多 8 个闹钟、独立时间 / 开关、4 种铃声、**64 条通知配额三路预留与激活重排**、高保真列表 / 下次响铃预览、旧设置迁移与前台声音代理已接入；真机响铃、铃声资源、跨时区和 GUI 验收未完成 |
 | 公司政策引擎 | 🔴 | 无规则模型、模板、公司码分发 |
-| 自然语言创建 | 🟡 | 本地 parser / 规则表 / UI 已接入；GUI 验收、英文完整表达、复杂重复规则、提醒推断未实现 |
-| 自然语言问答 | 🔴 | 无本地查询引擎 |
 | 本地 SQLite / GRDB | 🟡 | 搜索派生索引已使用系统 SQLite FTS5；GRDB 与其他 App 层持久化未引入 |
 | CloudKit / SyncProvider | 🔴 | 未实现 |
-| 手动导出导入 | 🔴 | 无 ICS / JSON 备份 |
-| 日记 | 🟡 | `DiaryKit` 模型、AES-256-GCM 加密 SQLite、Keychain 密钥、日程骨架、心情 / 正文、日详情入口、历史列表与查看 / 修改 / 删除已接入；照片 / 语音 / 独立密码 / FTS / CloudKit / 导出未实现，GUI / 真机验收未完成 |
-| 完整多视图 | 🟡 | 月 / 年 / 议程视图、滑动手势、月点日详情、周末 / 法定休班底色角标、今天和年 / 月 / 日三列跳转已接入；独立日 / 周视图已移除，导航 GUI / 真机验收未完成 |
-| SQLite / FTS 搜索 | 🟡 | 可重建 SQLite FTS5 索引、日期 / 日历 / 全天过滤、CJK LIKE 兜底、200 条上限与内存降级已接入；增量索引、拼音 / 模糊纠错、复杂查询和故障注入验收未实现 |
-| 完整日历管理 | 🟡 | 可筛选 / 隐藏；本机日历创建、重命名、删除已接入；订阅管理、颜色修改、账户批量筛选未实现 |
-| 多条 / 自定义提醒 | 🔴 | v1 只管理单条相对提醒；多条和绝对时间提醒只保护不编辑 |
+| 手动导出导入 | 🟡 | **单事件 .ics 分享已实现**；整库 ICS / JSON 备份未实现 |
+| 日记 | 🟡 | `DiaryKit` 模型、AES-256-GCM 加密 SQLite、Keychain 密钥、日程骨架、心情 / 正文、日详情入口、历史列表与查看 / 修改 / 删除、**Spotlight 日期索引（正文永不入索引）**已接入；照片 / 语音 / 独立密码 / FTS / CloudKit / 导出未实现，GUI / 真机验收未完成 |
+| 完整多视图 | ✅ | 月 / 年 / 议程 / **周模式**视图、滑动手势、月点日详情、周末 / 法定休班底色角标、今天和年 / 月 / 日三列跳转、**iPad 双栏**已接入；导航 GUI / 真机验收未完成 |
+| 每日简报 | ✅ | 14 天预排（农历 / 节日 / 节气 / 宜忌）、设置页开关与时间选择；真机响铃验收未完成 |
+| Spotlight | ✅ | 里程碑 / 纪念日按标题、日记按日期；深链路由到对应 Tab 与编辑器 / 日详情 |
+| 无障碍专项 | 🟡 | **Dynamic Type 正文适配 v1**（EventRow / 日详情 / 设置页）；逐屏 VoiceOver audit 与大字号走查未完成 |
+| Watch | 🟡 | ADR-012 已定（复用纯逻辑包 + App Group 快照）；target 待 Xcode GUI 创建 |
 | 天气 / 任务 / 差旅 | 🔴 | 未实现 |
 | 邀请 / RSVP | 🔴 | 未实现 |
 | 冲突检测 | 🟡 | `CalendarAnalysis` 冲突组、全天处理、跨日裁剪、新建冲突提醒、日详情冲突摘要与日视图空闲时段已接入；GUI / 真机验收未完成 |
-| 无障碍专项 | 🔴 | 有基础文本层级，但无逐屏 audit |
+| 性能 | ✅ | DateFormatter 缓存、bundled 单例、年视图单次拉取、议程分组缓存、事件匹配后台线程、索引指纹复用（见 performance-optimizations.md） |
+| CI | ✅ | GitHub Actions 三 job（包测试 / App 构建 / App 单测） |
 | Android 预留 | 🟡 | 架构原则和 ADR-007 已定；NaturalInput 与规则引擎外没有更多落地 |
 
 ## 2. MVP 内最高优先缺口

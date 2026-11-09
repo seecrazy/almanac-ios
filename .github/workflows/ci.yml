@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package-tests:
+    name: 核心包 XCTest
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 选 Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: 九包构建 + XCTest
+        run: ./build.sh test
+
+  app-build:
+    name: iOS App 模拟器构建
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 选 Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: generic iOS Simulator build
+        run: |
+          /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild \
+            -project Almanac.xcodeproj \
+            -scheme Almanac \
+            -destination 'generic/platform=iOS Simulator' \
+            build
+
+  app-tests:
+    name: App 层 XCTest
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 选 Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: 模拟器单测
+        run: |
+          /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test \
+            -project Almanac.xcodeproj \
+            -scheme Almanac \
+            -destination 'platform=iOS Simulator,name=iPhone 16'

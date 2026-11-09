@@ -219,6 +219,10 @@ final class MilestoneStore: ObservableObject {
         )
         notificationAuthorization = result.authorization
         snapshotAvailable = result.snapshotAvailable
+        SpotlightIndexer.reindex(milestones: milestones, anniversaries: anniversaries)
+        if #available(iOS 16.1, *) {
+            LiveActivityScheduler.sync(milestones: milestones)
+        }
     }
 
     func countdown(for milestone: Milestone, at referenceDate: Date) -> MilestoneCountdown {

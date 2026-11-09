@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// 宜历设计 token——来源 docs/design/design-system.md
 struct Palette {
@@ -62,4 +63,17 @@ struct PaletteModifier: ViewModifier {
 
 extension View {
     func almanacPalette() -> some View { modifier(PaletteModifier()) }
+}
+
+extension Font {
+    /// 跟随系统动态字体的正文字号；展示型大数字（倒计时 / 闹钟时间）继续用固定字号。
+    /// 见 docs/design/dynamic-type.md。
+    static func appText(
+        _ size: CGFloat,
+        weight: Font.Weight = .regular,
+        design: Font.Design = .default
+    ) -> Font {
+        let scaled = UIFontMetrics(forTextStyle: .body).scaledValue(for: size)
+        return .system(size: scaled, weight: weight, design: design)
+    }
 }

@@ -34,6 +34,23 @@
   - [ ] GUI / 真机人工验收
 
 ## v1.1
+- [ ] 平台能力批次（2026-11-09 接入）
+  - [x] 通知配额修复：64 条上限三路预留（闹钟 / 里程碑 / 简报）、App 激活与显著时间变化重排、闹钟页调度数如实展示（[notification-budget](../design/notification-budget.md)）
+  - [x] 性能优化六项：DateFormatter 缓存、bundled 数据单例、年视图单次拉取、议程分组缓存、事件匹配后台线程、搜索索引指纹复用（[performance-optimizations](../design/performance-optimizations.md)）
+  - [x] 日程 Widget：桌面 small / medium + 锁屏 inline / rectangular，App Group 快照（[schedule-widget](../design/schedule-widget.md)）
+  - [x] 月视图周模式：上滑收起 / 下拉展开 + 选中日日程列表（[week-mode](../design/week-mode.md)）
+  - [x] 每日简报：14 天预排农历 / 节气节日 / 宜忌通知（[daily-briefing](../design/daily-briefing.md)）
+  - [x] 单事件 .ics 分享（[event-sharing](../design/event-sharing.md)）
+  - [x] Spotlight 集成：里程碑 / 纪念日按标题、日记按日期，深链路由（[spotlight](../design/spotlight.md)）
+  - [x] 拼音搜索：CFStringTransform 全拼 / 首字母（[pinyin-search](../design/pinyin-search.md)）
+  - [x] App Intents「记日程」+ App Shortcuts（[app-intents](../design/app-intents.md)）
+  - [x] 联系人生日导入（[contacts-birthdays](../design/contacts-birthdays.md)）
+  - [x] Live Activity 秒级倒计时（16.1 门控，[live-activity](../design/live-activity.md)）
+  - [x] Dynamic Type 正文适配（[dynamic-type](../design/dynamic-type.md)）
+  - [x] iPad 双栏月视图（[ipad-adaptation](../design/ipad-adaptation.md)）
+  - [x] App 层 XCTest（AppTests target，模拟器 5 项）+ GitHub Actions CI
+  - [x] Watch App 工程决策：ADR-012（target 须 Xcode GUI 创建，代码侧复用纯逻辑包 + 快照）
+  - [ ] GUI / 真机人工验收（Widget 添加、灵动岛、Siri / 快捷指令、通讯录导入、大字号走查、iPad 双栏）
 - [ ] 事件搜索 v2
   - [x] `EventSearchKit` 查询模型、范围解析、730 天限制与最近搜索去重
   - [x] 未来 7 / 30 天、近 90 天、自定义范围与临时日历筛选
@@ -125,8 +142,8 @@
 
 ## v1.2
 - [ ] 公司政策引擎（模板 + 公司码分发）
-- [ ] Live Activity 秒级倒计时
 - [ ] 多级自定义提醒
+- [ ] Watch App 落地（按 ADR-012 在 Xcode GUI 建 target）
 
 ## v2.0+
 自然语言问答 · 年度报告 · 日记 · Android（KMP，见 ADR-007）

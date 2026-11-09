@@ -4,6 +4,7 @@ import HolidayData
 struct SettingsView: View {
     @Environment(\.palette) private var palette
     @EnvironmentObject private var eventService: EventStoreService
+    @EnvironmentObject private var briefingService: DailyBriefingService
 
     @AppStorage("showLunar") private var showLunar = true
     @AppStorage("showSolarTerms") private var showSolarTerms = true
@@ -11,12 +12,7 @@ struct SettingsView: View {
     @AppStorage("showHuangLi") private var showHuangLi = false
     @AppStorage("month.week.start.day") private var weekStartDayRaw = WeekStartDay.monday.rawValue
 
-    private let holidayStore: HolidayStore
-
-    init() {
-        let holidayStore = HolidayStore.bundled()
-        self.holidayStore = holidayStore
-    }
+    private var holidayStore: HolidayStore { .bundledShared }
 
     var body: some View {
         ScrollView {
@@ -33,6 +29,8 @@ struct SettingsView: View {
                     toggleRow("农历节日", binding: $showLunarFestivals)
                     Divider().background(palette.separator)
                     toggleRow("黄历（宜忌/冲煞）", binding: $showHuangLi)
+                    Divider().background(palette.separator)
+                    briefingRow
                 }
                 .background(RoundedRectangle(cornerRadius: 16).fill(palette.card))
 
@@ -144,10 +142,38 @@ struct SettingsView: View {
     private func toggleRow(_ title: String, binding: Binding<Bool>) -> some View {
         HStack {
             Text(title)
-                .font(.system(size: 15))
+                .font(.appText(15))
                 .foregroundColor(palette.ink)
             Spacer()
             Toggle("", isOn: binding)
+                .labelsHidden()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+    }
+
+    @ViewBuilder
+    private var briefingRow: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("每日简报")
+                    .font(.system(size: 15))
+                    .foregroundColor(palette.ink)
+                Text("每天一条：农历 · 节气节日 · 宜忌（提前 14 天预排）")
+                    .font(.system(size: 11))
+                    .foregroundColor(palette.secondary)
+            }
+            Spacer()
+            if briefingService.isEnabled {
+                DatePicker(
+                    "简报时间",
+                    selection: $briefingService.time,
+                    displayedComponents: [.hourAndMinute]
+                )
+                .labelsHidden()
+                .frame(width: 74)
+            }
+            Toggle("", isOn: $briefingService.isEnabled)
                 .labelsHidden()
         }
         .padding(.horizontal, 16)

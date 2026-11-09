@@ -44,7 +44,7 @@ struct CalendarScreen: View {
     @State private var isDateJumpPresented = false
     @State private var dateJumpDraft = Date()
 
-    private let holidayStore = HolidayStore.bundled()
+    private var holidayStore: HolidayStore { .bundledShared }
 
     private var mode: CalendarViewMode {
         CalendarViewMode(rawValue: modeRaw) ?? .month
@@ -160,10 +160,8 @@ struct CalendarScreen: View {
     }
 
     private var anchorTitle: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_CN")
-        formatter.dateFormat = mode == .year ? "yyyy年" : "yyyy年M月d日"
-        return formatter.string(from: anchorDate)
+        (mode == .year ? AppFormatters.yearTitle : AppFormatters.anchorTitle)
+            .string(from: anchorDate)
     }
 
     private var anchorDate: Date {
@@ -239,23 +237,10 @@ struct CalendarScreen: View {
             let end = calendar.date(byAdding: .day, value: agendaRange.rawValue, to: start) ?? start
             await eventService.loadEvents(from: start, to: end)
         case .year:
-            await loadYearByMonth()
-        }
-    }
-
-    private func loadYearByMonth() async {
-        let year = calendar.component(.year, from: visibleYear)
-        for month in 1...12 {
-            guard let firstOfMonth = calendar.date(
-                from: DateComponents(year: year, month: month, day: 1)
-            ), let interval = calendar.dateInterval(of: .month, for: firstOfMonth) else {
-                continue
+            // 整年一次区间拉取，避免逐月串行请求与逐次全量重排。
+            if let interval = calendar.dateInterval(of: .year, for: visibleYear) {
+                await eventService.loadEvents(from: interval.start, to: interval.end)
             }
-            await eventService.loadEvents(
-                from: interval.start,
-                to: interval.end,
-                appending: month > 1
-            )
         }
     }
 }
@@ -423,7 +408,7 @@ struct AlmanacPanel: View {
     @State private var isExpanded = false
 
     var body: some View {
-        let rules = AlmanacRuleSet.bundled()
+        let rules = AlmanacRuleSet.bundledShared
         let day = AlmanacCalendar.day(for: date, rules: rules)
         VStack(alignment: .leading, spacing: 10) {
             HStack {
@@ -520,6 +505,9 @@ private struct CalendarAgendaView: View {
     @Binding var range: AgendaRange
 
     @State private var visibleLimit = 200
+    // 分组结果缓存：渲染期零过滤，仅在数据 / 范围 / 上限变化时重算。
+    @State private var sections: [(day: Date, events: [CalendarEvent])] = []
+    @State private var totalEventCount = 0
 
     private let calendar = Calendar.current
 
@@ -527,12 +515,6 @@ private struct CalendarAgendaView: View {
         let start = calendar.startOfDay(for: startDate)
         return (0..<range.rawValue).compactMap {
             calendar.date(byAdding: .day, value: $0, to: start)
-        }
-    }
-
-    private var totalEventCount: Int {
-        days.reduce(0) { count, day in
-            count + eventService.events(on: day).count
         }
     }
 
@@ -553,6 +535,11 @@ private struct CalendarAgendaView: View {
         .onChange(of: range) { _ in
             visibleLimit = 200
         }
+        .onAppear(perform: rebuildSections)
+        .onChange(of: eventService.events) { _ in rebuildSections() }
+        .onChange(of: startDate) { _ in rebuildSections() }
+        .onChange(of: range) { _ in rebuildSections() }
+        .onChange(of: visibleLimit) { _ in rebuildSections() }
         .simultaneousGesture(
             DragGesture(minimumDistance: 56).onEnded { value in
                 guard abs(value.translation.width) > abs(value.translation.height) * 1.5 else { return }
@@ -589,8 +576,7 @@ private struct CalendarAgendaView: View {
 
     @ViewBuilder
     private var agendaList: some View {
-        let sections = agendaSections
-        if sections.isEmpty {
+        if sections.isEmpty && totalEventCount == 0 && eventService.events.isEmpty {
             Text("暂无日程")
                 .font(.system(size: 13))
                 .foregroundColor(palette.secondary)
@@ -653,21 +639,26 @@ private struct CalendarAgendaView: View {
         }
     }
 
-    private var agendaSections: [(day: Date, events: [CalendarEvent])] {
+    private func rebuildSections() {
         var remaining = visibleLimit
-        return days.map { day in
+        var rebuilt: [(day: Date, events: [CalendarEvent])] = []
+        rebuilt.reserveCapacity(days.count)
+        var total = 0
+
+        for day in days {
             let allEvents = eventService.events(on: day)
+            total += allEvents.count
             let events = Array(allEvents.prefix(remaining))
             remaining -= events.count
-            return (day, events)
+            rebuilt.append((day, events))
         }
+
+        sections = rebuilt
+        totalEventCount = total
     }
 
     private func dayTitle(_ day: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_CN")
-        formatter.dateFormat = "M月d日 EEEE"
-        return formatter.string(from: day)
+        AppFormatters.monthDayWeekday.string(from: day)
     }
 }
 
@@ -782,10 +773,7 @@ private struct MiniMonthView: View {
     }
 
     private var monthTitle: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_CN")
-        formatter.dateFormat = "M月"
-        return formatter.string(from: month)
+        AppFormatters.monthOnly.string(from: month)
     }
 
     private var monthCells: [Date?] {
@@ -889,10 +877,7 @@ struct FreeSlotSection: View {
     }
 
     private func slotText(_ slot: AnalysisFreeSlot) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_CN")
-        formatter.dateFormat = "HH:mm"
-        return "\(formatter.string(from: slot.startDate)) – \(formatter.string(from: slot.endDate))"
+        "\(AppFormatters.hhmm.string(from: slot.startDate)) – \(AppFormatters.hhmm.string(from: slot.endDate))"
     }
 
     private func durationText(_ duration: TimeInterval) -> String {
@@ -908,14 +893,9 @@ struct FreeSlotSection: View {
 }
 
 private func intervalText(_ interval: DateInterval) -> String {
-    let formatter = DateFormatter()
-    formatter.locale = Locale(identifier: "zh_CN")
-    formatter.dateFormat = "HH:mm"
     if Calendar.current.isDate(interval.start, inSameDayAs: interval.end) {
-        return "\(formatter.string(from: interval.start))–\(formatter.string(from: interval.end))"
+        return "\(AppFormatters.hhmm.string(from: interval.start))–\(AppFormatters.hhmm.string(from: interval.end))"
     }
 
-    let start = formatter.string(from: interval.start)
-    formatter.dateFormat = "M月d日 HH:mm"
-    return "\(start)–\(formatter.string(from: interval.end))"
+    return "\(AppFormatters.hhmm.string(from: interval.start))–\(AppFormatters.monthDayTime.string(from: interval.end))"
 }

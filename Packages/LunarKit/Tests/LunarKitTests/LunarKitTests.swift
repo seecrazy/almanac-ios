@@ -273,4 +273,42 @@ final class LunarKitTests: XCTestCase {
         XCTAssertTrue(day.suitable.isEmpty)
         XCTAssertTrue(day.avoid.isEmpty)
     }
+
+    // MARK: - 每日简报
+
+    func testBriefingContainsLunarTextAndGanZhiYear() {
+        let rules = AlmanacRuleSet.bundled()
+        let briefing = AlmanacBriefingComposer.compose(for: date(2026, 2, 17), rules: rules)
+
+        XCTAssertTrue(briefing.title.contains("2月17日"))
+        XCTAssertTrue(briefing.body.contains("正月初一"), "春节当天应为正月初一，实际：\(briefing.body)")
+        XCTAssertTrue(briefing.body.contains("年"))
+        XCTAssertTrue(briefing.body.contains("节日 · 春节"))
+    }
+
+    func testBriefingLimitsActivitiesAndDegradesWithoutRules() {
+        let rules = AlmanacRuleSet.bundled()
+        let withRules = AlmanacBriefingComposer.compose(
+            for: date(2026, 6, 1),
+            rules: rules,
+            suitableLimit: 3,
+            avoidLimit: 3
+        )
+        if withRules.body.contains("宜：") {
+            let suitableLine = withRules.body
+                .components(separatedBy: .newlines)
+                .first { $0.hasPrefix("宜：") }!
+            XCTAssertLessThanOrEqual(suitableLine.dropFirst("宜：".count).filter { $0 == "、" }.count + 1, 3)
+        }
+
+        let withoutRules = AlmanacBriefingComposer.compose(for: date(2026, 6, 1), rules: nil)
+        XCTAssertFalse(withoutRules.body.contains("宜："))
+        XCTAssertFalse(withoutRules.body.contains("忌："))
+        XCTAssertTrue(withoutRules.body.contains("农历"))
+    }
+
+    func testBriefingOutOfSupportedRange() {
+        let briefing = AlmanacBriefingComposer.compose(for: date(2150, 1, 1), rules: nil)
+        XCTAssertTrue(briefing.body.contains("超出农历支持范围"))
+    }
 }

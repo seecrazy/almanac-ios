@@ -64,6 +64,9 @@ final class WorkdayAlarmStore: ObservableObject {
         Array(occurrences.prefix(10))
     }
 
+    /// 60 天计划中受通知配额约束实际可调度的部分。
+    @Published private(set) var scheduledOccurrenceCount = 0
+
     init(
         holidayStore: HolidayStore,
         defaults: UserDefaults = .standard
@@ -183,6 +186,12 @@ final class WorkdayAlarmStore: ObservableObject {
         await replacePendingNotifications()
     }
 
+    /// App 激活 / 系统显著时间变化时重排：不请求授权、不落盘。
+    func reschedule() async {
+        await refreshAuthorization()
+        await replacePendingNotifications()
+    }
+
     private func replacePendingNotifications() async {
         let pending = await notificationCenter.pendingNotificationRequests()
         let identifiers = pending
@@ -190,15 +199,32 @@ final class WorkdayAlarmStore: ObservableObject {
             .filter { $0.hasPrefix(Self.identifierPrefix) }
         notificationCenter.removePendingNotificationRequests(withIdentifiers: identifiers)
 
-        guard authorization == .granted else { return }
+        guard authorization == .granted else {
+            scheduledOccurrenceCount = 0
+            return
+        }
+
+        // 里程碑与简报共用 64 条待发上限，调度前须为其预留。
+        let reservedCount = pending
+            .map(\.identifier)
+            .filter {
+                $0.hasPrefix(NotificationBudgetPlanner.milestoneIdentifierPrefix) ||
+                $0.hasPrefix(NotificationBudgetPlanner.briefingIdentifierPrefix)
+            }
+            .count
+        let budget = NotificationBudgetPlanner.budget(reserving: reservedCount)
 
         let reference = Date()
-        let occurrences = WorkdayAlarmPlanner.occurrences(
-            alarms: alarms,
-            template: template,
-            holidays: holidayStore,
-            from: reference
+        let occurrences = NotificationBudgetPlanner.trimming(
+            WorkdayAlarmPlanner.occurrences(
+                alarms: alarms,
+                template: template,
+                holidays: holidayStore,
+                from: reference
+            ),
+            budget: budget
         )
+        scheduledOccurrenceCount = occurrences.count
 
         for occurrence in occurrences {
             var components = Calendar.current.dateComponents(
@@ -237,14 +263,7 @@ final class WorkdayAlarmStore: ObservableObject {
     }
 
     private static func identifierDate(for date: Date) -> String {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = LunarCalendarShanghai.timezone
-        let formatter = DateFormatter()
-        formatter.calendar = calendar
-        formatter.timeZone = LunarCalendarShanghai.timezone
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        return formatter.string(from: date)
+        AppFormatters.alarmIdentifierDate.string(from: date)
     }
 
     private struct AlarmSettings: Codable {

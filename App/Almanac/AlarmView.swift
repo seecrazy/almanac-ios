@@ -3,7 +3,7 @@ import HolidayData
 
 struct AlarmView: View {
     @Environment(\.palette) private var palette
-    @StateObject private var store = WorkdayAlarmStore(holidayStore: HolidayStore.bundled())
+    @EnvironmentObject private var store: WorkdayAlarmStore
 
     @State private var expandedAlarmID: UUID?
     @State private var showFullPreview = false
@@ -191,10 +191,20 @@ struct AlarmView: View {
                     .foregroundColor(palette.ink)
                 Spacer()
                 if !occurrences.isEmpty {
-                    Text("\(occurrences.count) 次")
+                    Text(scheduledSummaryText)
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(palette.secondary)
                 }
+            }
+
+            if store.scheduledOccurrenceCount == 0, !occurrences.isEmpty {
+                Text("通知配额已被其它提醒占满，闹钟暂无法调度。")
+                    .font(.system(size: 12))
+                    .foregroundColor(palette.holidayRed)
+            } else if store.scheduledOccurrenceCount < occurrences.count {
+                Text("受 iOS 64 条待发通知上限约束，实际调度前 \(store.scheduledOccurrenceCount) 次；打开 App 会自动续排。")
+                    .font(.system(size: 11))
+                    .foregroundColor(palette.secondary)
             }
 
             if let next = occurrences.first {
@@ -222,6 +232,12 @@ struct AlarmView: View {
         }
         .padding(18)
         .background(RoundedRectangle(cornerRadius: 22).fill(palette.card))
+    }
+
+    private var scheduledSummaryText: String {
+        store.scheduledOccurrenceCount < occurrences.count
+            ? "计划 \(occurrences.count) 次 / 调度 \(store.scheduledOccurrenceCount) 次"
+            : "\(occurrences.count) 次"
     }
 
     private func nextOccurrenceCard(_ occurrence: WorkdayAlarmOccurrence) -> some View {
@@ -322,18 +338,12 @@ private struct AlarmCard: View {
     let onToggleExpanded: () -> Void
     let onDelete: () -> Void
 
-    private var timeFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
-        return formatter
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Button(action: onToggleExpanded) {
                 HStack(alignment: .center, spacing: 12) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(timeFormatter.string(from: alarm.time))
+                        Text(AppFormatters.hhmm.string(from: alarm.time))
                             .font(.system(size: 36, weight: .bold, design: .rounded))
                             .monospacedDigit()
                             .foregroundColor(alarm.isEnabled ? palette.ink : palette.secondary.opacity(0.65))

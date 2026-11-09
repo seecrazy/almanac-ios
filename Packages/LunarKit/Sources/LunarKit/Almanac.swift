@@ -64,6 +64,9 @@ public struct AlmanacRuleSet: Codable, Hashable {
         bundled(bundle: .module)
     }
 
+    /// 进程内缓存：规则不可变，视图层直接使用，避免每次渲染读盘解码。
+    public static let bundledShared: AlmanacRuleSet? = bundled()
+
     public static func bundled(bundle: Bundle) -> AlmanacRuleSet? {
         guard let url = bundle.url(forResource: "almanac-rules", withExtension: "json"),
               let data = try? Data(contentsOf: url) else { return nil }

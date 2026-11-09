@@ -73,29 +73,26 @@ struct DayDetail: View {
                 .font(.system(size: 56, weight: .semibold, design: .serif))
                 .foregroundColor(palette.ink)
             Text(dateLine)
-                .font(.system(size: 15))
+                .font(.appText(15))
                 .foregroundColor(palette.ink)
             Text(lunarLine)
-                .font(.system(size: 14))
+                .font(.appText(14))
                 .foregroundColor(palette.secondary)
             if showLunarFestivals, let festival = LunarFestivalCalendar.festival(on: date) {
                 Text("农历节日 · \(festival.name.rawValue)")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.appText(14, weight: .medium))
                     .foregroundColor(palette.holidayRed)
             }
             if showSolarTerms, let solarTerm = SolarTermCalendar.term(on: date) {
                 Text("节气 · \(solarTerm.name.rawValue)")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.appText(14, weight: .medium))
                     .foregroundColor(palette.solarGreen)
             }
         }
     }
 
     private var dateLine: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_CN")
-        formatter.dateFormat = "yyyy年M月d日 EEEE"
-        return formatter.string(from: date)
+        AppFormatters.fullDateWeekday.string(from: date)
     }
 
     private var lunarLine: String {
@@ -311,18 +308,18 @@ struct EventRow: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(event.title)
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.appText(15, weight: .medium))
                     .foregroundColor(palette.ink)
                 Text(timeText)
-                    .font(.system(size: 12))
+                    .font(.appText(12))
                     .foregroundColor(palette.secondary)
                 if let location = event.location, !location.isEmpty {
                     Label(location, systemImage: "mappin.and.ellipse")
-                        .font(.system(size: 12))
+                        .font(.appText(12))
                         .foregroundColor(palette.secondary)
                 }
                 Text(event.calendarTitle)
-                    .font(.system(size: 10, weight: .medium))
+                    .font(.appText(10, weight: .medium))
                     .foregroundColor(palette.secondary)
             }
             Spacer(minLength: 0)
@@ -333,15 +330,11 @@ struct EventRow: View {
 
     private var timeText: String {
         if event.isAllDay { return "全天" }
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_CN")
-        formatter.dateFormat = "HH:mm"
         let sameDay = Calendar.current.isDate(event.startDate, inSameDayAs: event.endDate)
         if sameDay {
-            return "\(formatter.string(from: event.startDate)) – \(formatter.string(from: event.endDate))"
+            return "\(AppFormatters.hhmm.string(from: event.startDate)) – \(AppFormatters.hhmm.string(from: event.endDate))"
         }
-        formatter.dateFormat = "M月d日 HH:mm"
-        return "\(formatter.string(from: event.startDate)) – \(formatter.string(from: event.endDate))"
+        return "\(AppFormatters.monthDayTime.string(from: event.startDate)) – \(AppFormatters.monthDayTime.string(from: event.endDate))"
     }
 }
 

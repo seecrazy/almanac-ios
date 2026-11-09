@@ -1,4 +1,5 @@
 import Foundation
+import HolidayData
 import MilestoneKit
 import UserNotifications
 
@@ -99,10 +100,23 @@ final class MilestonePlatformService {
             )
         }
 
-        let allRequests = requests + anniversaryRequests
+        let allRequests = (requests + anniversaryRequests)
+            .sorted { $0.fireDate < $1.fireDate }
 
         await removePendingMilestoneNotifications()
-        for request in allRequests {
+
+        // 闹钟与简报共用 64 条待发上限，调度前须为其预留。
+        let pending = await notificationCenter.pendingNotificationRequests()
+        let reservedCount = pending
+            .map(\.identifier)
+            .filter {
+                $0.hasPrefix(NotificationBudgetPlanner.alarmIdentifierPrefix) ||
+                $0.hasPrefix(NotificationBudgetPlanner.briefingIdentifierPrefix)
+            }
+            .count
+        let budget = NotificationBudgetPlanner.budget(reserving: reservedCount)
+
+        for request in NotificationBudgetPlanner.trimming(allRequests, budget: budget) {
             let content = UNMutableNotificationContent()
             content.title = request.title
             content.subtitle = request.subtitle

@@ -26,7 +26,9 @@ enum WeekStartDay: String, CaseIterable, Identifiable {
 
 struct MonthView: View {
     @Environment(\.palette) private var palette
+    @Environment(\.horizontalSizeClass) private var sizeClass
     @EnvironmentObject private var eventService: EventStoreService
+    @EnvironmentObject private var router: AppRouter
 
     @Binding var visibleMonth: Date
     @Binding var selectedDate: Date
@@ -35,11 +37,13 @@ struct MonthView: View {
     @State private var quickInput = ""
     @State private var calendarFilterIsPresented = false
     @State private var searchIsPresented = false
+    @State private var selectedEvent: CalendarEvent?
     @AppStorage("month.week.start.day") private var weekStartDayRaw = WeekStartDay.monday.rawValue
+    @AppStorage("month.view.weekMode") private var isWeekMode = false
     @AppStorage("showSolarTerms") private var showSolarTerms = true
     @AppStorage("showLunarFestivals") private var showLunarFestivals = true
 
-    private let holidayStore = HolidayStore.bundled()
+    private var holidayStore: HolidayStore { .bundledShared }
     private let inputParser = NaturalInputParser()
 
     init(visibleMonth: Binding<Date>, selectedDate: Binding<Date>) {
@@ -64,16 +68,24 @@ struct MonthView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            header
-            quickInputBar
-            weekdayHeader
-            grid
-            Spacer(minLength: 0)
+        Group {
+            if sizeClass == .regular {
+                // iPad：左栏月格 + 右栏常驻日详情。
+                HStack(spacing: 0) {
+                    monthColumn
+                    Divider().background(palette.separator)
+                    DayDetail(date: selectedDate, holidayStore: holidayStore)
+                }
+            } else {
+                monthColumn
+            }
         }
         .background(palette.background.ignoresSafeArea())
         .sheet(item: $selectedDay) { day in
             DayDetail(date: day, holidayStore: holidayStore)
+        }
+        .sheet(item: $selectedEvent) { event in
+            EventDetailView(event: event) {}
         }
         .sheet(item: $quickComposerContext) { context in
             AddEventView(
@@ -93,8 +105,18 @@ struct MonthView: View {
                 .onEnded { value in
                     let horizontal = abs(value.translation.width)
                     let vertical = abs(value.translation.height)
-                    guard horizontal >= 56, horizontal >= vertical * 1.5 else { return }
-                    shiftMonth(value.translation.width < 0 ? 1 : -1)
+                    if horizontal >= 56, horizontal >= vertical * 1.5 {
+                        if isWeekMode {
+                            shiftWeek(value.translation.width < 0 ? 1 : -1)
+                        } else {
+                            shiftMonth(value.translation.width < 0 ? 1 : -1)
+                        }
+                    } else if vertical >= 56, vertical > horizontal * 1.5 {
+                        // 上滑收起为周视图，下拉展开为月视图。
+                        withAnimation(.easeInOut(duration: 0.22)) {
+                            isWeekMode = value.translation.height < 0
+                        }
+                    }
                 }
         )
         .onChange(of: selectedDate) { newValue in
@@ -103,6 +125,33 @@ struct MonthView: View {
             if !calendar.isDate(newMonth, inSameDayAs: currentMonth) {
                 visibleMonth = newMonth
             }
+        }
+        .onReceive(router.$pendingDiaryDate) { date in
+            guard let date else { return }
+            selectedDate = date
+            if sizeClass != .regular {
+                selectedDay = date
+            }
+            router.pendingDiaryDate = nil
+        }
+        .onReceive(router.$pendingQuickPhrase) { phrase in
+            guard let phrase, !phrase.isEmpty else { return }
+            quickInput = phrase
+            router.pendingQuickPhrase = nil
+            parseQuickInput()
+        }
+    }
+
+    private var monthColumn: some View {
+        VStack(spacing: 0) {
+            header
+            quickInputBar
+            weekdayHeader
+            grid
+            if isWeekMode {
+                weekDayList
+            }
+            Spacer(minLength: 0)
         }
     }
 
@@ -119,6 +168,17 @@ struct MonthView: View {
                     .foregroundColor(palette.secondary)
             }
             Spacer()
+            Button {
+                withAnimation(.easeInOut(duration: 0.22)) {
+                    isWeekMode.toggle()
+                }
+            } label: {
+                Image(systemName: isWeekMode ? "rectangle.expand.vertical" : "rectangle.compress.vertical")
+                    .font(.system(size: 17, weight: .medium))
+                    .foregroundColor(palette.accent)
+                    .frame(width: 36, height: 36)
+            }
+            .accessibilityLabel(isWeekMode ? "切换到月视图" : "切换到周视图")
             Button {
                 searchIsPresented = true
             } label: {
@@ -265,7 +325,7 @@ struct MonthView: View {
     // MARK: 日网格
 
     private var grid: some View {
-        let cells = monthCells(for: visibleMonth)
+        let cells = isWeekMode ? weekCells(for: selectedDate) : monthCells(for: visibleMonth)
         let eventColors = eventService.eventCalendarColors(for: visibleMonth)
         let solarTermNames = solarTermNames(for: visibleMonth)
         let festivalNames = festivalNames(for: visibleMonth)
@@ -287,7 +347,9 @@ struct MonthView: View {
                         .contentShape(Rectangle())
                         .onTapGesture {
                             selectedDate = day
-                            selectedDay = day
+                            if sizeClass != .regular {
+                                selectedDay = day
+                            }
                         }
                 } else {
                     Color.clear.frame(height: 76)
@@ -348,6 +410,76 @@ struct MonthView: View {
         }
         while cells.count % 7 != 0 { cells.append(nil) }
         return cells
+    }
+
+    /// 周模式：选中日所在周的一行（周起始日设置生效，可跨月）。
+    private func weekCells(for date: Date) -> [Date?] {
+        guard let interval = calendar.dateInterval(of: .weekOfYear, for: date) else {
+            return monthCells(for: visibleMonth)
+        }
+        let first = interval.start
+        let firstWeekday = calendar.component(.weekday, from: first)
+        let leading = (firstWeekday + 7 - calendar.firstWeekday) % 7
+        var cells: [Date?] = Array(repeating: nil, count: leading)
+        var day = first
+        while day < interval.end {
+            cells.append(day)
+            guard let next = calendar.date(byAdding: .day, value: 1, to: day) else { break }
+            day = next
+        }
+        while cells.count % 7 != 0 { cells.append(nil) }
+        return cells
+    }
+
+    // MARK: 周模式日程列表
+
+    @ViewBuilder
+    private var weekDayList: some View {
+        let dayEvents = eventService.events(on: selectedDate)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("日程")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(palette.ink)
+                    Spacer()
+                    Text(AppFormatters.monthDayWeekday.string(from: selectedDate))
+                        .font(.system(size: 12))
+                        .foregroundColor(palette.secondary)
+                }
+                .padding(.top, 8)
+
+                if dayEvents.isEmpty {
+                    Text("这一天暂无日程")
+                        .font(.system(size: 13))
+                        .foregroundColor(palette.secondary)
+                        .padding(.vertical, 20)
+                        .frame(maxWidth: .infinity)
+                        .background(RoundedRectangle(cornerRadius: 16).fill(palette.card))
+                } else {
+                    VStack(spacing: 8) {
+                        ForEach(dayEvents) { event in
+                            EventRow(event: event)
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    selectedEvent = event
+                                }
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 12)
+        }
+    }
+
+    /// 周模式下横滑：选中日 ±7 天（保持时刻），月 / 周区间由 onChange 跟随。
+    private func shiftWeek(_ delta: Int) {
+        selectedDate = calendar.date(byAdding: .day, value: delta * 7, to: selectedDate) ?? selectedDate
+        let newMonth = Self.firstOfMonth(selectedDate)
+        if !calendar.isDate(newMonth, inSameDayAs: Self.firstOfMonth(visibleMonth)) {
+            visibleMonth = newMonth
+        }
     }
 }
 

@@ -299,8 +299,7 @@ public enum LunarCalendarShanghai {
 
 public extension HolidayStore {
     /// App 默认数据源：读取 manifest 与其中列出的年度 JSON。
-    static func bundled(years requestedYears: ClosedRange<Int>? = nil) -> HolidayStore {
-        #if SWIFTPM
+    static func bundled(years requestedYears: ClosedRange<Int>? = nil) -> HolidayStore {        #if SWIFTPM
         guard let manifestURL = Bundle.module.url(forResource: "holiday-manifest", withExtension: "json"),
               let manifestData = try? Data(contentsOf: manifestURL),
               let manifest = try? JSONDecoder().decode(HolidayManifest.self, from: manifestData) else {
@@ -329,4 +328,7 @@ public extension HolidayStore {
         return HolidayStore(holidays: [])
         #endif
     }
+
+    /// 进程内缓存：内置年度数据不可变，视图层直接使用，避免每次初始化读盘解码。
+    static let bundledShared: HolidayStore = bundled()
 }

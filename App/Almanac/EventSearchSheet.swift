@@ -486,21 +486,15 @@ private struct SearchResultRow: View {
     }
 
     private var dateText: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_CN")
         if event.isAllDay {
-            formatter.dateFormat = "yyyy年M月d日"
-            return "\(formatter.string(from: event.startDate)) · 全天"
+            return "\(AppFormatters.fullDate.string(from: event.startDate)) · 全天"
         }
 
-        formatter.dateFormat = "yyyy年M月d日 HH:mm"
         let sameDay = Calendar.current.isDate(event.startDate, inSameDayAs: event.endDate)
         if sameDay {
-            let timeFormatter = DateFormatter()
-            timeFormatter.dateFormat = "HH:mm"
-            return "\(formatter.string(from: event.startDate)) – \(timeFormatter.string(from: event.endDate))"
+            return "\(AppFormatters.fullDate.string(from: event.startDate)) \(AppFormatters.hhmm.string(from: event.startDate)) – \(AppFormatters.hhmm.string(from: event.endDate))"
         }
 
-        return "\(formatter.string(from: event.startDate)) – \(formatter.string(from: event.endDate))"
+        return "\(AppFormatters.fullDateTime.string(from: event.startDate)) – \(AppFormatters.fullDateTime.string(from: event.endDate))"
     }
 }
