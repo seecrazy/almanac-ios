@@ -36,6 +36,11 @@ struct AlmanacApp: App {
                             await alarmStore.reschedule()
                             await briefingService.reschedule()
                             eventService.syncScheduleWidget()
+                            WatchBriefingWriter.sync(
+                                eventService: eventService,
+                                milestoneStore: milestoneStore,
+                                alarmStore: alarmStore
+                            )
                         }
                     }
                 }
@@ -45,6 +50,11 @@ struct AlmanacApp: App {
                         await milestoneStore.refreshPlatformState()
                         await alarmStore.reschedule()
                         await briefingService.reschedule()
+                        WatchBriefingWriter.sync(
+                            eventService: eventService,
+                            milestoneStore: milestoneStore,
+                            alarmStore: alarmStore
+                        )
                     }
                 }
         }

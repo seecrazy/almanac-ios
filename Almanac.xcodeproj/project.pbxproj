@@ -23,6 +23,7 @@
 		7A1111110000000000000303 /* keepalive.caf in Resources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000302 /* keepalive.caf */; };
 		7A1111110000000000000315 /* AlarmSoundPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000314 /* AlarmSoundPickerSheet.swift */; };
 		7A1111110000000000000319 /* AlmanacStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000318 /* AlmanacStoreTests.swift */; };
+		7A1111110000000000000321 /* WatchBriefingWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000320 /* WatchBriefingWriter.swift */; };
 		7A1111110000000000000305 /* bird-song.caf in Resources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000304 /* bird-song.caf */; };
 		7A1111110000000000000307 /* music-box.caf in Resources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000306 /* music-box.caf */; };
 		7A1111110000000000000309 /* deep-bell.caf in Resources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000308 /* deep-bell.caf */; };
@@ -86,6 +87,7 @@
 		7A1111110000000000000314 /* AlarmSoundPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmSoundPickerSheet.swift; sourceTree = "<group>"; };
 		7A1111110000000000000316 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		7A1111110000000000000318 /* AlmanacStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlmanacTests/AlmanacStoreTests.swift; sourceTree = "<group>"; };
+		7A1111110000000000000320 /* WatchBriefingWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchBriefingWriter.swift; sourceTree = "<group>"; };
 		7A1111110000000000000304 /* bird-song.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = bird-song.caf; sourceTree = "<group>"; };
 		7A1111110000000000000306 /* music-box.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = music-box.caf; sourceTree = "<group>"; };
 		7A1111110000000000000308 /* deep-bell.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = deep-bell.caf; sourceTree = "<group>"; };
@@ -183,6 +185,7 @@
 				7A1111110000000000000274 /* ContactImportSheet.swift */,
 				7A1111110000000000000276 /* LiveActivityScheduler.swift */,
 				7A1111110000000000000292 /* AlarmRinging.swift */,
+				7A1111110000000000000320 /* WatchBriefingWriter.swift */,
 				7A1111110000000000000300 /* AlarmKeepAlive.swift */,
 				7A1111110000000000000314 /* AlarmSoundPickerSheet.swift */,
 				7A1111110000000000000043 /* RootView.swift */,
@@ -447,6 +450,7 @@
 				7A1111110000000000000275 /* ContactImportSheet.swift in Sources */,
 				7A1111110000000000000277 /* LiveActivityScheduler.swift in Sources */,
 				7A1111110000000000000293 /* AlarmRinging.swift in Sources */,
+				7A1111110000000000000321 /* WatchBriefingWriter.swift in Sources */,
 				7A1111110000000000000301 /* AlarmKeepAlive.swift in Sources */,
 				7A1111110000000000000315 /* AlarmSoundPickerSheet.swift in Sources */,
 				7A1111110000000000000052 /* Theme.swift in Sources */,
