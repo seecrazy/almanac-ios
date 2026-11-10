@@ -17,6 +17,7 @@
 		7A1111110000000000000273 /* QuickEventIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000272 /* QuickEventIntent.swift */; };
 		7A1111110000000000000275 /* ContactImportSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000274 /* ContactImportSheet.swift */; };
 		7A1111110000000000000277 /* LiveActivityScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000276 /* LiveActivityScheduler.swift */; };
+		7A1111110000000000000293 /* AlarmRinging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000292 /* AlarmRinging.swift */; };
 		7A1111110000000000000279 /* MilestoneLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000278 /* MilestoneLiveActivity.swift */; };
 		7A1111110000000000000051 /* AlmanacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000041 /* AlmanacApp.swift */; };
 		7A1111110000000000000052 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000042 /* Theme.swift */; };
@@ -68,6 +69,7 @@
 		7A1111110000000000000272 /* QuickEventIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickEventIntent.swift; sourceTree = "<group>"; };
 		7A1111110000000000000274 /* ContactImportSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactImportSheet.swift; sourceTree = "<group>"; };
 		7A1111110000000000000276 /* LiveActivityScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityScheduler.swift; sourceTree = "<group>"; };
+		7A1111110000000000000292 /* AlarmRinging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmRinging.swift; sourceTree = "<group>"; };
 		7A1111110000000000000278 /* MilestoneLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MilestoneLiveActivity.swift; sourceTree = "<group>"; };
 		7A1111110000000000000041 /* AlmanacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlmanacApp.swift; sourceTree = "<group>"; };
 		7A1111110000000000000042 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
@@ -159,6 +161,7 @@
 				7A1111110000000000000272 /* QuickEventIntent.swift */,
 				7A1111110000000000000274 /* ContactImportSheet.swift */,
 				7A1111110000000000000276 /* LiveActivityScheduler.swift */,
+				7A1111110000000000000292 /* AlarmRinging.swift */,
 				7A1111110000000000000043 /* RootView.swift */,
 				7A1111110000000000000161 /* CalendarViews.swift */,
 				7A1111110000000000000044 /* MonthView.swift */,
@@ -404,6 +407,7 @@
 				7A1111110000000000000273 /* QuickEventIntent.swift in Sources */,
 				7A1111110000000000000275 /* ContactImportSheet.swift in Sources */,
 				7A1111110000000000000277 /* LiveActivityScheduler.swift in Sources */,
+				7A1111110000000000000293 /* AlarmRinging.swift in Sources */,
 				7A1111110000000000000052 /* Theme.swift in Sources */,
 				7A1111110000000000000053 /* RootView.swift in Sources */,
 				7A1111110000000000000054 /* MonthView.swift in Sources */,

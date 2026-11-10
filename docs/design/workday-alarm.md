@@ -1,6 +1,6 @@
 # 工作日智能闹钟设计 v1.2
 
-状态：v1.3 拆分闹钟开关与工作日规则已确认（2026-11-05）；真机响铃与闹钟 GUI 验收待完成<br>
+状态：v1.4 响铃体验已接入（2026-11-10：全屏响铃页 / 长铃声 / timeSensitive / 铃声试听 / 保存状态反馈）；真机响铃与闹钟 GUI 验收待完成<br>
 架构依据：[ADR-007](../architecture/adr/ADR-007-cross-platform.md) · [ADR-009](../architecture/adr/ADR-009-workday-alarm.md)
 关联设计：[官方节假日数据管道](holiday-data-pipeline.md)
 
@@ -218,3 +218,34 @@ workday-alarm.<alarmID>.yyyy-MM-dd
 - `UNUserNotificationCenterDelegate` 在 App 启动时挂载，前台通知补横幅与声音。
 - 里程碑通知同步同样只清理 `milestone.` 前缀，避免两个功能互相覆盖。
 - 通知响铃、跨时区修改和真机权限路径仍需人工验收。
+
+## 10. v1.4 响铃体验（2026-11-10）
+
+用户反馈两个问题：到点只见表针横幅不"响"；选铃声无法试听、修改保存无感知。根因与对策：
+
+| 问题 | 根因 | 对策 |
+|---|---|---|
+| 到点不响 | 通知自带声音受静音键 / 专注模式约束，且内置铃声仅 ~2 秒 | 三管齐下（见下） |
+| 试听缺失 | Picker 仅写值不播音 | 选中即 `AVAudioPlayer` 试听一次（ambient 会话，尊重静音键） |
+| 保存无感知 | 自动保存无任何可见反馈 | 卡片副标题显示「下次响铃 M月d日 HH:mm」；展开区显示「修改自动保存 · 下次响铃 …」；不启用 / 不触发各有明确文案 |
+
+响铃链路：
+
+1. **铃声加长**：三个内置 caf 重新合成为 29 秒（IMA4，约 670KB/个），通知自身可连续响近 30 秒；
+2. **timeSensitive**：通知 `interruptionLevel = .timeSensitive`，可穿透专注模式（用户首次需在系统提示中允许）；
+3. **全屏响铃页**（`AlarmRingingController` + `AlarmRingingView`）：
+   - 触发点：前台到点（`willPresent`）与用户点按通知（`didReceive`），按 `workday-alarm.` 前缀识别，经通知 `userInfo`（alarmName / soundID）还原上下文；
+   - `AVAudioSession` **`.playback`** 类别循环播放所选铃声——该类别**无视静音键**，是"会响"的关键；系统默认音无法由 AVAudioPlayer 播放，响铃回退「轻快铃」；
+   - 停止 / 稍后提醒（5 分钟后单条即时通知，复用前缀与声音，再次进入响铃链路）；
+   - 前台触发时横幅本身不带系统音，避免与循环铃声叠加。
+
+边界：App 被杀死且用户不点通知时，仅通知自身响（受静音键约束）——iOS 本地通知的能力边界，响铃页在该路径下靠"点按即响"补足。
+
+验收清单：
+
+- [x] 29 秒铃声 ×3 打进主包；通知 timeSensitive + userInfo
+- [x] willPresent / didReceive → 全屏响铃页（playback 循环、无视静音键）
+- [x] 停止 / 稍后提醒 5 分钟
+- [x] 选铃声即时试听；卡片与展开区的下次响铃 / 保存状态文案
+- [x] generic iOS Simulator build 通过
+- [ ] 真机静音键 / 专注模式 / 锁屏点按路径人工验收

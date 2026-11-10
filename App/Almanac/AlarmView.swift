@@ -149,6 +149,7 @@ struct AlarmView: View {
                     alarm: alarmBinding(for: alarm),
                     isExpanded: expandedAlarmID == alarm.id,
                     canDelete: store.alarms.count > 1,
+                    nextFireDate: store.occurrences.first { $0.alarm.id == alarm.id }?.fireDate,
                     palette: palette,
                     onToggleExpanded: {
                         expandedAlarmID = expandedAlarmID == alarm.id ? nil : alarm.id
@@ -334,6 +335,8 @@ private struct AlarmCard: View {
     @Binding var alarm: WorkdayAlarm
     let isExpanded: Bool
     let canDelete: Bool
+    /// 该闹钟下一次实际响铃时间；nil = 当前规则下不会响铃。作为"修改已保存"的可见反馈。
+    let nextFireDate: Date?
     let palette: Palette
     let onToggleExpanded: () -> Void
     let onDelete: () -> Void
@@ -347,7 +350,7 @@ private struct AlarmCard: View {
                             .font(.system(size: 36, weight: .bold, design: .rounded))
                             .monospacedDigit()
                             .foregroundColor(alarm.isEnabled ? palette.ink : palette.secondary.opacity(0.65))
-                        Text(alarm.name.isEmpty ? "闹钟" : alarm.name)
+                        Text(nameLine)
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(palette.secondary)
                     }
@@ -386,6 +389,19 @@ private struct AlarmCard: View {
                     .frame(height: 42)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(RoundedRectangle(cornerRadius: 14).fill(palette.background))
+                    .onChange(of: alarm.soundID) { newSoundID in
+                        // 选即试听，可感知更换结果。
+                        AlarmAudio.preview(soundID: newSoundID)
+                    }
+
+                    HStack(spacing: 6) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 12))
+                            .foregroundColor(palette.solarGreen)
+                        Text(saveStatusText)
+                            .font(.system(size: 12))
+                            .foregroundColor(palette.secondary)
+                    }
 
                     if canDelete {
                         Button(action: onDelete) {
@@ -403,5 +419,22 @@ private struct AlarmCard: View {
                 .fill(palette.card)
                 .overlay(RoundedRectangle(cornerRadius: 22).stroke(palette.separator, lineWidth: 1))
         )
+    }
+
+    private var nameLine: String {
+        let name = alarm.name.isEmpty ? "闹钟" : alarm.name
+        guard alarm.isEnabled else {
+            return "\(name) · 未启用"
+        }
+        guard let next = nextFireDate else {
+            return "\(name) · 当前规则下不会响铃"
+        }
+        return "\(name) · 下次响铃 \(AppFormatters.monthDayTime.string(from: next))"
+    }
+
+    private var saveStatusText: String {
+        guard alarm.isEnabled else { return "修改自动保存；闹钟未启用，不会调度" }
+        guard let next = nextFireDate else { return "修改自动保存；当前规则下不会响铃" }
+        return "修改自动保存 · 下次响铃 \(AppFormatters.monthDayWeekday.string(from: next)) \(AppFormatters.hhmm.string(from: next))"
     }
 }

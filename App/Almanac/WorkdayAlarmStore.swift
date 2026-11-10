@@ -48,7 +48,7 @@ final class WorkdayAlarmStore: ObservableObject {
     private let storageKey = "workday.alarm.alarms.v3"
     private let notificationCenter = UNUserNotificationCenter.current()
 
-    private static let identifierPrefix = "workday-alarm."
+    static let identifierPrefix = NotificationBudgetPlanner.alarmIdentifierPrefix
     private static let legacyAlarmID = UUID(uuidString: "00000000-0000-4000-8000-000000000001")!
 
     var occurrences: [WorkdayAlarmOccurrence] {
@@ -239,6 +239,12 @@ final class WorkdayAlarmStore: ObservableObject {
             content.body = occurrence.plan.reason
             content.sound = SmartAlarmSound(rawValue: occurrence.alarm.soundID)?.notificationSound
                 ?? UNNotificationSound.default
+            // 打穿专注模式；userInfo 供通知代理进入全屏响铃页。
+            content.interruptionLevel = .timeSensitive
+            content.userInfo = [
+                "alarmName": alarmTitle.isEmpty ? "智能闹钟" : alarmTitle,
+                "soundID": occurrence.alarm.soundID
+            ]
 
             let request = UNNotificationRequest(
                 identifier: [
@@ -292,6 +298,38 @@ final class AlarmNotificationCenterDelegate: NSObject, UNUserNotificationCenterD
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
+        // 闹钟前台到点：进入全屏响铃页循环响铃（无视静音键），横幅本身不带系统音避免叠加。
+        if isAlarmNotification(notification) {
+            startRinging(notification)
+            completionHandler([.banner, .list])
+            return
+        }
         completionHandler([.banner, .list, .sound])
+    }
+
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        // 用户点按闹钟通知（含锁屏 / 通知中心）：打开即响铃。
+        if isAlarmNotification(response.notification) {
+            startRinging(response.notification)
+        }
+        completionHandler()
+    }
+
+    private func isAlarmNotification(_ notification: UNNotification) -> Bool {
+        notification.request.identifier.hasPrefix(NotificationBudgetPlanner.alarmIdentifierPrefix)
+    }
+
+    private func startRinging(_ notification: UNNotification) {
+        let userInfo = notification.request.content.userInfo
+        let alarmName = (userInfo["alarmName"] as? String) ?? notification.request.content.title
+        let soundID = (userInfo["soundID"] as? String) ?? SmartAlarmSound.systemDefault.rawValue
+
+        Task { @MainActor in
+            AlarmRingingController.shared.start(alarmName: alarmName, soundID: soundID)
+        }
     }
 }

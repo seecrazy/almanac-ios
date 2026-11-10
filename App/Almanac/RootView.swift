@@ -4,6 +4,7 @@ import SwiftUI
 struct RootView: View {
     @Environment(\.palette) private var palette
     @EnvironmentObject private var router: AppRouter
+    @ObservedObject private var ringing = AlarmRingingController.shared
 
     var body: some View {
         TabView(selection: $router.selectedTab) {
@@ -21,6 +22,9 @@ struct RootView: View {
                 .tag(AppRouter.Tab.settings)
         }
         .background(palette.background.ignoresSafeArea())
+        .fullScreenCover(item: $ringing.ringing) { context in
+            AlarmRingingView(context: context)
+        }
         .onContinueUserActivity(CSSearchableItemActionType) { activity in
             guard let identifier = activity.userInfo?[CSSearchableItemActivityIdentifier] as? String else {
                 return
