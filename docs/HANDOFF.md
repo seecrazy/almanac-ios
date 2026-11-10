@@ -67,6 +67,10 @@ xcodebuild test -scheme Almanac -destination 'platform=iOS Simulator,name=iPhone
 - XCUITest 冒烟接入；App 层测试 12→14 项
 - 验证：包测试 121 项全绿（CalendarAnalysis 7→13）+ 模拟器单测 / UI 测试通过
 
+## 保活健壮性修复（2026-11-10 追加）
+
+真机反馈"到点只有通知不响铃"，复盘出两处保活缺陷并修复：保活音频原为 -90dB 数字静音（iOS 可回收静音会话）→ 提至 -60dB 实际不可闻电平；会话无 mixWithOthers（睡前听歌即被抢断）且无中断恢复 → 统一 mixWithOthers + interruption/mediaServicesWereReset 自动恢复；闹钟页新增保活状态自检行。关机 / 重启 / 强杀为系统能力边界（文档明确）。真机验收重点：边放音乐锁屏过夜。
+
 ## 下一步（按优先级）
 
 1. **GUI / 真机人工验收批次**（本批次全部功能 + 此前遗留 D-140~D-210）：Widget 添加、灵动岛、Siri / 快捷指令、通讯录导入、大字号走查、iPad 双栏、闹钟真机响铃

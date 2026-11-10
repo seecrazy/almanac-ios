@@ -32,8 +32,8 @@ enum AlarmAudio {
         stopPreview()
         guard let url = url(for: soundID) else { return }
         let session = AVAudioSession.sharedInstance()
-        // 试听是用户主动行为：用 playback 类别，静音键打开也能听到。
-        try? session.setCategory(.playback, mode: .default)
+        // 试听是用户主动行为：playback 无视静音键；mixWithOthers 不打断用户正在听的内容。
+        try? session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
         try? session.setActive(true)
         previewPlayer = try? AVAudioPlayer(contentsOf: url)
         previewPlayer?.volume = 1
@@ -60,7 +60,8 @@ enum AlarmAudio {
         stopLoopPlayerOnly()
         guard let url = url(for: soundID) else { return }
         let session = AVAudioSession.sharedInstance()
-        try? session.setCategory(.playback, mode: .default)
+        // mixWithOthers：响铃与用户音乐共存，不因对方会话活跃而无法启动。
+        try? session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
         try? session.setActive(true)
         loopPlayer = try? AVAudioPlayer(contentsOf: url)
         loopPlayer?.volume = 1

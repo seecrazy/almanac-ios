@@ -298,18 +298,38 @@ struct AlarmView: View {
     }
 
     private var authorizationFooter: some View {
-        HStack(spacing: 8) {
-            Image(systemName: authorizationIcon)
-                .foregroundColor(authorizationColor)
-            Text(authorizationText)
-                .font(.system(size: 12))
-                .foregroundColor(authorizationColor)
-            Spacer()
-            if store.authorization == .denied {
-                OpenSettingsLink()
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                Image(systemName: authorizationIcon)
+                    .foregroundColor(authorizationColor)
+                Text(authorizationText)
+                    .font(.system(size: 12))
+                    .foregroundColor(authorizationColor)
+                Spacer()
+                if store.authorization == .denied {
+                    OpenSettingsLink()
+                }
             }
+            keepAliveStatusLine
         }
         .padding(.horizontal, 4)
+    }
+
+    /// 后台保活自检：真机上判断"到点会不会响"的关键状态。
+    @ViewBuilder
+    private var keepAliveStatusLine: some View {
+        let anyEnabled = store.alarms.contains { $0.isEnabled }
+        if anyEnabled {
+            if AlarmKeepAlive.shared.isRunning {
+                Text("后台保活运行中 · 锁屏与静音键下到点会响（强杀 App 或重启后需打开一次宜历）")
+                    .font(.system(size: 11))
+                    .foregroundColor(palette.solarGreen)
+            } else {
+                Text("后台保活未运行 · 即将自动恢复；若持续显示请重启宜历")
+                    .font(.system(size: 11))
+                    .foregroundColor(palette.holidayRed)
+            }
+        }
     }
 
     private var authorizationIcon: String {
