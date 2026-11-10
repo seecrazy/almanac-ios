@@ -341,6 +341,12 @@ private struct AlarmCard: View {
     let onToggleExpanded: () -> Void
     let onDelete: () -> Void
 
+    @State private var soundSheetIsPresented = false
+
+    private var currentSoundTitle: String {
+        SmartAlarmSound(rawValue: alarm.soundID)?.title ?? "系统默认"
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Button(action: onToggleExpanded) {
@@ -378,21 +384,26 @@ private struct AlarmCard: View {
                         .frame(height: 104)
                         .background(RoundedRectangle(cornerRadius: 14).fill(palette.background))
 
-                    Picker("铃声", selection: $alarm.soundID) {
-                        ForEach(SmartAlarmSound.allCases) { sound in
-                            Text(sound.title).tag(sound.rawValue)
+                    Button {
+                        soundSheetIsPresented = true
+                    } label: {
+                        HStack {
+                            Text("铃声")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(palette.ink)
+                            Spacer()
+                            Text(currentSoundTitle)
+                                .font(.system(size: 13))
+                                .foregroundColor(palette.secondary)
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(palette.secondary)
                         }
+                        .padding(.horizontal, 12)
+                        .frame(height: 42)
+                        .background(RoundedRectangle(cornerRadius: 14).fill(palette.background))
                     }
-                    .pickerStyle(.menu)
-                    .font(.system(size: 14, weight: .medium))
-                    .padding(.horizontal, 12)
-                    .frame(height: 42)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(RoundedRectangle(cornerRadius: 14).fill(palette.background))
-                    .onChange(of: alarm.soundID) { newSoundID in
-                        // 选即试听，可感知更换结果。
-                        AlarmAudio.preview(soundID: newSoundID)
-                    }
+                    .accessibilityLabel("选择铃声，当前\(currentSoundTitle)")
 
                     HStack(spacing: 6) {
                         Image(systemName: "checkmark.circle.fill")
@@ -411,6 +422,9 @@ private struct AlarmCard: View {
                         }
                     }
                 }
+                .sheet(isPresented: $soundSheetIsPresented) {
+                    AlarmSoundPickerSheet(selection: $alarm.soundID)
+                }
             }
         }
         .padding(16)
@@ -419,6 +433,10 @@ private struct AlarmCard: View {
                 .fill(palette.card)
                 .overlay(RoundedRectangle(cornerRadius: 22).stroke(palette.separator, lineWidth: 1))
         )
+        .onChange(of: isExpanded) { expanded in
+            // 收起卡片即停止试听，不留尾巴。
+            if !expanded { AlarmAudio.stopPreview() }
+        }
     }
 
     private var nameLine: String {

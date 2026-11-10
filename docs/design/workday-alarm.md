@@ -284,3 +284,32 @@ workday-alarm.<alarmID>.yyyy-MM-dd
 - [x] 试听 playback；响铃去重；停止重排
 - [x] generic iOS Simulator build 通过
 - [ ] 真机静音键整夜保活到点响铃验收
+
+## 12. v1.6 铃声库与选择交互（2026-11-10）
+
+用户反馈：试听 29 秒停不下来、菜单收起还在响、铃声太少。参照系统时钟「声音」页重做：
+
+### 交互（AlarmSoundPickerSheet）
+
+- 展开卡片的「铃声」行（显示当前铃声名）→ 打开选择页；
+- **点行即试听短节选（1.6 秒）并选中**（勾选跟随），换行即换播——与系统时钟一致，无独立"确定才生效"；
+- 关闭选择页 / 收起卡片 / 选中其它行，任一时机试听立即停止；
+- 选中即自动保存（闹钟本就自动保存 + 卡片显示下次响铃时间反馈）。
+
+### 铃声库（4 → 9 种）
+
+系统默认 + 8 个内置（均为 29 秒 IMA4，合成生成）：清晨钟声、双响脉冲、轻快铃、**晨间鸟鸣（扫频啁啾）、八音盒（拨音旋律）、古钟（低频部分音）、电子音（四连音）、晨光渐强（和弦渐强琶音）**。`SmartAlarmSound` 扩展后旧 soundID 完全兼容。
+
+### 审计修复（2026-11-10 复查发现）
+
+- **UIBackgroundModes 未进 Info.plist**（`INFOPLIST_KEY_UIBackgroundModes` 对数组型键不生效，v1.5 的保活在真机上不会生效）：改为 App target 提供真实 `Info.plist` 文件（`INFOPLIST_FILE` 合并），产物已验证含 `UIBackgroundModes: [audio]`；
+- App / Widget 全部 `DateFormatter()` 创建点复查：仅存于 static 缓存初始化（合规）；
+- `bundled()` 直调复查：App/Widget 全部走 `bundledShared`（合规）。
+
+验收清单：
+
+- [x] 9 种铃声进包（产物 9 个 caf 已验证）；旧 soundID 兼容
+- [x] 点行 1.6 秒节选试听 + 勾选；关闭 / 收起 / 换行即停
+- [x] UIBackgroundModes 产物级验证
+- [x] generic iOS Simulator build 通过
+- [ ] 真机静音键整夜保活到点响铃（v1.5 修复后需重验）

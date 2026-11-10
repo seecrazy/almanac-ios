@@ -13,6 +13,11 @@ enum SmartAlarmSound: String, CaseIterable, Identifiable {
     case morningChime = "morning-chime"
     case doublePulse = "double-pulse"
     case lightBell = "light-bell"
+    case birdSong = "bird-song"
+    case musicBox = "music-box"
+    case deepBell = "deep-bell"
+    case digitalBeep = "digital-beep"
+    case sunrise = "sunrise"
 
     var id: String { rawValue }
 
@@ -22,6 +27,11 @@ enum SmartAlarmSound: String, CaseIterable, Identifiable {
         case .morningChime: return "清晨钟声"
         case .doublePulse: return "双响脉冲"
         case .lightBell: return "轻快铃"
+        case .birdSong: return "晨间鸟鸣"
+        case .musicBox: return "八音盒"
+        case .deepBell: return "古钟"
+        case .digitalBeep: return "电子音"
+        case .sunrise: return "晨光渐强"
         }
     }
 
@@ -29,7 +39,8 @@ enum SmartAlarmSound: String, CaseIterable, Identifiable {
         switch self {
         case .systemDefault:
             return .default
-        case .morningChime, .doublePulse, .lightBell:
+        case .morningChime, .doublePulse, .lightBell, .birdSong,
+             .musicBox, .deepBell, .digitalBeep, .sunrise:
             return UNNotificationSound(named: UNNotificationSoundName(rawValue: "\(rawValue).caf"))
         }
     }

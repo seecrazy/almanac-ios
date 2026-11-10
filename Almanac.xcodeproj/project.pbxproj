@@ -21,6 +21,12 @@
 		7A1111110000000000000299 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000298 /* Assets.xcassets */; };
 		7A1111110000000000000301 /* AlarmKeepAlive.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000300 /* AlarmKeepAlive.swift */; };
 		7A1111110000000000000303 /* keepalive.caf in Resources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000302 /* keepalive.caf */; };
+		7A1111110000000000000315 /* AlarmSoundPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000314 /* AlarmSoundPickerSheet.swift */; };
+		7A1111110000000000000305 /* bird-song.caf in Resources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000304 /* bird-song.caf */; };
+		7A1111110000000000000307 /* music-box.caf in Resources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000306 /* music-box.caf */; };
+		7A1111110000000000000309 /* deep-bell.caf in Resources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000308 /* deep-bell.caf */; };
+		7A111111000000000000030b /* digital-beep.caf in Resources */ = {isa = PBXBuildFile; fileRef = 7A111111000000000000030a /* digital-beep.caf */; };
+		7A111111000000000000030d /* sunrise.caf in Resources */ = {isa = PBXBuildFile; fileRef = 7A111111000000000000030c /* sunrise.caf */; };
 		7A1111110000000000000279 /* MilestoneLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000278 /* MilestoneLiveActivity.swift */; };
 		7A1111110000000000000051 /* AlmanacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000041 /* AlmanacApp.swift */; };
 		7A1111110000000000000052 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000042 /* Theme.swift */; };
@@ -76,6 +82,13 @@
 		7A1111110000000000000298 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Resources/Assets.xcassets; sourceTree = "<group>"; };
 		7A1111110000000000000300 /* AlarmKeepAlive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmKeepAlive.swift; sourceTree = "<group>"; };
 		7A1111110000000000000302 /* keepalive.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = keepalive.caf; sourceTree = "<group>"; };
+		7A1111110000000000000314 /* AlarmSoundPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmSoundPickerSheet.swift; sourceTree = "<group>"; };
+		7A1111110000000000000316 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		7A1111110000000000000304 /* bird-song.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = bird-song.caf; sourceTree = "<group>"; };
+		7A1111110000000000000306 /* music-box.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = music-box.caf; sourceTree = "<group>"; };
+		7A1111110000000000000308 /* deep-bell.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = deep-bell.caf; sourceTree = "<group>"; };
+		7A111111000000000000030a /* digital-beep.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = digital-beep.caf; sourceTree = "<group>"; };
+		7A111111000000000000030c /* sunrise.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = sunrise.caf; sourceTree = "<group>"; };
 		7A1111110000000000000278 /* MilestoneLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MilestoneLiveActivity.swift; sourceTree = "<group>"; };
 		7A1111110000000000000041 /* AlmanacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlmanacApp.swift; sourceTree = "<group>"; };
 		7A1111110000000000000042 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
@@ -169,6 +182,7 @@
 				7A1111110000000000000276 /* LiveActivityScheduler.swift */,
 				7A1111110000000000000292 /* AlarmRinging.swift */,
 				7A1111110000000000000300 /* AlarmKeepAlive.swift */,
+				7A1111110000000000000314 /* AlarmSoundPickerSheet.swift */,
 				7A1111110000000000000043 /* RootView.swift */,
 				7A1111110000000000000161 /* CalendarViews.swift */,
 				7A1111110000000000000044 /* MonthView.swift */,
@@ -178,6 +192,7 @@
 				7A1111110000000000000241 /* AlarmView.swift */,
 				7A1111110000000000000098 /* QuickComposerContext.swift */,
 				7A1111110000000000000132 /* Almanac.entitlements */,
+				7A1111110000000000000316 /* Info.plist */,
 				7A1111110000000000000130 /* MilestonePlatformService.swift */,
 				7A1111110000000000000048 /* EventService.swift */,
 				7A1111110000000000000049 /* AddEventView.swift */,
@@ -201,6 +216,11 @@
 				7A1111110000000000000221 /* double-pulse.caf */,
 				7A1111110000000000000223 /* light-bell.caf */,
 				7A1111110000000000000302 /* keepalive.caf */,
+				7A1111110000000000000304 /* bird-song.caf */,
+				7A1111110000000000000306 /* music-box.caf */,
+				7A1111110000000000000308 /* deep-bell.caf */,
+				7A111111000000000000030a /* digital-beep.caf */,
+				7A111111000000000000030c /* sunrise.caf */,
 			);
 			path = Resources/Sounds;
 			sourceTree = "<group>";
@@ -391,6 +411,11 @@
 				7A1111110000000000000222 /* light-bell.caf in Resources */,
 				7A1111110000000000000224 /* morning-chime.caf in Resources */,
 				7A1111110000000000000303 /* keepalive.caf in Resources */,
+				7A1111110000000000000305 /* bird-song.caf in Resources */,
+				7A1111110000000000000307 /* music-box.caf in Resources */,
+				7A1111110000000000000309 /* deep-bell.caf in Resources */,
+				7A111111000000000000030b /* digital-beep.caf in Resources */,
+				7A111111000000000000030d /* sunrise.caf in Resources */,
 				7A1111110000000000000299 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -420,6 +445,7 @@
 				7A1111110000000000000277 /* LiveActivityScheduler.swift in Sources */,
 				7A1111110000000000000293 /* AlarmRinging.swift in Sources */,
 				7A1111110000000000000301 /* AlarmKeepAlive.swift in Sources */,
+				7A1111110000000000000315 /* AlarmSoundPickerSheet.swift in Sources */,
 				7A1111110000000000000052 /* Theme.swift in Sources */,
 				7A1111110000000000000053 /* RootView.swift in Sources */,
 				7A1111110000000000000054 /* MonthView.swift in Sources */,
@@ -546,7 +572,7 @@
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_NSContactsUsageDescription = "宜历可从通讯录读取联系人生日，用于创建生日倒计时与提醒；不读取其它字段。";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				INFOPLIST_KEY_UIBackgroundModes = "audio";
+				INFOPLIST_FILE = App/Almanac/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -578,7 +604,7 @@
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_NSContactsUsageDescription = "宜历可从通讯录读取联系人生日，用于创建生日倒计时与提醒；不读取其它字段。";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				INFOPLIST_KEY_UIBackgroundModes = "audio";
+				INFOPLIST_FILE = App/Almanac/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

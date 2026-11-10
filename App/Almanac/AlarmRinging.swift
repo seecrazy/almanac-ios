@@ -14,8 +14,12 @@ struct AlarmRingingContext: Identifiable {
 /// 这是"到点会响"的关键——通知自带声音受静音键约束，App 内循环不受）。
 /// 系统默认音无法被 AVAudioPlayer 播放，响铃与试听回退「轻快铃」。
 enum AlarmAudio {
+    /// 试听节选时长：足够辨识音色，菜单收起后不会继续响。
+    static let previewExcerptDuration: TimeInterval = 1.6
+
     private static var previewPlayer: AVAudioPlayer?
     private static var loopPlayer: AVAudioPlayer?
+    private static var previewStopTimer: Timer?
 
     static func url(for soundID: String) -> URL? {
         let sound = SmartAlarmSound(rawValue: soundID) ?? .systemDefault
@@ -23,8 +27,9 @@ enum AlarmAudio {
         return Bundle.main.url(forResource: fileName, withExtension: "caf")
     }
 
+    /// 短节选试听（自动 1.6 秒停止），选中即播、切选即换，参照系统时钟声音页。
     static func preview(soundID: String) {
-        stopLoop()
+        stopPreview()
         guard let url = url(for: soundID) else { return }
         let session = AVAudioSession.sharedInstance()
         // 试听是用户主动行为：用 playback 类别，静音键打开也能听到。
@@ -34,10 +39,25 @@ enum AlarmAudio {
         previewPlayer?.volume = 1
         previewPlayer?.numberOfLoops = 0
         previewPlayer?.play()
+
+        previewStopTimer = Timer.scheduledTimer(
+            withTimeInterval: previewExcerptDuration,
+            repeats: false
+        ) { _ in
+            stopPreview()
+        }
+    }
+
+    static func stopPreview() {
+        previewStopTimer?.invalidate()
+        previewStopTimer = nil
+        previewPlayer?.stop()
+        previewPlayer = nil
     }
 
     static func startLoop(soundID: String) {
-        stopLoop()
+        stopPreview()
+        stopLoopPlayerOnly()
         guard let url = url(for: soundID) else { return }
         let session = AVAudioSession.sharedInstance()
         try? session.setCategory(.playback, mode: .default)
@@ -49,11 +69,14 @@ enum AlarmAudio {
     }
 
     static func stopLoop() {
+        stopPreview()
+        stopLoopPlayerOnly()
+        try? AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
+    }
+
+    private static func stopLoopPlayerOnly() {
         loopPlayer?.stop()
         loopPlayer = nil
-        previewPlayer?.stop()
-        previewPlayer = nil
-        try? AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
     }
 }
 

@@ -1,11 +1,11 @@
 # 宜历 Almanac
 
 > 输入最快、信息最全的个人时间管理中枢
-> 自然语言建事件 · 农历/节气/节日/黄历 · 法定节假日(含调休) · 里程碑倒计时 · 日详情加密日记 · 独立闹钟页 / 多闹钟 / 铃声 · 冲突检测 / 空闲时段 · 日程+倒计时 Widget · Live Activity · 每日简报 · 拼音搜索 · Spotlight · App Intents · 联系人生日导入 · iPad 双栏
+> 自然语言建事件 · 农历/节气/节日/黄历 · 法定节假日(含调休) · 里程碑倒计时 · 日详情加密日记 · 独立闹钟页 / 多闹钟 / 铃声 · 冲突检测 / 空闲时段 · 日程+倒计时 Widget · Live Activity · 每日简报 · 拼音搜索 · Spotlight · App Intents · 联系人生日导入 · iPad 双栏 · 自定义图标
 
 ## 状态
 
-🚧 核心引擎、EventKit 只读/写入、手动新建、自然语言创建 v1（含 App Intents / 快捷指令）、事件详情/编辑/删除/`.ics` 分享、重复规则完整编辑、多日历筛选、本机日历管理、月 / 年 / 议程 / 周模式视图、iPad 双栏、搜索 v2 与 SQLite FTS5 索引（含拼音全拼/首字母）、倒计时卡片、加密日记、农历生日 / 纪念日（含通讯录导入）、里程碑提醒与小组件、日程小组件（桌面+锁屏）、Live Activity 秒级倒计时、每日简报、独立闹钟页（64 条通知配额三路预留）、冲突检测 / 空闲时段、Spotlight 深链、Dynamic Type 正文适配、GitHub Actions CI 已完成代码接入；当前进度见 [docs/product/roadmap.md](docs/product/roadmap.md)。
+🚧 核心引擎、EventKit 只读/写入、手动新建、自然语言创建 v1（含 App Intents / 快捷指令）、事件详情/编辑/删除/`.ics` 分享、重复规则完整编辑、多日历筛选、本机日历管理、月 / 年 / 议程 / 周模式视图、iPad 双栏、搜索 v2 与 SQLite FTS5 索引（含拼音全拼/首字母）、倒计时卡片、加密日记、农历生日 / 纪念日（含通讯录导入）、里程碑提醒与小组件、日程小组件（桌面+锁屏）、Live Activity 秒级倒计时、每日简报、独立闹钟页（64 条通知配额三路预留 · 全屏响铃 · 后台保活静音也响 · 9 种铃声）、冲突检测 / 空闲时段、Spotlight 深链、Dynamic Type 正文适配、GitHub Actions CI 已完成代码接入；当前进度见 [docs/product/roadmap.md](docs/product/roadmap.md)。
 
 ## 核心包（纯逻辑，跨平台可移植）
 
