@@ -43,6 +43,7 @@
   - [x] 年度回顾 v1：CalendarAnalysis 统计引擎 + 设置页入口 + 文本分享（[year-in-review](../design/year-in-review.md)）
   - [x] 备份导出 / 导入 v0：里程碑 / 纪念日 / 闹钟 JSON，按 id 去重合并（[backup-export](../design/backup-export.md)）
   - [x] XCUITest 冒烟（四页签可达）接入 scheme 与 CI
+  - [x] 里程碑 / 纪念日编辑器按钮布局优化（保存入导航栏、删除独立红字行，[milestones](../design/milestones.md)）
 - [ ] 平台能力批次（2026-11-09 接入）
   - [x] 通知配额修复：64 条上限三路预留（闹钟 / 里程碑 / 简报）、App 激活与显著时间变化重排、闹钟页调度数如实展示（[notification-budget](../design/notification-budget.md)）
   - [x] 性能优化六项：DateFormatter 缓存、bundled 数据单例、年视图单次拉取、议程分组缓存、事件匹配后台线程、搜索索引指纹复用（[performance-optimizations](../design/performance-optimizations.md)）

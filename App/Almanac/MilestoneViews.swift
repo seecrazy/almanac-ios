@@ -404,32 +404,25 @@ struct MilestoneEditorView: View {
                     }
                 }
 
-                Section {
-                    Button {
-                        save()
-                    } label: {
-                        HStack {
-                            Spacer()
-                            Text(milestone == nil ? "保存里程碑" : "保存修改")
-                                .fontWeight(.medium)
-                            Spacer()
-                        }
-                    }
-                    .disabled(!canSave)
-
-                    if milestone != nil {
+                if milestone != nil {
+                    Section {
                         Button(role: .destructive) {
                             deleteConfirmationIsPresented = true
                         } label: {
-                            HStack {
-                                Spacer()
-                                Text("删除里程碑")
-                                Spacer()
-                            }
+                            Label("删除里程碑", systemImage: "trash")
+                                .font(.appText(15))
                         }
                     }
+                }
+
+                Section {
+                    EmptyView()
                 } footer: {
-                    Text("里程碑保存在本机，不写入系统日历；提醒通过本地通知调度。")
+                    if canSave {
+                        Text("里程碑保存在本机，不写入系统日历；提醒通过本地通知调度。")
+                    } else {
+                        Text("填写标题后即可保存。")
+                    }
                 }
             }
             .navigationTitle(milestone == nil ? "新建里程碑" : "编辑里程碑")
@@ -437,6 +430,15 @@ struct MilestoneEditorView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button {
+                        save()
+                    } label: {
+                        Text(milestone == nil ? "保存" : "保存修改")
+                            .fontWeight(.semibold)
+                    }
+                    .disabled(!canSave)
                 }
             }
             .alert("删除这个里程碑？", isPresented: $deleteConfirmationIsPresented) {
@@ -745,32 +747,25 @@ struct AnniversaryEditorView: View {
                     }
                 }
 
-                Section {
-                    Button {
-                        save()
-                    } label: {
-                        HStack {
-                            Spacer()
-                            Text(anniversary == nil ? "保存生日 / 纪念日" : "保存修改")
-                                .fontWeight(.medium)
-                            Spacer()
-                        }
-                    }
-                    .disabled(!canSave)
-
-                    if anniversary != nil {
+                if anniversary != nil {
+                    Section {
                         Button(role: .destructive) {
                             deleteConfirmationIsPresented = true
                         } label: {
-                            HStack {
-                                Spacer()
-                                Text("删除")
-                                Spacer()
-                            }
+                            Label("删除生日 / 纪念日", systemImage: "trash")
+                                .font(.appText(15))
                         }
                     }
+                }
+
+                Section {
+                    EmptyView()
                 } footer: {
-                    Text("生日 / 纪念日保存在本机，不写入系统日历或云端。")
+                    if canSave {
+                        Text("生日 / 纪念日保存在本机，不写入系统日历或云端。")
+                    } else {
+                        Text("填写标题后即可保存；原始年份留空或填数字。")
+                    }
                 }
             }
             .navigationTitle(anniversary == nil ? "新建纪念日" : "编辑纪念日")
@@ -778,6 +773,15 @@ struct AnniversaryEditorView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button {
+                        save()
+                    } label: {
+                        Text(anniversary == nil ? "保存" : "保存修改")
+                            .fontWeight(.semibold)
+                    }
+                    .disabled(!canSave)
                 }
             }
             .alert("删除这条生日 / 纪念日？", isPresented: $deleteConfirmationIsPresented) {
