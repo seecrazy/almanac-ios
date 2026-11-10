@@ -27,7 +27,8 @@ enum AlarmAudio {
         stopLoop()
         guard let url = url(for: soundID) else { return }
         let session = AVAudioSession.sharedInstance()
-        try? session.setCategory(.ambient, options: [.mixWithOthers])
+        // 试听是用户主动行为：用 playback 类别，静音键打开也能听到。
+        try? session.setCategory(.playback, mode: .default)
         try? session.setActive(true)
         previewPlayer = try? AVAudioPlayer(contentsOf: url)
         previewPlayer?.volume = 1
@@ -66,6 +67,12 @@ final class AlarmRingingController: ObservableObject {
     private init() {}
 
     func start(alarmName: String, soundID: String) {
+        // 计时器与前台 willPresent 可能同秒触发；同一闹钟 5 秒内只启动一次。
+        if let current = ringing,
+           current.alarmName == alarmName,
+           Date().timeIntervalSince(current.firedAt) < 5 {
+            return
+        }
         ringing = AlarmRingingContext(
             alarmName: alarmName,
             soundID: soundID,
@@ -103,6 +110,7 @@ final class AlarmRingingController: ObservableObject {
 /// 全屏响铃页：大号时间 + 循环铃声 + 停止 / 稍后提醒。
 struct AlarmRingingView: View {
     @ObservedObject private var controller = AlarmRingingController.shared
+    @EnvironmentObject private var alarmStore: WorkdayAlarmStore
 
     let context: AlarmRingingContext
 
@@ -134,6 +142,8 @@ struct AlarmRingingView: View {
             VStack(spacing: 14) {
                 Button {
                     controller.stop()
+                    // 停止后重排：滑动通知窗口并重挂下一次响铃计时器。
+                    Task { await alarmStore.reschedule() }
                 } label: {
                     Text("停止")
                         .font(.system(size: 18, weight: .semibold))

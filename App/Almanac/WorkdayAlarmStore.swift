@@ -193,6 +193,20 @@ final class WorkdayAlarmStore: ObservableObject {
     }
 
     private func replacePendingNotifications() async {
+        let anyAlarmEnabled = alarms.contains { $0.isEnabled }
+        let reference = Date()
+        // 完整 60 天计划：保活计时器据此兜底响铃，不受通知配额约束。
+        let plannedOccurrences = WorkdayAlarmPlanner.occurrences(
+            alarms: alarms,
+            template: template,
+            holidays: holidayStore,
+            from: reference
+        )
+        AlarmKeepAlive.shared.sync(
+            occurrences: plannedOccurrences,
+            anyAlarmEnabled: anyAlarmEnabled
+        )
+
         let pending = await notificationCenter.pendingNotificationRequests()
         let identifiers = pending
             .map(\.identifier)
@@ -214,17 +228,14 @@ final class WorkdayAlarmStore: ObservableObject {
             .count
         let budget = NotificationBudgetPlanner.budget(reserving: reservedCount)
 
-        let reference = Date()
-        let occurrences = NotificationBudgetPlanner.trimming(
-            WorkdayAlarmPlanner.occurrences(
-                alarms: alarms,
-                template: template,
-                holidays: holidayStore,
-                from: reference
-            ),
-            budget: budget
-        )
+        let occurrences = NotificationBudgetPlanner.trimming(plannedOccurrences, budget: budget)
         scheduledOccurrenceCount = occurrences.count
+
+        // 进程内兜底响铃：保活 + 计时器使用未裁剪的完整计划（不受通知配额约束）。
+        AlarmKeepAlive.shared.sync(
+            occurrences: plannedOccurrences,
+            anyAlarmEnabled: alarms.contains { $0.isEnabled }
+        )
 
         for occurrence in occurrences {
             var components = Calendar.current.dateComponents(

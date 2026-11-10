@@ -249,3 +249,38 @@ workday-alarm.<alarmID>.yyyy-MM-dd
 - [x] 选铃声即时试听；卡片与展开区的下次响铃 / 保存状态文案
 - [x] generic iOS Simulator build 通过
 - [ ] 真机静音键 / 专注模式 / 锁屏点按路径人工验收
+
+## 11. v1.5 后台保活响铃与试听修正（2026-11-10）
+
+真机反馈：静音键开启时通知不响、试听无声。结论性修正：
+
+| 反馈 | 根因 | 修正 |
+|---|---|---|
+| 到点还是不响 | 通知声音永远受静音键约束（国内用户普遍开静音），点横幅进响铃页不现实 | **后台保活响铃**（见下） |
+| 试听无声 | 试听走 ambient 会话，静音键开启即无声 | 试听改 `.playback`（用户主动行为，无视静音键） |
+| 桌面默认图标 | 无 AppIcon | Assets.xcassets 单尺寸 1024 图标：纸底 + 朱砂页签 + 「宜」（CoreGraphics 合成，见 design-system） |
+
+### 后台保活响铃（AlarmKeepAlive）
+
+机制（Alarmy 等真闹钟 App 的通行做法）：
+
+1. 存在启用闹钟时，循环播放 `keepalive.caf`（2 秒、-50dB、实测不可闻）维持 `.playback` 音频会话，App 在后台不被挂起（Info.plist `UIBackgroundModes: audio`）；
+2. 进程内 `Timer` 挂在完整 60 天计划的下一次触发时刻（不受通知配额约束）；
+3. 到点直接进全屏响铃页（playback 循环、无视静音键），通知作为锁屏横幅的并行冗余；
+4. 触发源三路去重（计时器 / 前台 willPresent / 点按 didReceive，5 秒窗口）；
+5. 停止响铃即重排（滑窗 + 重挂下一次计时器）。
+
+保活不看通知授权（音频无需权限）——通知被拒时这是唯一响铃路径。
+
+### 系统能力边界（如实告知用户）
+
+- 重启后 iOS 清除所有后台 App 与通知：保活与通知路径双双失效，需开一次 App 重挂；
+- 长夜（>8h）后台存在被系统回收的小概率，重要闹钟建议同时保留系统时钟；
+- 静音键只影响"通知自身声音"，不影响保活计时器触发的响铃页。
+
+验收清单：
+
+- [x] keepalive.caf / Assets.xcassets(AppIcon) / AlarmKeepAlive.swift 进包（产物已验证）
+- [x] 试听 playback；响铃去重；停止重排
+- [x] generic iOS Simulator build 通过
+- [ ] 真机静音键整夜保活到点响铃验收
