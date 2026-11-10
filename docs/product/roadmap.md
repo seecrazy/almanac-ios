@@ -34,6 +34,15 @@
   - [ ] GUI / 真机人工验收
 
 ## v1.1
+- [ ] UX 打磨与回顾批次（2026-11-10 接入，跳过人工验收待真机）
+  - [x] 闹钟页 600ms 防抖同步；月视图装饰缓存（节气/节日/事件色点）；冲突分析单次调用（[ux-polish](../design/ux-polish.md)）
+  - [x] 四处权限拒绝补「打开系统设置」
+  - [x] almanac:// 深链 + 两族 Widget widgetURL + 路由消费
+  - [x] Watch 代码侧就绪：WatchBriefingSnapshot 数据契约 + iOS 写入器 + staging 页面与复杂功能 + GUI 步骤（[ADR-012](../architecture/adr/ADR-012-watch-app-engineering.md)、WatchApp/README.md）
+  - [x] 图标深色 / 染色变体 + 启动屏品牌化（LaunchBackground）
+  - [x] 年度回顾 v1：CalendarAnalysis 统计引擎 + 设置页入口 + 文本分享（[year-in-review](../design/year-in-review.md)）
+  - [x] 备份导出 / 导入 v0：里程碑 / 纪念日 / 闹钟 JSON，按 id 去重合并（[backup-export](../design/backup-export.md)）
+  - [x] XCUITest 冒烟（四页签可达）接入 scheme 与 CI
 - [ ] 平台能力批次（2026-11-09 接入）
   - [x] 通知配额修复：64 条上限三路预留（闹钟 / 里程碑 / 简报）、App 激活与显著时间变化重排、闹钟页调度数如实展示（[notification-budget](../design/notification-budget.md)）
   - [x] 性能优化六项：DateFormatter 缓存、bundled 数据单例、年视图单次拉取、议程分组缓存、事件匹配后台线程、搜索索引指纹复用（[performance-optimizations](../design/performance-optimizations.md)）
@@ -134,7 +143,9 @@
   - [x] EventKitMapping 8 项 XCTest + generic iOS Simulator build
   - [ ] GUI / 真机人工验收
 - [ ] 桌面大组件、倒计时模板
-- [ ] 联系人生日导入
+- [ ] Watch target GUI 落地（代码已就绪，见 WatchApp/README.md）
+- [ ] SyncProvider ADR（日记密钥迁移 / CloudKit）
+- [x] 联系人生日导入
 - [ ] 日记 v1.1
   - [x] `DiaryKit` 纯逻辑模型、AES-256-GCM payload、HMAC 日期键与 SQLite 存储
   - [x] Keychain 主密钥、一天一篇、心情 / 正文 / EventKit 日程骨架

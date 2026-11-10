@@ -39,6 +39,16 @@
                ReferencedContainer = "container:Almanac.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "7A1111110000000000000332"
+               BuildableName = "AlmanacUITests.xctest"
+               BlueprintName = "AlmanacUITests"
+               ReferencedContainer = "container:Almanac.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

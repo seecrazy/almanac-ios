@@ -1,5 +1,6 @@
 import XCTest
 import HolidayData
+import MilestoneKit
 @testable import Almanac
 
 /// App 层存储逻辑测试：闹钟三代设置迁移、简报设置恢复。
@@ -77,6 +78,56 @@ final class AlmanacStoreTests: XCTestCase {
             DateComponents(hour: 8, minute: 0),
             "默认 08:00"
         )
+    }
+
+    // MARK: - 备份往返与去重
+
+    func testBackupRoundTripAndDedup() throws {
+        let milestone = Milestone(
+            id: UUID(),
+            title: "高考",
+            targetDate: Date(timeIntervalSince1970: 1_800_000_000),
+            isAllDay: true,
+            category: .exam,
+            notes: "",
+            createdAt: Date()
+        )
+        let anniversary = Anniversary(
+            title: "妈妈生日",
+            kind: .birthday,
+            calendar: .solar,
+            solarDate: DateComponents(month: 5, day: 20)
+        )
+        let alarm = WorkdayAlarm(name: "早班", time: Date(), soundID: "music-box", isEnabled: true)
+
+        let data = try BackupService.export(
+            milestones: [milestone],
+            anniversaries: [anniversary],
+            alarmTemplate: WorkdayTemplate(kind: .singleRestDay),
+            alarms: [alarm]
+        )
+        let document = try BackupService.decode(data)
+
+        XCTAssertEqual(document.version, 1)
+        XCTAssertEqual(document.milestones.first?.title, "高考")
+        XCTAssertEqual(document.anniversaries.first?.title, "妈妈生日")
+        XCTAssertEqual(document.alarms.first?.soundID, "music-box")
+
+        // 已存在的 id 被去重，增量应为空。
+        let preview = BackupService.preview(
+            document,
+            existingMilestones: [milestone],
+            existingAnniversaries: [anniversary],
+            existingAlarms: [alarm]
+        )
+        XCTAssertTrue(preview.newMilestones.isEmpty)
+        XCTAssertTrue(preview.newAnniversaries.isEmpty)
+        XCTAssertTrue(preview.newAlarms.isEmpty)
+        XCTAssertEqual(preview.template?.kind, WorkdayTemplateKind.singleRestDay, "模板仍可更新")
+    }
+
+    func testBackupDecodeRejectsGarbage() {
+        XCTAssertThrowsError(try BackupService.decode(Data("not json".utf8)))
     }
 }
 

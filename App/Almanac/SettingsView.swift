@@ -1,6 +1,7 @@
 import SwiftUI
 import HolidayData
 import UIKit
+import UniformTypeIdentifiers
 
 /// 权限被拒时的「打开系统设置」统一入口。
 struct OpenSettingsLink: View {
@@ -25,12 +26,20 @@ struct SettingsView: View {
     @Environment(\.palette) private var palette
     @EnvironmentObject private var eventService: EventStoreService
     @EnvironmentObject private var briefingService: DailyBriefingService
+    @EnvironmentObject private var milestoneStore: MilestoneStore
+    @EnvironmentObject private var alarmStore: WorkdayAlarmStore
 
     @AppStorage("showLunar") private var showLunar = true
     @AppStorage("showSolarTerms") private var showSolarTerms = true
     @AppStorage("showLunarFestivals") private var showLunarFestivals = true
     @AppStorage("showHuangLi") private var showHuangLi = false
     @AppStorage("month.week.start.day") private var weekStartDayRaw = WeekStartDay.monday.rawValue
+
+    @State private var reportIsPresented = false
+    @State private var backupShareURL: URL?
+    @State private var importIsPresented = false
+    @State private var importPreview: BackupService.ImportPreview?
+    @State private var importErrorMessage: String?
 
     private var holidayStore: HolidayStore { .bundledShared }
 
@@ -151,6 +160,31 @@ struct SettingsView: View {
                 .padding(16)
                 .background(RoundedRectangle(cornerRadius: 16).fill(palette.card))
 
+                VStack(spacing: 0) {
+                    actionRow("年度回顾", icon: "chart.bar.doc.horizontal") {
+                        reportIsPresented = true
+                    }
+                    Divider().background(palette.separator)
+                    actionRow("导出备份", icon: "square.and.arrow.up") {
+                        exportBackup()
+                    }
+                    Divider().background(palette.separator)
+                    actionRow("导入备份", icon: "square.and.arrow.down") {
+                        importIsPresented = true
+                    }
+                }
+                .background(RoundedRectangle(cornerRadius: 16).fill(palette.card))
+
+                if let importErrorMessage {
+                    Text(importErrorMessage)
+                        .font(.system(size: 12))
+                        .foregroundColor(palette.holidayRed)
+                }
+
+                Text("备份含里程碑 / 纪念日 / 闹钟（JSON）；日记为加密数据，暂不包含。")
+                    .font(.system(size: 12))
+                    .foregroundColor(palette.secondary)
+
                 Text("黄历默认关闭；开关控制日详情中的黄历面板。当前版本设置不参与同步。")
                     .font(.system(size: 13))
                     .foregroundColor(palette.secondary)
@@ -158,6 +192,137 @@ struct SettingsView: View {
             .padding(20)
         }
         .background(palette.background.ignoresSafeArea())
+        .sheet(isPresented: $reportIsPresented) {
+            YearReportView()
+        }
+        .sheet(item: $backupShareURL) { url in
+            ActivityShareSheet(items: [url])
+                .ignoresSafeArea()
+        }
+        .fileImporter(
+            isPresented: $importIsPresented,
+            allowedContentTypes: [.json]
+        ) { result in
+            handleImportFile(result)
+        }
+        .confirmationDialog(
+            "导入备份？",
+            isPresented: Binding(
+                get: { importPreview != nil },
+                set: { if !$0 { importPreview = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("导入") { applyImport() }
+            Button("取消", role: .cancel) { importPreview = nil }
+        } message: {
+            if let preview = importPreview {
+                Text(importSummary(preview))
+            }
+        }
+    }
+
+    private func actionRow(_ title: String, icon: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack {
+                Label(title, systemImage: icon)
+                    .font(.appText(15))
+                    .foregroundColor(palette.ink)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(palette.secondary)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+        }
+    }
+
+    // MARK: 备份
+
+    private func exportBackup() {
+        do {
+            let data = try BackupService.export(
+                milestones: milestoneStore.milestones,
+                anniversaries: milestoneStore.anniversaries,
+                alarmTemplate: alarmStore.template,
+                alarms: alarmStore.alarms
+            )
+            let url = FileManager.default.temporaryDirectory
+                .appendingPathComponent(BackupService.fileName())
+            try data.write(to: url, options: .atomic)
+            backupShareURL = url
+        } catch {
+            importErrorMessage = "导出失败：\(error.localizedDescription)"
+        }
+    }
+
+    private func handleImportFile(_ result: Result<URL, Error>) {
+        importErrorMessage = nil
+        guard case .success(let url) = result else { return }
+
+        let accessing = url.startAccessingSecurityScopedResource()
+        defer { if accessing { url.stopAccessingSecurityScopedResource() } }
+
+        do {
+            let data = try Data(contentsOf: url)
+            let document = try BackupService.decode(data)
+            let preview = BackupService.preview(
+                document,
+                existingMilestones: milestoneStore.milestones,
+                existingAnniversaries: milestoneStore.anniversaries,
+                existingAlarms: alarmStore.alarms
+            )
+            let totalCount = preview.newMilestones.count + preview.newAnniversaries.count + preview.newAlarms.count
+            guard totalCount > 0 || preview.template != nil else {
+                importErrorMessage = "备份中没有新内容（可能此前已导入过）。"
+                return
+            }
+            importPreview = BackupService.ImportPreview(
+                newMilestones: preview.newMilestones,
+                newAnniversaries: preview.newAnniversaries,
+                newAlarms: preview.newAlarms,
+                template: preview.template
+            )
+            pendingApply = preview
+        } catch {
+            importErrorMessage = error.localizedDescription
+        }
+    }
+
+    @State private var pendingApply: BackupService.ImportPreview?
+
+    private func importSummary(_ preview: BackupService.ImportPreview) -> String {
+        var parts: [String] = []
+        if !preview.newMilestones.isEmpty { parts.append("里程碑 \(preview.newMilestones.count) 条") }
+        if !preview.newAnniversaries.isEmpty { parts.append("生日/纪念日 \(preview.newAnniversaries.count) 条") }
+        if !preview.newAlarms.isEmpty { parts.append("闹钟 \(preview.newAlarms.count) 个") }
+        if preview.template != nil { parts.append("工作日规则") }
+        return "将新增：" + parts.joined(separator: "、") + "（已存在的跳过，不覆盖）"
+    }
+
+    private func applyImport() {
+        guard let preview = pendingApply else { return }
+        pendingApply = nil
+        importPreview = nil
+
+        Task {
+            for milestone in preview.newMilestones {
+                await milestoneStore.save(milestone)
+            }
+            for anniversary in preview.newAnniversaries {
+                await milestoneStore.save(anniversary)
+            }
+            if !preview.newAlarms.isEmpty || preview.template != nil {
+                for alarm in preview.newAlarms {
+                    alarmStore.alarms.append(alarm)
+                }
+                if let template = preview.template {
+                    alarmStore.template = template
+                }
+                await alarmStore.sync()
+            }
+        }
     }
 
     private func toggleRow(_ title: String, binding: Binding<Bool>) -> some View {

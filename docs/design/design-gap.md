@@ -34,13 +34,13 @@
 | 公司政策引擎 | 🔴 | 无规则模型、模板、公司码分发 |
 | 本地 SQLite / GRDB | 🟡 | 搜索派生索引已使用系统 SQLite FTS5；GRDB 与其他 App 层持久化未引入 |
 | CloudKit / SyncProvider | 🔴 | 未实现 |
-| 手动导出导入 | 🟡 | **单事件 .ics 分享已实现**；整库 ICS / JSON 备份未实现 |
+| 手动导出导入 | ✅ | 单事件 .ics 分享 + **备份导出/导入 v0（里程碑/纪念日/闹钟 JSON，按 id 去重合并）**；日记因加密待 SyncProvider |
 | 日记 | 🟡 | `DiaryKit` 模型、AES-256-GCM 加密 SQLite、Keychain 密钥、日程骨架、心情 / 正文、日详情入口、历史列表与查看 / 修改 / 删除、**Spotlight 日期索引（正文永不入索引）**已接入；照片 / 语音 / 独立密码 / FTS / CloudKit / 导出未实现，GUI / 真机验收未完成 |
 | 完整多视图 | ✅ | 月 / 年 / 议程 / **周模式**视图、滑动手势、月点日详情、周末 / 法定休班底色角标、今天和年 / 月 / 日三列跳转、**iPad 双栏**已接入；导航 GUI / 真机验收未完成 |
 | 每日简报 | ✅ | 14 天预排（农历 / 节日 / 节气 / 宜忌）、设置页开关与时间选择；真机响铃验收未完成 |
 | Spotlight | ✅ | 里程碑 / 纪念日按标题、日记按日期；深链路由到对应 Tab 与编辑器 / 日详情 |
 | 无障碍专项 | 🟡 | **Dynamic Type 正文适配 v1**（EventRow / 日详情 / 设置页）；逐屏 VoiceOver audit 与大字号走查未完成 |
-| Watch | 🟡 | ADR-012 已定（复用纯逻辑包 + App Group 快照）；target 待 Xcode GUI 创建 |
+| Watch | 🟡 | ADR-012 + **代码侧就绪**（WatchBriefingSnapshot 契约、iOS 写入器、staging 页面与复杂功能、GUI 步骤）；target 待 Xcode GUI 创建 |
 | 天气 / 任务 / 差旅 | 🔴 | 未实现 |
 | 邀请 / RSVP | 🔴 | 未实现 |
 | 冲突检测 | 🟡 | `CalendarAnalysis` 冲突组、全天处理、跨日裁剪、新建冲突提醒、日详情冲突摘要与日视图空闲时段已接入；GUI / 真机验收未完成 |
@@ -91,3 +91,6 @@
 2. 为多条提醒和 Live Activity 补实现细节。
 3. 为 `SyncProvider` 写一份 ADR。
 4. 把 `design-gap.md` 纳入每次 milestone 结束时刷新。
+| 年度回顾 | ✅ | CalendarAnalysis 统计引擎（6 项 XCTest）+ 设置页入口 + 文本分享；日记心情曲线未含 |
+| 深链 | ✅ | almanac:// scheme + 两族 Widget widgetURL + AppRouter 路由（AppTests 覆盖） |
+| UI 冒烟 | ✅ | XCUITest 四页签可达，接入 scheme 与 CI |

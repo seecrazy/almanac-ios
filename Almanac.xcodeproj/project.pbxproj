@@ -24,6 +24,9 @@
 		7A1111110000000000000315 /* AlarmSoundPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000314 /* AlarmSoundPickerSheet.swift */; };
 		7A1111110000000000000319 /* AlmanacStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000318 /* AlmanacStoreTests.swift */; };
 		7A1111110000000000000321 /* WatchBriefingWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000320 /* WatchBriefingWriter.swift */; };
+		7A1111110000000000000323 /* YearReportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000322 /* YearReportView.swift */; };
+		7A1111110000000000000325 /* BackupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000324 /* BackupService.swift */; };
+		7A1111110000000000000327 /* SmokeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000326 /* SmokeUITests.swift */; };
 		7A1111110000000000000305 /* bird-song.caf in Resources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000304 /* bird-song.caf */; };
 		7A1111110000000000000307 /* music-box.caf in Resources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000306 /* music-box.caf */; };
 		7A1111110000000000000309 /* deep-bell.caf in Resources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000308 /* deep-bell.caf */; };
@@ -88,6 +91,10 @@
 		7A1111110000000000000316 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		7A1111110000000000000318 /* AlmanacStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlmanacTests/AlmanacStoreTests.swift; sourceTree = "<group>"; };
 		7A1111110000000000000320 /* WatchBriefingWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchBriefingWriter.swift; sourceTree = "<group>"; };
+		7A1111110000000000000322 /* YearReportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YearReportView.swift; sourceTree = "<group>"; };
+		7A1111110000000000000324 /* BackupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupService.swift; sourceTree = "<group>"; };
+		7A1111110000000000000326 /* SmokeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmokeUITests.swift; sourceTree = "<group>"; };
+		7A1111110000000000000328 /* AlmanacUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AlmanacUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7A1111110000000000000304 /* bird-song.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = bird-song.caf; sourceTree = "<group>"; };
 		7A1111110000000000000306 /* music-box.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = music-box.caf; sourceTree = "<group>"; };
 		7A1111110000000000000308 /* deep-bell.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = deep-bell.caf; sourceTree = "<group>"; };
@@ -157,6 +164,7 @@
 			children = (
 				7A1111110000000000000004 /* App/Almanac */,
 				7A1111110000000000000283 /* AppTests */,
+				7A1111110000000000000329 /* AppUITests */,
 				7A1111110000000000000136 /* MilestoneWidget */,
 				7A1111110000000000000003 /* Products */,
 			);
@@ -186,6 +194,8 @@
 				7A1111110000000000000276 /* LiveActivityScheduler.swift */,
 				7A1111110000000000000292 /* AlarmRinging.swift */,
 				7A1111110000000000000320 /* WatchBriefingWriter.swift */,
+				7A1111110000000000000322 /* YearReportView.swift */,
+				7A1111110000000000000324 /* BackupService.swift */,
 				7A1111110000000000000300 /* AlarmKeepAlive.swift */,
 				7A1111110000000000000314 /* AlarmSoundPickerSheet.swift */,
 				7A1111110000000000000043 /* RootView.swift */,
@@ -237,6 +247,14 @@
 				7A1111110000000000000318 /* AlmanacStoreTests.swift */,
 			);
 			path = AppTests;
+			sourceTree = "<group>";
+		};
+		7A1111110000000000000329 /* AppUITests */ = {
+			isa = PBXGroup;
+			children = (
+				7A1111110000000000000326 /* SmokeUITests.swift */,
+			);
+			path = AppUITests;
 			sourceTree = "<group>";
 		};
 		7A1111110000000000000136 /* MilestoneWidget */ = {
@@ -303,6 +321,25 @@
 			productReference = 7A1111110000000000000282 /* AlmanacTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		7A1111110000000000000332 /* AlmanacUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7A1111110000000000000335 /* Build configuration list for PBXNativeTarget "AlmanacUITests" */;
+			buildPhases = (
+				7A1111110000000000000330 /* Sources */,
+				7A1111110000000000000331 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				7A1111110000000000000337 /* PBXTargetDependency */,
+			);
+			name = AlmanacUITests;
+			packageProductDependencies = (
+			);
+			productName = AlmanacUITests;
+			productReference = 7A1111110000000000000328 /* AlmanacUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		7A1111110000000000000138 /* MilestoneWidget */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 7A1111110000000000000142 /* Build configuration list for PBXNativeTarget "MilestoneWidget" */;
@@ -343,6 +380,10 @@
 						CreatedOnToolsVersion = 16.0;
 						TestTargetID = 7A1111110000000000000010;
 					};
+					7A1111110000000000000332 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = 7A1111110000000000000010;
+					};
 				};
 			};
 			buildConfigurationList = 7A1111110000000000000030 /* Build configuration list for PBXProject "Almanac" */;
@@ -373,6 +414,7 @@
 				7A1111110000000000000010 /* Almanac */,
 				7A1111110000000000000138 /* MilestoneWidget */,
 				7A1111110000000000000288 /* AlmanacTests */,
+				7A1111110000000000000332 /* AlmanacUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -386,6 +428,13 @@
 			remoteInfo = MilestoneWidget;
 		};
 		7A1111110000000000000286 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7A1111110000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7A1111110000000000000010;
+			remoteInfo = Almanac;
+		};
+		7A1111110000000000000336 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 7A1111110000000000000001 /* Project object */;
 			proxyType = 1;
@@ -451,6 +500,8 @@
 				7A1111110000000000000277 /* LiveActivityScheduler.swift in Sources */,
 				7A1111110000000000000293 /* AlarmRinging.swift in Sources */,
 				7A1111110000000000000321 /* WatchBriefingWriter.swift in Sources */,
+				7A1111110000000000000323 /* YearReportView.swift in Sources */,
+				7A1111110000000000000325 /* BackupService.swift in Sources */,
 				7A1111110000000000000301 /* AlarmKeepAlive.swift in Sources */,
 				7A1111110000000000000315 /* AlarmSoundPickerSheet.swift in Sources */,
 				7A1111110000000000000052 /* Theme.swift in Sources */,
@@ -495,6 +546,21 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		7A1111110000000000000285 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7A1111110000000000000330 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7A1111110000000000000327 /* SmokeUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7A1111110000000000000331 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -719,6 +785,42 @@
 			};
 			name = Release;
 		};
+		7A1111110000000000000333 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = DFB7P62Y8F;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yili.almanac.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Almanac;
+			};
+			name = Debug;
+		};
+		7A1111110000000000000334 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = DFB7P62Y8F;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yili.almanac.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Almanac;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -758,6 +860,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		7A1111110000000000000335 /* Build configuration list for PBXNativeTarget "AlmanacUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7A1111110000000000000333 /* Debug */,
+				7A1111110000000000000334 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin PBXTargetDependency section */
@@ -770,6 +881,11 @@
 			isa = PBXTargetDependency;
 			target = 7A1111110000000000000010 /* Almanac */;
 			targetProxy = 7A1111110000000000000286 /* PBXContainerItemProxy */;
+		};
+		7A1111110000000000000337 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7A1111110000000000000010 /* Almanac */;
+			targetProxy = 7A1111110000000000000336 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 

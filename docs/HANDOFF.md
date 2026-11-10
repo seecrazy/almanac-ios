@@ -58,6 +58,15 @@ xcodebuild test -scheme Almanac -destination 'platform=iOS Simulator,name=iPhone
 - App Group `group.com.yili.almanac.shared`：里程碑 / 日程两份快照 + （Watch 落地后）简报快照
 - 模拟器：iOS 27.2 运行时（iPhone 18 Pro 等已就绪）
 
+## UX 打磨与回顾批次（2026-11-10 晚）
+
+- UX：闹钟防抖 / 月视图装饰缓存 / 冲突单次 / 四处去设置深链 / almanac:// 深链 + Widget widgetURL（ux-polish.md）
+- Watch 代码侧就绪：快照契约（MilestoneKit）+ iOS 写入器 + WatchApp/ staging（README 含 GUI 步骤）
+- 图标深浅 / 染色变体 + 启动屏品牌化
+- 年度回顾 v1（CalendarAnalysis 引擎 6 项测试 + 设置页 + 分享）；备份导出导入 v0（往返 / 去重测试）
+- XCUITest 冒烟接入；App 层测试 12→14 项
+- 验证：包测试 121 项全绿（CalendarAnalysis 7→13）+ 模拟器单测 / UI 测试通过
+
 ## 下一步（按优先级）
 
 1. **GUI / 真机人工验收批次**（本批次全部功能 + 此前遗留 D-140~D-210）：Widget 添加、灵动岛、Siri / 快捷指令、通讯录导入、大字号走查、iPad 双栏、闹钟真机响铃
