@@ -261,10 +261,12 @@ struct DayDetail: View {
                 .accessibilityLabel("新建日程")
             }
             let dayEvents = eventService.events(on: date)
-            if eventService.accessState == .granted,
-               !CalendarConflictAnalyzer.conflictGroups(in: dayEvents.map(\.analysisEvent)).isEmpty {
+            let conflictGroups = eventService.accessState == .granted
+                ? CalendarConflictAnalyzer.conflictGroups(in: dayEvents.map(\.analysisEvent))
+                : []
+            if !conflictGroups.isEmpty {
                 EventConflictSection(
-                    groups: CalendarConflictAnalyzer.conflictGroups(in: dayEvents.map(\.analysisEvent)),
+                    groups: conflictGroups,
                     draftEventID: ""
                 )
             }

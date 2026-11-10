@@ -96,6 +96,7 @@ struct ScheduleWidgetView: View {
     var body: some View {
         familyContent
             .widgetBackground()
+            .widgetURL(URL(string: "almanac://calendar"))
     }
 
     @ViewBuilder

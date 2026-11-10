@@ -100,6 +100,7 @@ struct ContactImportSheet: View {
                 .font(.system(size: 13))
                 .foregroundColor(palette.secondary)
                 .multilineTextAlignment(.center)
+            OpenSettingsLink()
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)

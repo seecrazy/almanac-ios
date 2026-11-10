@@ -7,6 +7,7 @@ struct AlarmView: View {
 
     @State private var expandedAlarmID: UUID?
     @State private var showFullPreview = false
+    @State private var syncDebounceTask: Task<Void, Never>?
 
     private var occurrences: [WorkdayAlarmOccurrence] { store.occurrences }
 
@@ -30,6 +31,18 @@ struct AlarmView: View {
             await store.sync(shouldRequestAuthorization: false)
         }
         .onChange(of: store.alarms) { _ in
+            // 名称 / 时间编辑每字符都会写 store；全量重排通知开销大，防抖合并。
+            syncDebounceTask?.cancel()
+            syncDebounceTask = Task {
+                try? await Task.sleep(nanoseconds: 600_000_000)
+                guard !Task.isCancelled else { return }
+                await store.sync()
+            }
+        }
+        .onDisappear {
+            // 防抖窗口内退出立即冲刷，避免丢最后一次编辑。
+            syncDebounceTask?.cancel()
+            syncDebounceTask = nil
             Task { await store.sync() }
         }
     }
@@ -292,6 +305,9 @@ struct AlarmView: View {
                 .font(.system(size: 12))
                 .foregroundColor(authorizationColor)
             Spacer()
+            if store.authorization == .denied {
+                OpenSettingsLink()
+            }
         }
         .padding(.horizontal, 4)
     }

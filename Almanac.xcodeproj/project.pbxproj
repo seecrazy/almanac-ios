@@ -22,6 +22,7 @@
 		7A1111110000000000000301 /* AlarmKeepAlive.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000300 /* AlarmKeepAlive.swift */; };
 		7A1111110000000000000303 /* keepalive.caf in Resources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000302 /* keepalive.caf */; };
 		7A1111110000000000000315 /* AlarmSoundPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000314 /* AlarmSoundPickerSheet.swift */; };
+		7A1111110000000000000319 /* AlmanacStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000318 /* AlmanacStoreTests.swift */; };
 		7A1111110000000000000305 /* bird-song.caf in Resources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000304 /* bird-song.caf */; };
 		7A1111110000000000000307 /* music-box.caf in Resources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000306 /* music-box.caf */; };
 		7A1111110000000000000309 /* deep-bell.caf in Resources */ = {isa = PBXBuildFile; fileRef = 7A1111110000000000000308 /* deep-bell.caf */; };
@@ -84,6 +85,7 @@
 		7A1111110000000000000302 /* keepalive.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = keepalive.caf; sourceTree = "<group>"; };
 		7A1111110000000000000314 /* AlarmSoundPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmSoundPickerSheet.swift; sourceTree = "<group>"; };
 		7A1111110000000000000316 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		7A1111110000000000000318 /* AlmanacStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlmanacTests/AlmanacStoreTests.swift; sourceTree = "<group>"; };
 		7A1111110000000000000304 /* bird-song.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = bird-song.caf; sourceTree = "<group>"; };
 		7A1111110000000000000306 /* music-box.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = music-box.caf; sourceTree = "<group>"; };
 		7A1111110000000000000308 /* deep-bell.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = deep-bell.caf; sourceTree = "<group>"; };
@@ -229,6 +231,7 @@
 			isa = PBXGroup;
 			children = (
 				7A1111110000000000000280 /* AppRouterTests.swift */,
+				7A1111110000000000000318 /* AlmanacStoreTests.swift */,
 			);
 			path = AppTests;
 			sourceTree = "<group>";
@@ -483,6 +486,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7A1111110000000000000281 /* AppRouterTests.swift in Sources */,
+				7A1111110000000000000319 /* AlmanacStoreTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

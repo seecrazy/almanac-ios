@@ -115,6 +115,7 @@ struct MilestoneWidgetView: View {
     var body: some View {
         familyContent
             .widgetBackground()
+            .widgetURL(URL(string: "almanac://countdown"))
     }
 
     @ViewBuilder

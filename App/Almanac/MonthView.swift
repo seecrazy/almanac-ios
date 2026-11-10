@@ -43,6 +43,9 @@ struct MonthView: View {
     @AppStorage("showSolarTerms") private var showSolarTerms = true
     @AppStorage("showLunarFestivals") private var showLunarFestivals = true
 
+    /// 月格装饰缓存：事件色点 + 节气 + 节日。节气含天文计算，禁止在渲染期重算。
+    @State private var decorations = MonthDecorations()
+
     private var holidayStore: HolidayStore { .bundledShared }
     private let inputParser = NaturalInputParser()
 
@@ -140,6 +143,19 @@ struct MonthView: View {
             router.pendingQuickPhrase = nil
             parseQuickInput()
         }
+        .onAppear(perform: rebuildDecorations)
+        .onChange(of: visibleMonth) { _ in rebuildDecorations() }
+        .onChange(of: eventService.events) { _ in rebuildDecorations() }
+        .onChange(of: showSolarTerms) { _ in rebuildDecorations() }
+        .onChange(of: showLunarFestivals) { _ in rebuildDecorations() }
+    }
+
+    private func rebuildDecorations() {
+        decorations = MonthDecorations(
+            eventColors: eventService.eventCalendarColors(for: visibleMonth),
+            solarTerms: solarTermNames(for: visibleMonth),
+            festivals: festivalNames(for: visibleMonth)
+        )
     }
 
     private var monthColumn: some View {
@@ -326,9 +342,9 @@ struct MonthView: View {
 
     private var grid: some View {
         let cells = isWeekMode ? weekCells(for: selectedDate) : monthCells(for: visibleMonth)
-        let eventColors = eventService.eventCalendarColors(for: visibleMonth)
-        let solarTermNames = solarTermNames(for: visibleMonth)
-        let festivalNames = festivalNames(for: visibleMonth)
+        let eventColors = decorations.eventColors
+        let solarTermNames = decorations.solarTerms
+        let festivalNames = decorations.festivals
         let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
         return LazyVGrid(columns: columns, spacing: 0) {
             ForEach(Array(cells.enumerated()), id: \.offset) { _, cell in
@@ -481,6 +497,13 @@ struct MonthView: View {
             visibleMonth = newMonth
         }
     }
+}
+
+/// 月格装饰（事件色点 / 节气 / 节日）的一次性计算结果。
+struct MonthDecorations {
+    var eventColors: [Date: [CalendarColorComponents]] = [:]
+    var solarTerms: [DateComponents: String] = [:]
+    var festivals: [DateComponents: String] = [:]
 }
 
 /// 单日格子：公历数字 + 农历小字 + 休/班角标

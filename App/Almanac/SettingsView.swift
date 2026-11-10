@@ -1,5 +1,25 @@
 import SwiftUI
 import HolidayData
+import UIKit
+
+/// 权限被拒时的「打开系统设置」统一入口。
+struct OpenSettingsLink: View {
+    @Environment(\.palette) private var palette
+
+    let title: String = "打开系统设置"
+
+    var body: some View {
+        Button {
+            if let url = URL(string: UIApplication.openSettingsURLString) {
+                UIApplication.shared.open(url)
+            }
+        } label: {
+            Label(title, systemImage: "gear.badge.questionmark")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(palette.accent)
+        }
+    }
+}
 
 struct SettingsView: View {
     @Environment(\.palette) private var palette
@@ -119,6 +139,7 @@ struct SettingsView: View {
                         Text("请到系统设置 > 隐私与安全性 > 日历中开启权限。")
                             .font(.system(size: 12))
                             .foregroundColor(palette.secondary)
+                        OpenSettingsLink()
                     }
                     if let error = eventService.lastErrorMessage {
                         Text(error)

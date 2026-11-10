@@ -198,6 +198,12 @@ struct CalendarScreen: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 7)
             .background(palette.card.opacity(0.9))
+            HStack {
+                OpenSettingsLink()
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 6)
         }
     }
 

@@ -25,6 +25,9 @@ struct RootView: View {
         .fullScreenCover(item: $ringing.ringing) { context in
             AlarmRingingView(context: context)
         }
+        .onOpenURL { url in
+            router.handleURL(url)
+        }
         .onContinueUserActivity(CSSearchableItemActionType) { activity in
             guard let identifier = activity.userInfo?[CSSearchableItemActivityIdentifier] as? String else {
                 return
