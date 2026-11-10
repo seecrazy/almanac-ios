@@ -71,13 +71,14 @@
   - [x] App 搜索接入有效日历集合、排序回填与内存过滤降级
   - [x] EventSearchKit 7 项 XCTest + generic iOS Simulator build
   - [ ] SQLite 故障注入验收与 GUI / 真机人工验收
-- [ ] 官方节假日数据管道
+- [x] 官方节假日数据管道
   - [x] manifest + 多年度 JSON 加载
-  - [x] 2026 official / 2027 sample 数据、跨年 `nextHoliday` 与覆盖状态
+  - [x] 2026 / 2027 official 数据、跨年 `nextHoliday` 与覆盖状态
   - [x] 日期 / 冲突 / source 校验与失败降级
   - [x] App 区分 official / sample / estimated，并展示未覆盖状态
   - [x] 2026 按国务院办公厅通知替换 official 数据并记录来源
-  - [ ] 2027 官方通知发布后替换 sample 数据
+  - [x] 2027 内置已替换官方数据（2026-11 通知，holiday-cn 转录）
+  - [x] 联网自动更新（ADR-013：双源拉取 + 七道校验 + 磁盘缓存覆盖 + 设置页手动检查，[holiday-remote-update](../design/holiday-remote-update.md)）
 - [x] 重复规则完整编辑
   - [x] `EventKitMapping` 映射包 + 8 项 XCTest
   - [x] 每日间隔、周几多选、每月日期 / 第 N 个周几

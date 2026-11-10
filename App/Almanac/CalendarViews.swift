@@ -44,7 +44,9 @@ struct CalendarScreen: View {
     @State private var isDateJumpPresented = false
     @State private var dateJumpDraft = Date()
 
-    private var holidayStore: HolidayStore { .bundledShared }
+    @EnvironmentObject private var holidayData: HolidayDataCoordinator
+
+    private var holidayStore: HolidayStore { holidayData.store }
 
     private var mode: CalendarViewMode {
         CalendarViewMode(rawValue: modeRaw) ?? .month

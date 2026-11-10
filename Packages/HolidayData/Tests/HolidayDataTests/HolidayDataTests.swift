@@ -70,7 +70,8 @@ final class HolidayDataTests: XCTestCase {
         XCTAssertEqual(store.statuses.map(\.year), [2026, 2027])
         XCTAssertEqual(store.status(for: 2026)?.source, .official)
         XCTAssertEqual(store.status(for: 2026)?.sourceName, "国务院办公厅通知")
-        XCTAssertEqual(store.status(for: 2027)?.source, .sample)
+        // 2027 已随官方通知替换为 official（ADR-013）。
+        XCTAssertEqual(store.status(for: 2027)?.source, .official)
         XCTAssertTrue(store.loadErrors.isEmpty)
     }
 
@@ -323,6 +324,102 @@ final class HolidayDataTests: XCTestCase {
         XCTAssertTrue(NotificationBudgetPlanner.trimming([1, 2, 3], budget: 0).isEmpty)
         XCTAssertTrue(NotificationBudgetPlanner.trimming([1, 2, 3], budget: -5).isEmpty)
         XCTAssertEqual(NotificationBudgetPlanner.trimming([1, 2], budget: 10), [1, 2])
+    }
+
+    // MARK: - 远程数据集
+
+    private func remoteDatasetJSON(year: Int, days: [[String: Any]], papers: [String]? = ["https://www.gov.cn/x"]) -> Data {
+        let payload: [String: Any] = ["year": year, "papers": papers as Any, "days": days]
+        return try! JSONSerialization.data(withJSONObject: payload)
+    }
+
+    private var valid2027Days: [[String: Any]] {
+        [
+            ["name": "元旦", "date": "2027-01-01", "isOffDay": true],
+            ["name": "元旦", "date": "2027-01-02", "isOffDay": true],
+            ["name": "元旦", "date": "2027-01-03", "isOffDay": true],
+            ["name": "春节", "date": "2027-02-06", "isOffDay": true],
+            ["name": "春节", "date": "2027-02-07", "isOffDay": true],
+            ["name": "春节", "date": "2027-01-30", "isOffDay": false]
+        ]
+    }
+
+    func testRemoteDatasetValidatesAndConverts() throws {
+        let year = try HolidayRemoteUpdate.validatedYear(
+            from: remoteDatasetJSON(year: 2027, days: valid2027Days),
+            allowedYears: [2027]
+        )
+
+        XCTAssertEqual(year.year, 2027)
+        XCTAssertEqual(year.source, .official)
+        XCTAssertEqual(year.holidays.count, 2)
+        let spring = year.holidays.first { $0.name == "春节" }!
+        XCTAssertEqual(spring.daysOff, ["2027-02-06", "2027-02-07"])
+        XCTAssertEqual(spring.workdays, ["2027-01-30"])
+
+        // 转换结果可直接建库查询。
+        let store = try HolidayStore(years: [year])
+        XCTAssertEqual(store.effect(for: date(2027, 2, 6)), .restDay(name: "春节"))
+        XCTAssertEqual(store.effect(for: date(2027, 1, 30)), .workday(name: "春节"))
+    }
+
+    func testRemoteDatasetRejectsAnomalies() {
+        func expectFailure(_ json: Data, allowed: Set<Int> = [2027]) {
+            XCTAssertThrowsError(try HolidayRemoteUpdate.validatedYear(from: json, allowedYears: allowed))
+        }
+        // 年份不在允许集合。
+        expectFailure(remoteDatasetJSON(year: 2028, days: valid2027Days))
+        // 空数据。
+        expectFailure(remoteDatasetJSON(year: 2027, days: []))
+        // 非法日期。
+        expectFailure(remoteDatasetJSON(year: 2027, days: [["name": "x", "date": "2027-13-01", "isOffDay": true]]))
+        // 日期不在年份内。
+        expectFailure(remoteDatasetJSON(year: 2027, days: [["name": "x", "date": "2026-01-01", "isOffDay": true]]))
+        // 重复日期。
+        expectFailure(remoteDatasetJSON(year: 2027, days: [
+            ["name": "x", "date": "2027-01-01", "isOffDay": true],
+            ["name": "x", "date": "2027-01-01", "isOffDay": false]
+        ]))
+        // 休日不足。
+        expectFailure(remoteDatasetJSON(year: 2027, days: [
+            ["name": "x", "date": "2027-01-01", "isOffDay": true],
+            ["name": "x", "date": "2027-01-02", "isOffDay": false]
+        ]))
+        // 天数超限。
+        var tooMany: [[String: Any]] = []
+        for day in 1...31 {
+            tooMany.append(["name": "x", "date": String(format: "2027-01-%02d", day), "isOffDay": true])
+        }
+        for day in 1...31 {
+            tooMany.append(["name": "x", "date": String(format: "2027-03-%02d", day), "isOffDay": true])
+        }
+        for day in 1...20 {
+            tooMany.append(["name": "x", "date": String(format: "2027-05-%02d", day), "isOffDay": true])
+        }
+        expectFailure(remoteDatasetJSON(year: 2027, days: tooMany))
+    }
+
+    func testBundledWithRemoteOverridesSameYearAndKeepsOthers() throws {
+        let remote = try HolidayRemoteUpdate.validatedYear(
+            from: remoteDatasetJSON(year: 2027, days: valid2027Days),
+            allowedYears: [2027]
+        )
+        let merged = HolidayStore.bundledWithRemote([remote])
+
+        // 2026 内置官方数据仍在（春节锚点）。
+        XCTAssertEqual(merged.effect(for: date(2026, 2, 17)), .restDay(name: "春节"))
+        // 2027 被远程覆盖：内置官方元旦三天 -> 远程同样三天，但补班日换成了 01-30（内置为别的日期）。
+        XCTAssertEqual(merged.effect(for: date(2027, 1, 2)), .restDay(name: "元旦"))
+        XCTAssertEqual(merged.effect(for: date(2027, 1, 30)), .workday(name: "春节"))
+        // 覆盖状态：2027 仍是 covered。
+        XCTAssertEqual(merged.coverage(for: date(2027, 5, 1)), .noSpecialDay)
+    }
+
+    func testBundled2027IsNowOfficial() {
+        // ADR-013：内置 2027 已随官方通知替换为 official。
+        let store = HolidayStore.bundled()
+        XCTAssertEqual(store.source(for: date(2027, 10, 1)), .official)
+        XCTAssertEqual(store.effect(for: date(2027, 10, 1)), .restDay(name: "国庆节"))
     }
 
     func testNotificationBudgetReservesOtherPrefixes() {

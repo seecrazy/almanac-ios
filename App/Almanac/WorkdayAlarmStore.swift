@@ -52,7 +52,8 @@ final class WorkdayAlarmStore: ObservableObject {
     @Published var alarms: [WorkdayAlarm]
     @Published private(set) var authorization: WorkdayAlarmAuthorizationState = .notDetermined
 
-    private let holidayStore: HolidayStore
+    /// 节假日数据源；远程更新后由外部替换并重排（ADR-013）。
+    private var holidayStore: HolidayStore
     private let defaults: UserDefaults
     private let legacyStorageKey = "workday.alarm.settings.v1"
     private let previousStorageKey = "workday.alarm.alarms.v2"
@@ -195,6 +196,12 @@ final class WorkdayAlarmStore: ObservableObject {
         }
 
         await replacePendingNotifications()
+    }
+
+    /// 远程节假日数据更新后替换数据源并整体重排。
+    func applyHolidayStore(_ newStore: HolidayStore) {
+        holidayStore = newStore
+        Task { await reschedule() }
     }
 
     /// App 激活 / 系统显著时间变化时重排：不请求授权、不落盘。

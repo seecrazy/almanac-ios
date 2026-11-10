@@ -12,10 +12,10 @@
     {
       "year": 2027,
       "file": "holiday-2027.json",
-      "source": "sample",
-      "sourceName": "内置示例",
-      "sourceURL": null,
-      "issuedAt": "2026-11-03"
+      "source": "official",
+      "sourceName": "国务院办公厅通知（holiday-cn 转录）",
+      "sourceURL": "https://www.gov.cn/zhengce/zhengceku/202611/content_7085102.htm",
+      "issuedAt": "2026-11"
     }
   ]
 }

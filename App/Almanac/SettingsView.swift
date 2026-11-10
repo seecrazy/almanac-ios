@@ -41,7 +41,8 @@ struct SettingsView: View {
     @State private var importPreview: BackupService.ImportPreview?
     @State private var importErrorMessage: String?
 
-    private var holidayStore: HolidayStore { .bundledShared }
+    @EnvironmentObject private var holidayData: HolidayDataCoordinator
+    private var holidayStore: HolidayStore { holidayData.store }
 
     var body: some View {
         ScrollView {
@@ -98,7 +99,25 @@ struct SettingsView: View {
                             .foregroundColor(palette.holidayRed)
                     }
 
-                    Text("当前内置数据仍为示例；官方通知发布后按数据管道更新。")
+                    HStack(spacing: 8) {
+                        Button {
+                            Task { await holidayData.checkForUpdates(force: true) }
+                        } label: {
+                            Label("检查更新", systemImage: "arrow.triangle.2.circlepath")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(palette.accent)
+                        }
+                        .disabled(holidayData.updateState == .checking)
+                        if holidayData.updateState == .checking {
+                            ProgressView()
+                        }
+                    }
+
+                    Text(remoteUpdateFooter)
+                        .font(.system(size: 12))
+                        .foregroundColor(updateStateColor)
+
+                    Text("数据来源：内置官方数据 + 联网更新（holiday-cn 数据集，转录国务院办公厅通知）；离线始终可用内置数据。")
                         .font(.system(size: 12))
                         .foregroundColor(palette.secondary)
                 }
@@ -364,6 +383,27 @@ struct SettingsView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
+    }
+
+    private var remoteUpdateFooter: String {
+        switch holidayData.updateState {
+        case .idle:
+            return "启动时自动检查更新（24 小时一次）"
+        case .checking:
+            return "正在检查节假日数据更新…"
+        case .updated(let years):
+            return "已更新 \(years.map(String.init).joined(separator: "、")) 年的数据"
+        case .upToDate:
+            return "节假日数据已是最新"
+        case .failed(let message):
+            return message
+        }
+    }
+
+    private var updateStateColor: Color {
+        if case .failed = holidayData.updateState { return palette.holidayRed }
+        if case .updated = holidayData.updateState { return palette.solarGreen }
+        return palette.secondary
     }
 
     private var accessText: String {

@@ -25,7 +25,7 @@
 | 核心引擎测试 | ✅ | LunarKit 22 / HolidayData 20 / RecurrenceEngine 6 / NaturalInput 13 / EventKitMapping 12 / MilestoneKit 15 / EventSearchKit 12 / CalendarAnalysis 7 / DiaryKit 6 |
 | 设计系统 | 🟡 | token 和月格/日详情/创建表单基线已文档化；组件覆盖不全 |
 | 农历基础 | 🟡 | 公历↔农历、闰月、干支、生肖、月视图文本已实现；月柱为农历月近似，节气月柱未精确计算 |
-| 节假日 | 🟡 | manifest、2026 official / 2027 sample、跨年查询、覆盖状态与来源提示已接入；2027 官方数据待替换 |
+| 节假日 | ✅ | 2026 / 2027 official、跨年查询、覆盖状态与来源提示；**联网自动更新（ADR-013：双源拉取 + 校验 + 缓存覆盖 + 设置页手动检查）**；真机联网路径验收待做 |
 | 完整重复规则 | ✅ | 自定义周几、COUNT 结束、系列编辑、规则预览和复杂规则只读保护已接入；RRULE 手输与复杂规则解释未实现 |
 | 里程碑平台能力 | ✅ | 四类本地提醒、桌面 small / medium Widget、锁屏 circular / inline / rectangular Widget、**Live Activity（16.1 门控）**已接入；SQLite、模板和颜色自定义未实现 |
 | Widget 矩阵 | ✅ | 里程碑 + **日程（桌面 small / medium、锁屏 inline / rectangular）**两组 Widget；交互式 Widget 与 deep link 未实现 |

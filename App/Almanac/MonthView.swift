@@ -46,7 +46,8 @@ struct MonthView: View {
     /// 月格装饰缓存：事件色点 + 节气 + 节日。节气含天文计算，禁止在渲染期重算。
     @State private var decorations = MonthDecorations()
 
-    private var holidayStore: HolidayStore { .bundledShared }
+    @EnvironmentObject private var holidayData: HolidayDataCoordinator
+    private var holidayStore: HolidayStore { holidayData.store }
     private let inputParser = NaturalInputParser()
 
     init(visibleMonth: Binding<Date>, selectedDate: Binding<Date>) {

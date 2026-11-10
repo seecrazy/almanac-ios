@@ -1,7 +1,7 @@
 # 宜历 Almanac
 
 > 输入最快、信息最全的个人时间管理中枢
-> 自然语言建事件 · 农历/节气/节日/黄历 · 法定节假日(含调休) · 里程碑倒计时 · 日详情加密日记 · 独立闹钟页 / 多闹钟 / 铃声 · 冲突检测 / 空闲时段 · 日程+倒计时 Widget · Live Activity · 每日简报 · 拼音搜索 · Spotlight · App Intents · 联系人生日导入 · iPad 双栏 · 年度回顾 · 备份导出导入 · 深链 · 自定义图标（深浅/染色）
+> 自然语言建事件 · 农历/节气/节日/黄历 · 法定节假日(含调休,联网自动更新) · 里程碑倒计时 · 日详情加密日记 · 独立闹钟页 / 多闹钟 / 铃声 · 冲突检测 / 空闲时段 · 日程+倒计时 Widget · Live Activity · 每日简报 · 拼音搜索 · Spotlight · App Intents · 联系人生日导入 · iPad 双栏 · 年度回顾 · 备份导出导入 · 深链 · 自定义图标（深浅/染色）
 
 ## 状态
 
@@ -57,7 +57,7 @@
 ## 文档索引
 
 - **产品 / 进展**：[roadmap](docs/product/roadmap.md)、[HANDOFF](docs/HANDOFF.md)
-- **架构**：[ADR-001 EventKit](docs/architecture/adr/ADR-001-eventkit-as-source-of-truth.md)、[ADR-007 跨平台](docs/architecture/adr/ADR-007-cross-platform.md)、[ADR-008 自然语言输入](docs/architecture/adr/ADR-008-natural-language-input.md)、[ADR-009 工作日闹钟](docs/architecture/adr/ADR-009-workday-alarm.md)、[ADR-010 搜索索引](docs/architecture/adr/ADR-010-event-search-sqlite-index.md)、[ADR-011 日记存储](docs/architecture/adr/ADR-011-diary-local-encrypted-storage.md)、[ADR-012 Watch App](docs/architecture/adr/ADR-012-watch-app-engineering.md)
+- **架构**：[ADR-001 EventKit](docs/architecture/adr/ADR-001-eventkit-as-source-of-truth.md)、[ADR-007 跨平台](docs/architecture/adr/ADR-007-cross-platform.md)、[ADR-008 自然语言输入](docs/architecture/adr/ADR-008-natural-language-input.md)、[ADR-009 工作日闹钟](docs/architecture/adr/ADR-009-workday-alarm.md)、[ADR-010 搜索索引](docs/architecture/adr/ADR-010-event-search-sqlite-index.md)、[ADR-011 日记存储](docs/architecture/adr/ADR-011-diary-local-encrypted-storage.md)、[ADR-012 Watch App](docs/architecture/adr/ADR-012-watch-app-engineering.md)、[ADR-013 节假日联网更新](docs/architecture/adr/ADR-013-remote-holiday-dataset.md)
 - **设计（UX 打磨与回顾批次 2026-11-10）**：[UX 打磨](docs/design/ux-polish.md)、[年度回顾](docs/design/year-in-review.md)、[备份导出导入](docs/design/backup-export.md)
 - **设计（平台能力批次 2026-11）**：[通知配额](docs/design/notification-budget.md)、[性能优化](docs/design/performance-optimizations.md)、[日程小组件](docs/design/schedule-widget.md)、[周模式](docs/design/week-mode.md)、[每日简报](docs/design/daily-briefing.md)、[.ics 分享](docs/design/event-sharing.md)、[Spotlight](docs/design/spotlight.md)、[拼音搜索](docs/design/pinyin-search.md)、[App Intents](docs/design/app-intents.md)、[联系人生日导入](docs/design/contacts-birthdays.md)、[Live Activity](docs/design/live-activity.md)、[Dynamic Type](docs/design/dynamic-type.md)、[iPad 适配](docs/design/ipad-adaptation.md)
 - **设计（既有）**：[设计系统 v0.1](docs/design/design-system.md)、[事件创建 v1](docs/design/event-creation.md)、[自然语言输入 v1](docs/design/natural-language-input.md)、[事件详情/编辑/删除 v1](docs/design/event-detail-editing.md)、[事件提醒 v1](docs/design/event-reminders.md)、[重复规则 v1](docs/design/event-recurrence.md)、[重复规则完整编辑与系列操作 v1](docs/design/recurrence-series-editing.md)、[多日历管理 v1](docs/design/calendar-management.md)、[月视图交互 v1](docs/design/month-interaction.md)、[月 / 年 / 议程视图 v1.3](docs/design/views-navigation.md)、[事件搜索 v1](docs/design/event-search.md)、[事件搜索 v2](docs/design/event-search-v2.md)、[搜索本地索引 v1](docs/design/event-search-local-index.md)、[黄历面板 v1](docs/design/almanac-panel.md)、[农历生日 / 纪念日 v1](docs/design/lunar-anniversaries.md)、[倒计时卡片 v1.1](docs/design/milestones.md)、[日记 v1.1](docs/design/diary.md)、[里程碑提醒与小组件 v1](docs/design/milestone-reminders-widgets.md)、[官方节假日数据管道 v1](docs/design/holiday-data-pipeline.md)、[二十四节气 v1](docs/design/solar-terms.md)、[农历节日 v1](docs/design/lunar-festivals.md)、[工作日智能闹钟 v1.3](docs/design/workday-alarm.md)
